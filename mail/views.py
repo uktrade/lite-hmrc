@@ -10,13 +10,6 @@ from rest_framework.views import APIView
 
 class SendMailView(APIView):
     def get(self, request):
-#         receiver_email = "test18@example.com"
-#         sender_email = "username@example.com"
-#         # Make Gmail accept the email
-#         message = "From: <email>:" \
-#                   "Subject: tinkering with the settings:" \
-#                   "Message: body:" \
-#                   "."
         sender_email = "charles@example.com"
         receiver_email = "test18@example.com"
         msg = MIMEMultipart()
@@ -33,7 +26,7 @@ class SendMailView(APIView):
         msg.attach(MIMEText(body, 'plain'))
         # open the file to be sent
         filename = "File_name_with_extension"
-        attachment = open("/Users/charlesluo/dev/dit/hmrc-integration/lite-hmrc/mail/urls.py", "rb")
+        attachment = open("path_to_file", "rb")
         # instance of MIMEBase and named as p
         p = MIMEBase('application', 'octet-stream')
         # To change the payload into encoded form
@@ -61,13 +54,6 @@ class ReceiveMailView(APIView):
         output=str(messages_info) + "\n" + "\n"
         i=0
         output+=str(server.retr(len(messages_info[1])))
-#         while i < len(messages_info[1]):
-#             i+=1
-#             output+=str(server.retr(i)) + "\n" + "\n"
-#         for msg in messages_info:
-#             full_message = "\n".join(server.retr(msg_num)[1])
-            # Do something with the message
-#             print("\n\nEmail: ---------\n")
         print(output)
         server.quit()
         return JsonResponse(status=HTTP_200_OK, data=output, safe=False)
