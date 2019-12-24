@@ -1,5 +1,7 @@
 import poplib
 import smtplib
+import schedule
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -46,14 +48,30 @@ class SendMailView(APIView):
 class ReceiveMailView(APIView):
     def get(self, request):
         server = poplib.POP3_SSL("localhost", 995)
-        server.getwelcome()
         server.user("test18")
         server.pass_("password")
         messages_info = server.list()
 
         output=str(messages_info) + "\n" + "\n"
-        i=0
         output+=str(server.retr(len(messages_info[1])))
         print(output)
         server.quit()
         return JsonResponse(status=HTTP_200_OK, data=output, safe=False)
+
+
+def job():
+   print(time.time())
+
+schedule.every(5).seconds.do(job)
+# schedule.every().hour.do(job)
+# schedule.every().day.at("10:30").do(job)
+# schedule.every().monday.do(job)
+# schedule.every().wednesday.at("13:15").do(job)
+# while True:
+#     schedule.run_pending()
+#     time.sleep(1)
+
+
+
+
+
