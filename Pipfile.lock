@@ -30,14 +30,6 @@
             "index": "pypi",
             "version": "==0.4.5"
         },
-        "django-mailbox": {
-            "hashes": [
-                "sha256:d1239f833be6d5f2a7a6bfd66fea40dcafb2fa8e953f3aa9b3afcfde1247a323",
-                "sha256:db0a02aca48679b500ad6f7da867de3892b902637c9e88f93af082f10721063f"
-            ],
-            "index": "pypi",
-            "version": "==4.8.1"
-        },
         "django-model-utils": {
             "hashes": [
                 "sha256:3f130a262e45d73e0950d2be76af4bf4ee86804dd60e5f90afc5cd948fcfe760",
