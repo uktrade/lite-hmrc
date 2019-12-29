@@ -9,6 +9,7 @@ from mail.helpers import build_and_send_message
 from mail.servers import MailServer
 
 
+# Leaving the endpoints in place for now for testing purposes
 class SendMailView(APIView):
     def get(self, request):
         sender = "junk@mail.com"
