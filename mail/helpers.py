@@ -10,6 +10,9 @@ def build_and_send_message(server, sender, receiver):
     )
 
 
+# Let's do an assessment of using MIME rather than a custom
+# builder and find out whether we should be using
+# octet-stream as our encoding standard.
 def _build_message(sender, receiver):
     msg = MIMEMultipart()
     msg["From"] = sender

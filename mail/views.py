@@ -38,7 +38,8 @@ def job():
     #   - records the send message in table
 
 
-schedule.every(1).minuted.do(job)
+# Chose 1 minute as a reasonable refresh rate we can discuss this
+schedule.every(1).minutes.do(job)
 
 while True:
     schedule.run_pending()
