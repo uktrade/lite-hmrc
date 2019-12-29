@@ -1,3 +1,6 @@
+import time
+
+import schedule as schedule
 from django.http import JsonResponse
 from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
@@ -35,13 +38,8 @@ def job():
     #   - records the send message in table
 
 
-# print(time.time())
+schedule.every(1).minuted.do(job)
 
-# schedule.every(5).seconds.do(job)
-# schedule.every().hour.do(job)
-# schedule.every().day.at("10:30").do(job)
-# schedule.every().monday.do(job)
-# schedule.every().wednesday.at("13:15").do(job)
-# while True:
-#     schedule.run_pending()
-#     time.sleep(1)
+while True:
+    schedule.run_pending()
+    time.sleep(1)
