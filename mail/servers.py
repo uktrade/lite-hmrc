@@ -1,14 +1,14 @@
 import poplib
 import smtplib
 
-MAIL_SERVER='localhost'
+MAIL_SERVER = "localhost"
 MAIL_SERVER_USER = "test18"
 MAIL_SERVER_PASS = "password"
-SMTP_PORT= 587
-POP3_PORT= 995
+SMTP_PORT = 587
+POP3_PORT = 995
+
 
 class MailServer(object):
-
     def __init__(self):
         pass
 
@@ -29,6 +29,6 @@ class MailServer(object):
 
     def _process_contents(self, server):
         msg_obj = server.list()
-        output=str(msg_obj) + "\n" + "\n"
-        output+=str(server.retr(len(msg_obj[1])))
+        output = str(msg_obj) + "\n" + "\n"
+        output += str(server.retr(len(msg_obj[1])))
         return output
