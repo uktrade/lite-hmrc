@@ -68,6 +68,3 @@ target/
 # Environments
 .env
 .venv
-
-# local SQLite file
-db.sqlite3
