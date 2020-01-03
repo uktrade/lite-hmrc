@@ -20,15 +20,15 @@ class MailServer(object):
         server.quit()
 
     def read_email(self):
-        server = poplib.POP3_SSL(MAIL_SERVER, str(POP3_PORT))
-        server.user(MAIL_SERVER_USER)
-        server.pass_(MAIL_SERVER_PASS)
-        msg = self._process_contents(server)
-        server.quit()
+        pop3 = poplib.POP3_SSL(MAIL_SERVER, str(POP3_PORT))
+        pop3.user(MAIL_SERVER_USER)
+        pop3.pass_(MAIL_SERVER_PASS)
+        msg = self._process_mailbox(pop3)
+        pop3.quit()
         return msg
 
-    def _process_contents(self, server):
-        msg_obj = server.list()
+    def _process_mailbox(self, pop3_mailbox):
+        msg_obj = pop3_mailbox.list()
         output = str(msg_obj) + "\n" + "\n"
-        output += str(server.retr(len(msg_obj[1])))
+        output += str(pop3_mailbox.retr(len(msg_obj[1])))
         return output

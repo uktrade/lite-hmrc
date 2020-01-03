@@ -21,7 +21,7 @@ def _build_message(sender, receiver):
     body = "Body_of_the_mail"
     msg.attach(MIMEText(body, "plain"))
     filename = "File_name_with_extension"
-    attachment = open("<path_to_file>", "rb")
+    attachment = open("/path/to/file", "rb")
     payload = MIMEBase("application", "octet-stream")
     payload.set_payload((attachment).read())
     payload.add_header("Content-Disposition", "attachment; filename= %s" % filename)

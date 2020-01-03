@@ -1,10 +1,10 @@
 from django.urls import path
 
-from mail import views
+from mail.views import SendMailView, ReceiveMailView
 
 app_name = "mail"
 
 urlpatterns = [
-    path("send", views.SendMailView.as_view(), name="send_mail"),
-    path("receive", views.ReceiveMailView.as_view(), name="receive_mail"),
+    path("send", SendMailView.as_view(), name="send_mail"),
+    path("receive", ReceiveMailView.as_view(), name="receive_mail"),
 ]

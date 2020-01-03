@@ -1,6 +1,3 @@
-import time
-
-import schedule as schedule
 from django.http import JsonResponse
 from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
@@ -37,11 +34,3 @@ def job():
     #   - Records run number and if required and adjusts run number
     #   - calls build_and_send_message with new receiver address (keep the sender)
     #   - records the send message in table
-
-
-# Chose 1 minute as a reasonable refresh rate we can discuss this
-schedule.every(1).minutes.do(job)
-
-while True:
-    schedule.run_pending()
-    time.sleep(1)
