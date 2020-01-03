@@ -16,7 +16,7 @@ class SendMailView(APIView):
         return JsonResponse(status=HTTP_200_OK, data={"message": "email_sent !"})
 
 
-class ReceiveMailView(APIView):
+class ReadMailView(APIView):
     def get(self, request):
         server = MailServer()
         last_msg = server.read_email()
