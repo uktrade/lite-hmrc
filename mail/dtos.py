@@ -3,4 +3,4 @@ import logging
 
 log = logging.getLogger(__name__)
 
-EmailMessageDto = namedtuple("EmailMessageDto", "sender, subject, body, attachment")
+EmailMessageDto = namedtuple("EmailMessageDto", "run_number, sender, subject, body, attachment")
