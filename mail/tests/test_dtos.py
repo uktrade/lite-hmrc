@@ -2,6 +2,7 @@ import unittest
 
 from mail.dtos import *
 
+
 class TestDtos(unittest.TestCase):
     def setUp(self):
         pass
@@ -11,4 +12,3 @@ class TestDtos(unittest.TestCase):
                                           attachment={})
         self.assertEqual(101, emailMessageDto.run_number, 'Run-number did not match')
         self.assertEqual('test@example.com', emailMessageDto.sender, 'sender email did not match')
-
