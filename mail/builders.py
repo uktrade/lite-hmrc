@@ -16,7 +16,7 @@ def build_text_message(sender, receiver):
     filename = "File_name_with_extension"
     attachment = open("/path/to/afile", "rb")
     payload = MIMEBase("application", "octet-stream")
-    payload.set_payload((attachment).read())
+    payload.set_payload(attachment.read())
     payload.add_header("Content-Disposition", "attachment; filename= %s" % filename)
     msg.attach(payload)
     return msg

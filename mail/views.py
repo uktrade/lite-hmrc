@@ -37,6 +37,34 @@ class ReadMailView(APIView):
         )
         pop3_conn = server.connect_pop3()
         mailBoxService = MailboxService()
-        last_msg = mailBoxService.read_last_message(pop3_conn)
+        last_msg_dto = mailBoxService.read_last_message(pop3_conn)
         pop3_conn.quit()
-        return JsonResponse(status=HTTP_200_OK, data=last_msg, safe=False)
+        return JsonResponse(status=HTTP_200_OK, data=str(last_msg_dto), safe=False)
+
+
+class RouteMailView(APIView):
+    def get(self, request):
+        server = MailServer(
+            hostname="localhost",
+            user="test18",
+            pwd="password",
+            pop3_port=995,
+            smtp_port=587,
+        )
+        pop3_conn = server.connect_pop3()
+        mailBoxService = MailboxService()
+        last_msg_dto = mailBoxService.read_last_message(pop3_conn)
+        pop3_conn.quit()
+        # todo
+        mailBoxService.handleRunnumber(last_msg_dto)
+        smtp_conn = server.connect_smtp()
+        # todo
+        mailBoxService.send_email(smtp_conn, self.build_msg(last_msg_dto))
+
+        resp_msg = "Email routed from {} to {}".format(
+            last_msg_dto.sender, "receiver tbd"
+        )
+        return JsonResponse(status=HTTP_200_OK, data={"message": resp_msg}, safe=False)
+
+    def build_msg(self, emailMsgDto):
+        pass
