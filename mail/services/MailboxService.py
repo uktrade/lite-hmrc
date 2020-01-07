@@ -8,4 +8,3 @@ class MailboxService(object):
     def read_last_message(self, pop3Conn: object):
         msg_obj = pop3Conn.list()
         return str(pop3Conn.retr(len(msg_obj[1])))
-

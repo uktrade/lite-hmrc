@@ -20,4 +20,3 @@ def build_text_message(sender, receiver):
     payload.add_header("Content-Disposition", "attachment; filename= %s" % filename)
     msg.attach(payload)
     return msg
-
