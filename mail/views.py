@@ -5,6 +5,8 @@ from rest_framework.views import APIView
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
 from mail.builders import build_text_message
+from mail.dtos import to_json
+import json
 
 
 # Leaving the endpoints in place for now for testing purposes
@@ -39,7 +41,7 @@ class ReadMailView(APIView):
         mailBoxService = MailboxService()
         last_msg_dto = mailBoxService.read_last_message(pop3_conn)
         pop3_conn.quit()
-        return JsonResponse(status=HTTP_200_OK, data=str(last_msg_dto), safe=False)
+        return JsonResponse(status=HTTP_200_OK, data=to_json(last_msg_dto), safe=False)
 
 
 class RouteMailView(APIView):

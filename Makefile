@@ -5,4 +5,4 @@ run:
 	pipenv run ./manage.py runserver
 
 check-format:
-	black --check .
+	black --check ./mail
