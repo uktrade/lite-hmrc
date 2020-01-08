@@ -68,6 +68,7 @@ def to_mail_message_dto(mailContents: list):
     return EmailMessageDto(
         subject=msgObj.get("Subject"),
         sender=msgObj.get("From"),
+        receiver=msgObj.get("To"),
         body=msg,
         attachment=[file_name, file_data],
         run_number=get_runnumber(file_data),

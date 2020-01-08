@@ -11,6 +11,7 @@ class TestDtos(unittest.TestCase):
         emailMessageDto = EmailMessageDto(
             run_number=101,
             sender="test@example.com",
+            receiver="receiver@example.com",
             body="body",
             subject="subject",
             attachment={},
@@ -18,4 +19,9 @@ class TestDtos(unittest.TestCase):
         self.assertEqual(101, emailMessageDto.run_number, "Run-number did not match")
         self.assertEqual(
             "test@example.com", emailMessageDto.sender, "sender email did not match"
+        )
+        self.assertEqual(
+            "receiver@example.com",
+            emailMessageDto.receiver,
+            "receiver email did not match",
         )
