@@ -6,30 +6,30 @@ EmailMessageDto = namedtuple(
 )
 
 
-def to_json(emailMsgDto: EmailMessageDto):
+def to_json(email_message_dto: EmailMessageDto):
     """
     Converts EmailMessageDto to JSON str
-    :param emailMsgDto: an object of type EmailMessageDto
+    :param email_message_dto: an object of type EmailMessageDto
     :return: str in JSON format
     """
-    if emailMsgDto is None:
+    if email_message_dto is None:
         raise TypeError("given EmailMessageDto is invalid!")
 
-    if emailMsgDto.attachment is None or not isinstance(
-        emailMsgDto.attachment[1], bytes
+    if email_message_dto.attachment is None or not isinstance(
+        email_message_dto.attachment[1], bytes
     ):
         raise TypeError("Invalid attribute 'attachment'")
 
-    emailMsgDto.attachment[1] = emailMsgDto.attachment[1].decode("ascii")
+    email_message_dto.attachment[1] = email_message_dto.attachment[1].decode("ascii")
     _dict = {
-        "run_number": emailMsgDto.run_number,
-        "sender": emailMsgDto.sender,
-        "subject": emailMsgDto.subject,
-        "receiver": emailMsgDto.receiver,
-        "body": emailMsgDto.body,
+        "run_number": email_message_dto.run_number,
+        "sender": email_message_dto.sender,
+        "subject": email_message_dto.subject,
+        "receiver": email_message_dto.receiver,
+        "body": email_message_dto.body,
         "attachment": {
-            "name": emailMsgDto.attachment[0],
-            "data": emailMsgDto.attachment[1],
+            "name": email_message_dto.attachment[0],
+            "data": email_message_dto.attachment[1],
         },
     }
     return json.dumps(_dict)

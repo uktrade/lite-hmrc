@@ -1,5 +1,4 @@
 import unittest
-import json
 
 from mail.dtos import *
 
@@ -9,7 +8,7 @@ class TestDtos(unittest.TestCase):
         pass
 
     def test_EmailMessageDto(self):
-        emailMessageDto = EmailMessageDto(
+        email_message_dto = EmailMessageDto(
             run_number=101,
             sender="test@example.com",
             receiver="receiver@example.com",
@@ -17,18 +16,18 @@ class TestDtos(unittest.TestCase):
             subject="subject",
             attachment=[],
         )
-        self.assertEqual(101, emailMessageDto.run_number, "Run-number did not match")
+        self.assertEqual(101, email_message_dto.run_number, "Run-number did not match")
         self.assertEqual(
-            "test@example.com", emailMessageDto.sender, "sender email did not match"
+            "test@example.com", email_message_dto.sender, "sender email did not match"
         )
         self.assertEqual(
             "receiver@example.com",
-            emailMessageDto.receiver,
+            email_message_dto.receiver,
             "receiver email did not match",
         )
 
     def test_toJson(self):
-        emailMessageDto = EmailMessageDto(
+        email_message_dto = EmailMessageDto(
             run_number=101,
             sender="test@example.com",
             receiver="receiver@example.com",
@@ -36,15 +35,15 @@ class TestDtos(unittest.TestCase):
             subject="subject",
             attachment=["filename", "a line".encode("ascii", "replace")],
         )
-        dtoInJson = to_json(emailMessageDto)
-        dtoInDict = json.loads(dtoInJson)
-        self.assertEqual(dtoInDict["run_number"], 101)
-        self.assertEqual(dtoInDict["body"], "body")
-        self.assertEqual(dtoInDict["attachment"]["name"], "filename")
-        self.assertEqual(dtoInDict["attachment"]["data"], "a line")
+        dto_in_json = to_json(email_message_dto)
+        dto_in_dict = json.loads(dto_in_json)
+        self.assertEqual(dto_in_dict["run_number"], 101)
+        self.assertEqual(dto_in_dict["body"], "body")
+        self.assertEqual(dto_in_dict["attachment"]["name"], "filename")
+        self.assertEqual(dto_in_dict["attachment"]["data"], "a line")
 
     def test_toJson_raiseTypeError(self):
-        emailMessageDto = EmailMessageDto(
+        email_message_dto = EmailMessageDto(
             run_number=101,
             sender="test@example.com",
             receiver="receiver@example.com",
@@ -53,5 +52,5 @@ class TestDtos(unittest.TestCase):
             attachment=["filename", "contents not encoded"],
         )
         with self.assertRaises(TypeError) as context:
-            to_json(emailMessageDto)
+            to_json(email_message_dto)
         self.assertEqual("Invalid attribute 'attachment'", str(context.exception))

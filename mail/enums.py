@@ -2,16 +2,10 @@
 
 
 class ReceptionStatusEnum:
-    APPEAL_FINAL_REVIEW = "appeal_final_review"
-    APPEAL_REVIEW = "appeal_review"
-    APPLICANT_EDITING = "applicant_editing"
-    CHANGE_INTIAL_REVIEW = "change_initial_review"
+    ACCEPTED = "accepted"
 
     choices = [
-        (APPEAL_FINAL_REVIEW, "Appeal final review"),
-        (APPEAL_REVIEW, "Appeal review"),
-        (APPLICANT_EDITING, "Applicant editing"),
-        (CHANGE_INTIAL_REVIEW, "Change initial review"),
+        (ACCEPTED, "Accepted"),
     ]
 
     @classmethod
@@ -26,16 +20,10 @@ class ReceptionStatusEnum:
 
 
 class ExtractTypeEnum:
-    APPEAL_FINAL_REVIEW = "appeal_final_review"
-    APPEAL_REVIEW = "appeal_review"
-    APPLICANT_EDITING = "applicant_editing"
-    CHANGE_INTIAL_REVIEW = "change_initial_review"
+    INSERT = "insert"
 
     choices = [
-        (APPEAL_FINAL_REVIEW, "Appeal final review"),
-        (APPEAL_REVIEW, "Appeal review"),
-        (APPLICANT_EDITING, "Applicant editing"),
-        (CHANGE_INTIAL_REVIEW, "Change initial review"),
+        (INSERT, "Insert"),
     ]
 
     @classmethod
@@ -46,4 +34,11 @@ class ExtractTypeEnum:
 
     @classmethod
     def as_list(cls):
-        return [{"status": choice[0]} for choice in cls.choices]
+        return [{"extract_type": choice[0]} for choice in cls.choices]
+
+
+class SourceEnum:
+    SPIRE = "SPIRE"
+    LITE = "LITE"
+
+    choices = [(SPIRE, "SPIRE"), (LITE, "LITE")]

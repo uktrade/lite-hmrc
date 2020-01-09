@@ -1,3 +1,4 @@
+import string
 from email.message import Message
 from email.parser import Parser
 from mail.dtos import EmailMessageDto
@@ -78,3 +79,9 @@ def to_mail_message_dto(mailContents: list):
 def get_runnumber(file: object):
     """todo: """
     return "99"
+
+
+def sender_to_source(sender: string):
+    if sender == "test@example.com":
+        return "SPIRE"
+    return "LITE"
