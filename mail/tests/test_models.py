@@ -1,4 +1,4 @@
-import unittest
+from django.test import testcases
 
 from mail.data_processing import process_and_save_email_message_dto
 from mail.dtos import EmailMessageDto
@@ -6,7 +6,7 @@ from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import LicenseUpdate
 
 
-class TestModels(unittest.TestCase):
+class TestModels(testcases.TestCase):
     def setUp(self):
         self.hmrc_run_number = 28
         self.source_run_number = 15
@@ -33,11 +33,11 @@ class TestModels(unittest.TestCase):
 
         process_and_save_email_message_dto(email_message_dto)
 
-        email = LicenseUpdate.objects.first()
-        self.assertEqual(email.edi_data, email_message_dto.attachment[1])
+        email = LicenseUpdate.objects.last()
+        self.assertEqual(email.edi_data, str(email_message_dto.attachment[1]))
         self.assertEqual(email.extract_type, ExtractTypeEnum.INSERT)
-        self.assertEqual(email.respnonse_file, None)
-        self.assertEqual(email.respnonse_date, None)
+        self.assertEqual(email.response_file, None)
+        self.assertEqual(email.response_date, None)
         self.assertEqual(email.edi_filename, email_message_dto.attachment[0])
         self.assertEqual(email.source_run_number, email_message_dto.run_number)
         self.assertEqual(email.hmrc_run_number, self.hmrc_run_number + 1)

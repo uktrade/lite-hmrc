@@ -1,9 +1,11 @@
 import unittest
 
+from django.test import testcases
+
 from mail.dtos import *
 
 
-class TestDtos(unittest.TestCase):
+class TestDtos(testcases.TestCase):
     def setUp(self):
         pass
 

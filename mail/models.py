@@ -20,6 +20,9 @@ class Mail(models.Model):
     response_date = models.DateTimeField(blank=True, null=True)
     edi_filename = models.TextField()
 
+    class Meta:
+        ordering = ["created_at"]
+
 
 class LicenseUpdate(Mail):
     license_id = models.UUIDField()
