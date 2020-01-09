@@ -19,9 +19,11 @@ class Mail(models.Model):
     response_file = models.TextField(blank=True, null=True)
     response_date = models.DateTimeField(blank=True, null=True)
     edi_filename = models.TextField()
+    raw_data = models.TextField()
 
     class Meta:
         ordering = ["created_at"]
+        abstract = True
 
 
 class LicenseUpdate(Mail):
@@ -33,3 +35,12 @@ class LicenseUpdate(Mail):
 
 class LicenseUsage(Mail):
     pass
+
+
+class InvalidEmail(Mail):
+    serializer_errors = models.TextField()
+    extract_type = models.CharField(
+        choices=ExtractTypeEnum.choices, max_length=20, null=True
+    )
+    edi_filename = models.TextField(null=True, blank=True)
+    edi_data = models.TextField(null=True, blank=True)

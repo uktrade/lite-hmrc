@@ -17,6 +17,7 @@ class TestDtos(testcases.TestCase):
             body="body",
             subject="subject",
             attachment=[],
+            raw_data="qwerty",
         )
         self.assertEqual(101, email_message_dto.run_number, "Run-number did not match")
         self.assertEqual(
@@ -36,6 +37,7 @@ class TestDtos(testcases.TestCase):
             body="body",
             subject="subject",
             attachment=["filename", "a line".encode("ascii", "replace")],
+            raw_data="qwerty",
         )
         dto_in_json = to_json(email_message_dto)
         dto_in_dict = json.loads(dto_in_json)
@@ -52,6 +54,7 @@ class TestDtos(testcases.TestCase):
             body="body",
             subject="subject",
             attachment=["filename", "contents not encoded"],
+            raw_data="qwerty",
         )
         with self.assertRaises(TypeError) as context:
             to_json(email_message_dto)

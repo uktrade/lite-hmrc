@@ -82,6 +82,18 @@ def get_runnumber(file: object):
 
 
 def sender_to_source(sender: string):
-    if sender == "test@example.com":
+    if sender == "test@spire.com":
         return "SPIRE"
-    return "LITE"
+    elif sender == "test@lite.com":
+        return "LITE"
+    else:
+        return sender
+
+
+def process_attachment(attachment):
+    try:
+        edi_filename = attachment[0]
+        edi_data = attachment[1]
+        return edi_filename, str(edi_data)
+    except IndexError:
+        return "", ""
