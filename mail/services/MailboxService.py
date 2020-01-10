@@ -1,5 +1,5 @@
 import logging
-from mail.helpers import to_mail_message_dto
+from mail.services.helpers import to_mail_message_dto
 from mail.dtos import EmailMessageDto
 
 log = logging.getLogger(__name__)
@@ -18,6 +18,6 @@ class MailboxService(object):
         msgTripolet = pop3Conn.retr(len(mails))
         return to_mail_message_dto(msgTripolet[1])
 
-    def handleRunnumber(self, mailMsgDto: EmailMessageDto):
+    def handle_run_number(self, mailMsgDto: EmailMessageDto):
         # todo
         pass

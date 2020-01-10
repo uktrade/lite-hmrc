@@ -1,6 +1,6 @@
 from django.test import testcases
 
-from mail.data_processing import process_and_save_email_message
+from mail.services.data_processing import process_and_save_email_message
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import LicenseUpdate, InvalidEmail

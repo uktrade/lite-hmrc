@@ -81,7 +81,7 @@ def get_runnumber(file: object):
     return "99"
 
 
-def sender_to_source(sender: string):
+def convert_sender_to_source(sender: string):
     if sender == "test@spire.com":
         return "SPIRE"
     elif sender == "test@lite.com":
