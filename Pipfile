@@ -17,3 +17,6 @@ django-reversion = "==3.0.3"
 djangorestframework = "==3.9.2"
 psycopg2 = "==2.8.2"
 schedule = "*"
+
+[requires]
+python_version = "3.7"
