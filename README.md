@@ -15,11 +15,7 @@ and usage are exchanged as mail attachment between Lite and HMRC
 
 ##### With Docker 
 
-An `.env` file is expected at the root of project which might look like below
-
-```$xslt
-DATABASE_URL=postgresql://db_user:db_password@db_host:5432/db_name
-```
+An `.env` file is expected at the root of project which might look like `local.env`
 
 - `docker-compose up`
 
