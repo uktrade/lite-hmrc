@@ -89,6 +89,8 @@ WSGI_APPLICATION = "conf.wsgi.application"
 
 DATABASES = {"default": env.db()}
 
+EMAIL_PASSWORD = env("EMAIL_PASSWORD")
+
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
