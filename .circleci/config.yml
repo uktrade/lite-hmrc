@@ -19,6 +19,7 @@ jobs:
       - jq/install
 
       - checkout
+
 #      - run:
 #          name: Repository Vulnerability Check
 #          command: |
