@@ -18,7 +18,7 @@ services:
   lite-hmrc-intg:
     container_name: "lite-hmrc-intg"
     env_file:
-      - ./mail/.env
+      - .env
     build: .
     volumes:
       - .:/app
