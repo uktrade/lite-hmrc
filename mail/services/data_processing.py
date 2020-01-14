@@ -1,17 +1,24 @@
 from mail.dtos import EmailMessageDto
-from mail.services.helpers import convert_sender_to_source, process_attachment
-from mail.models import LicenseUpdate
-from mail.serializers import LicenseUpdateSerializer, InvalidEmailSerializer
+from mail.models import Mail
+from mail.serializers import (
+    InvalidEmailSerializer,
+    LicenceUpdateMailSerializer,
+    LicenceUpdateUpdateSerializer,
+)
+from mail.services.helpers import (
+    convert_sender_to_source,
+    process_attachment,
+    new_hmrc_run_number,
+)
 
 
 def process_and_save_email_message(dto: EmailMessageDto):
-    data = convert_dto_data_for_serialization(dto)
-
-    serializer = LicenseUpdateSerializer(data=data)
+    data, serializer, instance = convert_dto_data_for_serialization(dto)
+    serializer = serializer(instance=instance, data=data)
 
     if serializer.is_valid():
-        serializer.save()
-        return True
+        mail = serializer.save()
+        return mail
     else:
         data["serializer_errors"] = str(serializer.errors)
         serializer = InvalidEmailSerializer(data=data)
@@ -21,12 +28,34 @@ def process_and_save_email_message(dto: EmailMessageDto):
 
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
-    data = {}
-    last_hmrc_number = LicenseUpdate.objects.last().hmrc_run_number
-    data["hmrc_run_number"] = (
-        last_hmrc_number + 1 if last_hmrc_number != 99999 else 0
-    )  # TODO: Extra logic to generalise
-    data["source_run_number"] = dto.run_number
+    if convert_sender_to_source(dto.sender) in VALID_SENDERS:
+        data = _for_licence_update_outbound(dto)
+        serializer = LicenceUpdateMailSerializer
+        return data, serializer, None
+    elif convert_sender_to_source(dto.sender) == "HMRC":
+        data, instance = _for_licence_update_response(dto)
+        serializer = LicenceUpdateUpdateSerializer(partial=True)
+        return data, serializer, instance
+    # TODO: Licence Usage emails
+    # TODO: Refine conditions and create a serializer to valid against all fields for bad emails
+    else:
+        data = _for_licence_update_outbound(dto)
+        serializer = LicenceUpdateMailSerializer
+        return data, serializer, None
+
+
+def collect_and_send_data_to_dto(mail: Mail):
+    # determine run_number to use
+    # get data out
+    # return dto
+    return True
+
+
+def _for_licence_update_outbound(dto: EmailMessageDto):
+    data = {"licence_update": {}}
+    data["licence_update"]["source"] = convert_sender_to_source(dto.sender)
+    data["licence_update"]["hmrc_run_number"] = new_hmrc_run_number(dto.run_number)
+    data["licence_update"]["source_run_number"] = dto.run_number
 
     data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
 
@@ -40,8 +69,5 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
     return data
 
 
-def collect_and_send_data_to_dto():
-    # determine run_number to use
-    # get data out
-    # return dto
+def _for_licence_update_response(dto: EmailMessageDto):
     return True
