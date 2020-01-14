@@ -15,10 +15,6 @@ class TestModels(testcases.TestCase):
             extract_type=ExtractTypeEnum.INSERT,
             status=ReceptionStatusEnum.ACCEPTED,
             edi_filename="blank",
-            license_id="00000000-0000-0000-0000-000000000001",
-            hmrc_run_number=self.hmrc_run_number,
-            source_run_number=self.source_run_number,
-            source=SourceEnum.SPIRE,
         ).save()
 
     def test_email_processed_successfully(self):

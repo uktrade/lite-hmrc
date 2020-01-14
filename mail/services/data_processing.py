@@ -42,9 +42,9 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
     data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
 
     data["extract_type"] = "insert"  # TODO: extract from data
-    data[
-        "license_id"
-    ] = "00000000-0000-0000-0000-000000000001"  # TODO: extract from data
+    data["license_ids"] = [
+        "00000000-0000-0000-0000-000000000001"
+    ]  # TODO: extract from data
     data["raw_data"] = dto.raw_data
 
     return data
