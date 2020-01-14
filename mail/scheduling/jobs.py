@@ -10,7 +10,7 @@ def read_email_job():
     server = MailServer()
     pop3_conn = server.connect_to_pop3()
     log.info("Last message: \n%s.", str(MailboxService().read_last_message(pop3_conn)))
-    pop3_conn.quit()
+    server.quit_pop3_connection()
     # TODO: Some logic which does the following:
     #   - reads the 'last_message'
     #   - Saves the message in a table (against a sent message if it is a reply)
