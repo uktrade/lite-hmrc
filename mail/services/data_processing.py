@@ -2,8 +2,6 @@ import json
 
 from conf.constants import VALID_SENDERS
 from mail.dtos import EmailMessageDto
-from mail.enums import SourceEnum
-from mail.models import LicenceUpdate
 from mail.serializers import InvalidEmailSerializer, LicenceUpdateMailSerializer
 from mail.services.helpers import (
     convert_sender_to_source,
