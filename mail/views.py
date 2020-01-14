@@ -2,7 +2,6 @@ from django.http import JsonResponse
 from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
-from conf.settings import EMAIL_PASSWORD
 from mail.builders import build_text_message
 from mail.dtos import to_json
 from mail.routing_controller import check_and_route_emails
