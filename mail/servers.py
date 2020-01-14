@@ -18,15 +18,23 @@ class MailServer(object):
         self.password = password
         self.user = user
         self.hostname = hostname
+        self.pop3_connection = None
+        self.smtp_connection = None
 
-    def connect_pop3(self):
-        pop3 = poplib.POP3_SSL(self.hostname, str(self.pop3_port))
-        pop3.user(self.user)
-        pop3.pass_(self.password)
-        return pop3
+    def connect_to_pop3(self):
+        self.pop3_connection = poplib.POP3_SSL(self.hostname, str(self.pop3_port))
+        self.pop3_connection.user(self.user)
+        self.pop3_connection.pass_(self.password)
+        return self.pop3_connection
 
-    def connect_smtp(self):
-        smtp = smtplib.SMTP(self.hostname, str(self.smtp_port))
-        smtp.starttls()
-        smtp.login(self.user, self.password)
-        return smtp
+    def quit_pop3_connection(self):
+        self.pop3_connection.quit()
+
+    def connect_to_smtp(self):
+        self.smtp_connection = smtplib.SMTP(self.hostname, str(self.smtp_port))
+        self.smtp_connection.starttls()
+        self.smtp_connection.login(self.user, self.password)
+        return self.smtp_connection
+
+    def quit_smtp_connection(self):
+        self.smtp_connection.quit()

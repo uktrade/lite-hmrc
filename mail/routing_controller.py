@@ -1,7 +1,6 @@
 from django.http import JsonResponse
 from rest_framework.status import HTTP_400_BAD_REQUEST
 
-from conf.settings import EMAIL_PASSWORD
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
 from mail.services.data_processing import (
@@ -13,10 +12,10 @@ from mail.services.helpers import build_msg
 
 def check_and_route_emails():
     server = MailServer()
-    pop3_conn = server.connect_pop3()
     mail_box_service = MailboxService()
-    last_msg_dto = mail_box_service.read_last_message(pop3_conn)
-    pop3_conn.quit()
+    pop3_connection = server.connect_to_pop3()
+    last_msg_dto = mail_box_service.read_last_message(pop3_connection)
+    server.quit_pop3_connection()
     # todo
     # TODO: Process data (saves data to db from dto)
     if not process_and_save_email_message(last_msg_dto):
@@ -24,9 +23,10 @@ def check_and_route_emails():
     # mail_box_service.handle_run_number(last_msg_dto) this should go into the process part
     # TODO: Collect data (retrieves data from db back into dto) return -> message_to_send_dto
     message_to_send_dto = collect_and_send_data_to_dto()
-    smtp_conn = server.connect_smtp()
+    smtp_connection = server.connect_to_smtp()
     # todo
-    mail_box_service.send_email(smtp_conn, build_msg(message_to_send_dto))
+    mail_box_service.send_email(smtp_connection, build_msg(message_to_send_dto))
+    server.quit_smtp_connection()
 
     response_message = "Email routed from {} to {}".format(
         last_msg_dto.sender, "receiver tbd"
