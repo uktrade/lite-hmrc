@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.db import transaction
 from rest_framework import serializers
 
@@ -5,6 +7,10 @@ from mail.models import Mail, LicenceUpdate
 
 
 class LicenceUpdateSerializer(serializers.ModelSerializer):
+    mail = serializers.PrimaryKeyRelatedField(
+        queryset=Mail.objects.all(), required=False
+    )
+
     class Meta:
         model = LicenceUpdate
         fields = "__all__"
@@ -25,11 +31,10 @@ class LicenceUpdateMailSerializer(serializers.ModelSerializer):
             "licence_update",
         ]
 
-    @transaction.atomic
     def create(self, validated_data):
-        print(validated_data)
         licence_update_data = validated_data.pop("licence_update")
         mail = Mail.objects.create(**validated_data)
+
         licence_update_data["mail"] = mail.id
 
         licence_update_serializer = LicenceUpdateSerializer(data=licence_update_data)
