@@ -100,17 +100,14 @@ def process_attachment(attachment):
 
 def new_hmrc_run_number(dto_run_number: int):
     last_licence_update = LicenceUpdate.objects.last()
-    if last_licence_update:
-        if not last_licence_update.source_run_number == dto_run_number:
-            return (
-                last_licence_update.hmrc_run_number + 1
-                if last_licence_update.hmrc_run_number != 99999
-                else 0
-            )
-        else:
-            return last_licence_update.hmrc_run_number
+    if not last_licence_update.source_run_number == dto_run_number:
+        return (
+            last_licence_update.hmrc_run_number + 1
+            if last_licence_update.hmrc_run_number != 99999
+            else 0
+        )
     else:
-        return 1
+        return last_licence_update.hmrc_run_number
 
 
 def build_msg(email_message_dto):
