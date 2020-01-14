@@ -92,6 +92,8 @@ DATABASES = {"default": env.db()}
 EMAIL_PASSWORD = env("EMAIL_PASSWORD")
 EMAIL_HOSTNAME = env("EMAIL_HOSTNAME")
 EMAIL_USER = env("EMAIL_USER")
+EMAIL_POP3_PORT = env("EMAIL_POP3_PORT")
+EMAIL_SMTP_PORT = env("EMAIL_SMTP_PORT")
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators

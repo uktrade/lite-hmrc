@@ -1,7 +1,13 @@
 import poplib
 import smtplib
 
-from conf.settings import EMAIL_PASSWORD, EMAIL_HOSTNAME, EMAIL_USER
+from conf.settings import (
+    EMAIL_PASSWORD,
+    EMAIL_HOSTNAME,
+    EMAIL_USER,
+    EMAIL_POP3_PORT,
+    EMAIL_SMTP_PORT,
+)
 
 
 class MailServer(object):
@@ -10,8 +16,8 @@ class MailServer(object):
         hostname: str = EMAIL_HOSTNAME,
         user: str = EMAIL_USER,
         password: str = EMAIL_PASSWORD,
-        pop3_port: int = 995,
-        smtp_port: int = 587,
+        pop3_port: int = EMAIL_POP3_PORT,
+        smtp_port: int = EMAIL_SMTP_PORT,
     ):
         self.smtp_port = smtp_port
         self.pop3_port = pop3_port
