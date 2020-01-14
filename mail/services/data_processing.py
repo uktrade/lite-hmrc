@@ -72,4 +72,4 @@ def _for_licence_update_outbound(dto: EmailMessageDto):
 
 
 def _for_licence_update_response(dto: EmailMessageDto):
-    return True
+    return True, None
