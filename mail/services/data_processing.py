@@ -1,3 +1,6 @@
+import json
+
+from conf.constants import VALID_SENDERS
 from mail.dtos import EmailMessageDto
 from mail.models import Mail
 from mail.serializers import (
@@ -60,10 +63,9 @@ def _for_licence_update_outbound(dto: EmailMessageDto):
     data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
 
     data["extract_type"] = "insert"  # TODO: extract from data
-    data[
-        "license_id"
-    ] = "00000000-0000-0000-0000-000000000001"  # TODO: extract from data
-    data["source"] = convert_sender_to_source(dto.sender)
+    data["licence_update"]["license_ids"] = json.dumps(
+        ["00000000-0000-0000-0000-000000000001"]
+    )  # TODO: extract from data
     data["raw_data"] = dto.raw_data
 
     return data
