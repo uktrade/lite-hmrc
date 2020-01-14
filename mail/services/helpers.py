@@ -95,3 +95,7 @@ def process_attachment(attachment):
         return edi_filename, str(edi_data)
     except IndexError:
         return "", ""
+
+
+def build_msg(email_message_dto):
+    pass
