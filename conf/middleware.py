@@ -8,21 +8,17 @@ class LoggingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        correlation = None
         start = time.time()
-        if "HTTP_X_CORRELATION_ID" in request.META:
-            correlation = request.META["HTTP_X_CORRELATION_ID"]
-        request.correlation = correlation or uuid.uuid4().hex
+        request.correlation = uuid.uuid4().hex
+        data = {
+            "message": "unpopped popcorn lite hmrc",
+            "corrID": request.correlation,
+            "type": "http request",
+            "method": request.method,
+            "url": request.path,
+        }
         response = self.get_response(request)
-        logging.info(
-            {
-                "message": "unpopped kernals lite hmrc",
-                "corrID": request.correlation,
-                "type": "http response",
-                "method": request.method,
-                "url": request.path,
-                "elapsed_time": time.time() - start,
-            }
-        )
-
+        data["type"] = "http response"
+        data["elapsed_time"] = time.time() - start
+        logging.info(data)
         return response
