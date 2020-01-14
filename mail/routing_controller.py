@@ -12,13 +12,7 @@ from mail.services.helpers import build_msg
 
 
 def check_and_route_emails():
-    server = MailServer(
-        hostname="localhost",
-        user="test18",
-        pwd=EMAIL_PASSWORD,
-        pop3_port=995,
-        smtp_port=587,
-    )
+    server = MailServer()
     pop3_conn = server.connect_pop3()
     mail_box_service = MailboxService()
     last_msg_dto = mail_box_service.read_last_message(pop3_conn)
