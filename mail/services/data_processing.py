@@ -1,6 +1,6 @@
 from mail.dtos import EmailMessageDto
 from mail.enums import SourceEnum
-from mail.models import Mail, LicenceUpdate
+from mail.models import LicenceUpdate
 from mail.serializers import InvalidEmailSerializer, LicenceUpdateSerializer
 from mail.services.helpers import (
     convert_sender_to_source,
