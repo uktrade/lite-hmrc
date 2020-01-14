@@ -1,16 +1,16 @@
 from django.test import testcases
 
+from mail.models import Mail
 from mail.services.data_processing import process_and_save_email_message
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
-from mail.models import LicenseUpdate, InvalidEmail
 
 
 class TestModels(testcases.TestCase):
     def setUp(self):
         self.hmrc_run_number = 28
         self.source_run_number = 15
-        LicenseUpdate(
+        Mail(
             edi_data="blank",
             extract_type=ExtractTypeEnum.INSERT,
             status=ReceptionStatusEnum.ACCEPTED,
@@ -34,7 +34,7 @@ class TestModels(testcases.TestCase):
 
         process_and_save_email_message(email_message_dto)
 
-        email = LicenseUpdate.objects.last()
+        email = Mail.objects.valid().last()
         self.assertEqual(email.edi_data, str(email_message_dto.attachment[1]))
         self.assertEqual(email.extract_type, ExtractTypeEnum.INSERT)
         self.assertEqual(email.response_file, None)
@@ -55,15 +55,15 @@ class TestModels(testcases.TestCase):
             raw_data="qwerty",
         )
 
-        initial_issues_count = InvalidEmail.objects.count()
-        initial_license_update_count = LicenseUpdate.objects.count()
+        initial_issues_count = Mail.objects.invalid().count()
+        initial_license_update_count = Mail.objects.invalid().count()
 
         process_and_save_email_message(email_message_dto)
 
-        self.assertEqual(InvalidEmail.objects.count(), initial_issues_count + 1)
-        self.assertEqual(LicenseUpdate.objects.count(), initial_license_update_count)
+        self.assertEqual(Mail.objects.invalid().count(), initial_issues_count + 1)
+        self.assertEqual(Mail.objects.invalid().count(), initial_license_update_count)
 
-        email = InvalidEmail.objects.last()
+        email = Mail.objects.invalid().last()
 
         self.assertEqual(email.edi_data, "")
         self.assertEqual(email.extract_type, ExtractTypeEnum.INSERT)
