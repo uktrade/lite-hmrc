@@ -66,6 +66,7 @@ class TestModels(testcases.TestCase):
         email = InvalidEmail.objects.last()
 
         self.assertEqual(email.edi_data, "")
+        self.assertEqual(True, False)
         self.assertEqual(email.extract_type, ExtractTypeEnum.INSERT)
         self.assertEqual(email.response_file, None)
         self.assertEqual(email.response_date, None)
