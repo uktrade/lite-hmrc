@@ -101,13 +101,14 @@ def process_attachment(attachment):
     try:
         edi_filename = attachment[0]
         edi_data = attachment[1].decode("ascii", "replace")
-        return edi_filename, str(edi_data)
+        return edi_filename, edi_data
     except IndexError:
         return "", ""
 
 
 def new_hmrc_run_number(dto_run_number: int):
     last_licence_update = LicenceUpdate.objects.last()
+    dto_run_number = dto_run_number % 100000
     if not last_licence_update.source_run_number == dto_run_number:
         return (
             last_licence_update.hmrc_run_number + 1
