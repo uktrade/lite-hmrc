@@ -2,6 +2,7 @@ import string
 from email.message import Message
 from email.parser import Parser
 from mail.dtos import EmailMessageDto
+from mail.enums import SourceEnum
 from mail.models import LicenceUpdate
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream"]
@@ -85,8 +86,15 @@ def convert_sender_to_source(sender: string):
         return "SPIRE"
     elif sender == "test@lite.com":
         return "LITE"
-    else:
-        return sender
+    return sender
+
+
+def convert_source_to_sender(source):
+    if source == SourceEnum.SPIRE:
+        return "test@spire.com"
+    elif source == SourceEnum.LITE:
+        return "test@lite.com"
+    return source
 
 
 def process_attachment(attachment):
