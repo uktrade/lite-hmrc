@@ -31,20 +31,26 @@ def process_and_save_email_message(dto: EmailMessageDto):
 
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
-    if convert_sender_to_source(dto.sender) in VALID_SENDERS:
-        data = _for_licence_update_outbound(dto)
-        serializer = LicenceUpdateMailSerializer
-        return data, serializer, None
-    elif convert_sender_to_source(dto.sender) == "HMRC":
-        data, instance = _for_licence_update_response(dto)
-        serializer = LicenceUpdateUpdateSerializer(partial=True)
-        return data, serializer, instance
+    sender = convert_sender_to_source(dto.sender)
+    if sender in VALID_SENDERS:
+        if dto.file_type == "Update":
+            data = _for_licence_update_outbound(dto)
+            serializer = LicenceUpdateMailSerializer
+            return data, serializer, None
+        elif dto.file_type == "Response":
+            pass
+    elif sender == "HMRC":
+        if dto.file_type == "Response":
+            data, instance = _for_licence_update_response(dto)
+            serializer = LicenceUpdateUpdateSerializer(partial=True)
+            return data, serializer, instance
+        elif dto.file_type == "Usage":
+            pass
     # TODO: Licence Usage emails
     # TODO: Refine conditions and create a serializer to valid against all fields for bad emails
-    else:
-        data = _for_licence_update_outbound(dto)
-        serializer = LicenceUpdateMailSerializer
-        return data, serializer, None
+    data, instance = _for_unknown_email_type(dto)
+    serializer = LicenceUpdateMailSerializer
+    return data, serializer, None
 
 
 def collect_and_send_data_to_dto(mail: Mail):
@@ -72,4 +78,8 @@ def _for_licence_update_outbound(dto: EmailMessageDto):
 
 
 def _for_licence_update_response(dto: EmailMessageDto):
+    return True, None
+
+
+def _for_unknown_email_type(dto: EmailMessageDto):
     return True, None
