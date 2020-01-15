@@ -100,7 +100,7 @@ def convert_source_to_sender(source):
 def process_attachment(attachment):
     try:
         edi_filename = attachment[0]
-        edi_data = attachment[1]
+        edi_data = attachment[1].decode("ascii", "replace")
         return edi_filename, str(edi_data)
     except IndexError:
         return "", ""

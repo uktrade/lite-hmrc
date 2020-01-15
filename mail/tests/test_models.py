@@ -1,5 +1,4 @@
-from django.test import testcases, tag
-
+from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate
@@ -10,8 +9,10 @@ from mail.services.data_processing import (
 from mail.services.helpers import convert_source_to_sender
 
 
-class TestModels(testcases.TestCase):
+class TestModels(LiteHMRCTestClient):
     def setUp(self):
+        super().setUp()
+
         self.hmrc_run_number = 28
         self.source_run_number = 15
         self.mail = Mail.objects.create(
@@ -44,7 +45,9 @@ class TestModels(testcases.TestCase):
         email = Mail.objects.valid().last()
         licence_update = LicenceUpdate.objects.get(mail=email)
 
-        self.assertEqual(email.edi_data, str(email_message_dto.attachment[1]))
+        self.assertEqual(
+            email.edi_data, email_message_dto.attachment[1].decode("ascii", "replace")
+        )
         self.assertEqual(email.extract_type, ExtractTypeEnum.INSERT)
         self.assertEqual(email.response_file, None)
         self.assertEqual(email.response_date, None)
@@ -85,34 +88,6 @@ class TestModels(testcases.TestCase):
         dto = collect_and_send_data_to_dto(self.mail)
 
         self.assertEqual(dto.run_number, self.licence_update.hmrc_run_number)
-        self.assertEqual(
-            dto.sender, convert_source_to_sender(self.licence_update.source)
-        )
-        self.assertEqual(dto.attachment[0], self.mail.edi_filename)
-        self.assertEqual(
-            dto.attachment[1], self.mail.edi_data.encode("ascii", "replace")
-        )
-        self.assertEqual(dto.subject, "some_subject")
-        self.assertEqual(dto.receiver, "HMRC")
-        self.assertEqual(dto.body, "")
-        self.assertEqual(dto.raw_data, None)
-
-    def test_successful_inbound_dto_converts_to_outbound_dto(self):
-        email_message_dto = EmailMessageDto(
-            run_number=self.source_run_number + 1,
-            sender="test@spire.com",
-            receiver="receiver@example.com",
-            body="body",
-            subject="subject",
-            attachment=["filename", "a line".encode("ascii", "replace")],
-            raw_data="qwerty",
-        )
-
-        # dto to dto processing
-        mail = process_and_save_email_message(email_message_dto)
-        dto = collect_and_send_data_to_dto(mail)
-
-        self.assertEqual(dto.run_number, self.licence_update.hmrc_run_number + 1)
         self.assertEqual(
             dto.sender, convert_source_to_sender(self.licence_update.source)
         )
