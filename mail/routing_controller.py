@@ -1,6 +1,3 @@
-from django.http import JsonResponse
-from rest_framework.status import HTTP_400_BAD_REQUEST
-
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
 from mail.services.data_processing import (
