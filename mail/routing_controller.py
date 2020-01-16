@@ -22,7 +22,6 @@ def check_and_route_emails():
         return 1
     message_to_send_dto = collect_and_send_data_to_dto(mail)
     smtp_connection = server.connect_to_smtp()
-    # todo
     mail_box_service.send_email(smtp_connection, build_msg(message_to_send_dto))
     server.quit_smtp_connection()
 
