@@ -1,6 +1,3 @@
-from datetime import datetime
-
-import schedule
 from django.http import JsonResponse
 from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
@@ -10,7 +7,7 @@ from mail.dtos import to_json
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate
 from mail.routing_controller import check_and_route_emails
-from mail.scheduling.scheduler import Scheduler
+from mail.scheduling.scheduler import shut_down
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
 
@@ -34,6 +31,7 @@ class ReadMailView(APIView):
         pop3_conn = server.connect_to_pop3()
         last_msg_dto = MailboxService().read_last_message(pop3_conn)
         pop3_conn.quit()
+        shut_down(1)
         return JsonResponse(status=HTTP_200_OK, data=to_json(last_msg_dto), safe=False)
 
 
@@ -76,3 +74,8 @@ class MailList(APIView):
         last_msg_dto = MailboxService().read_last_message(pop3_conn)
         pop3_conn.quit()
         return JsonResponse(status=HTTP_200_OK, data=to_json(last_msg_dto), safe=False)
+
+
+class TurnOnScheduler(APIView):
+    def get(self, request):
+        pass

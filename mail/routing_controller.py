@@ -33,11 +33,3 @@ def check_and_route_emails():
         last_msg_dto.sender, "receiver tbd"
     )
     return response_message
-
-
-schedule.every(5).seconds.do(check_and_route_emails)
-
-
-while True:
-    schedule.run_pending()
-    time.sleep(1)
