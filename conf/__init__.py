@@ -1,3 +1,3 @@
-from mail.scheduling.scheduler import shut_down
+from mail.scheduling.scheduler import scheduled_jobs
 
-shut_down(1)
+scheduled_jobs()
