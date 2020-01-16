@@ -16,7 +16,9 @@ def scheduled_jobs():
 
 def some_fn():
     while True:
-        # Do the job, get result in res
-        # If the job is done, return. Or sleep the thread for 2 seconds before trying again.
         print(datetime.now())
+        # if condition:
+        #     return
+        # else:
+        #     time.sleep(interval in seconds)
         time.sleep(5)
