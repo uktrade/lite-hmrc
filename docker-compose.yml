@@ -29,3 +29,40 @@ services:
     expose:
       - 8000
     command: pipenv run ./manage.py runserver 0.0.0.0:8000
+
+  mail:
+    build: ./mailserver
+    ports:
+      - "25:25"
+      - "587:587"
+      - "995:995"
+      - "80:80"
+    volumes:
+       - ./mailserver/maildata:/var/vmail
+    environment:
+      EMAIL_DOMAIN: example.com
+      RELAY_ADDRESS: api:10025
+      CERTBOT_EMAIL: test@test.com
+      USE_LETSENCRYPT: "no"
+      MAIL_USERNAME: username
+      MAIL_PASSWORD: password
+
+  testmail:
+    build: ./mailserver
+    ports:
+      - "26:25"
+      - "588:587"
+      - "996:995"
+      - "81:80"
+    volumes:
+      - ./mailserver/maildata:/var/vmail
+    environment:
+      EMAIL_DOMAIN: spire.com
+      RELAY_ADDRESS: api:10026
+      CERTBOT_EMAIL: test@test.com
+      USE_LETSENCRYPT: "no"
+      MAIL_USERNAME: test
+      MAIL_PASSWORD: password
+
+volumes:
+  maildata:

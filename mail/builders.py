@@ -14,7 +14,7 @@ def build_text_message(sender, receiver):
     body = "Body_of_the_mail 2"
     msg.attach(MIMEText(body, "plain"))
     filename = "File_name_with_extension"
-    attachment = open("/Users/christophers/Documents/GitHub/lite-hmrc/Pipfile", "rb")
+    attachment = open("/app/Pipfile", "rb")
     payload = MIMEBase("application", "octet-stream")
     payload.set_payload(attachment.read())
     payload.add_header("Content-Disposition", "attachment; filename= %s" % filename)

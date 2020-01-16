@@ -1,6 +1,7 @@
 import threading
 import time
-from datetime import datetime
+
+from mail.routing_controller import check_and_route_emails
 
 
 def scheduled_job():
@@ -16,7 +17,7 @@ def scheduled_job():
 
 def some_fn(x):
     while x:
-        print(datetime.now())
+        check_and_route_emails()
         # if condition:
         #     return
         # else:
