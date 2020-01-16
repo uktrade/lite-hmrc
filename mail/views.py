@@ -7,6 +7,7 @@ from mail.dtos import to_json
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate
 from mail.routing_controller import check_and_route_emails
+from mail.scheduling.scheduler import scheduled_job
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
 
@@ -26,6 +27,7 @@ class SendMailView(APIView):
 
 class ReadMailView(APIView):
     def get(self, request):
+        scheduled_job()
         server = MailServer()
         pop3_conn = server.connect_to_pop3()
         last_msg_dto = MailboxService().read_last_message(pop3_conn)

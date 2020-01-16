@@ -1,7 +1,4 @@
-import time
 from datetime import datetime
-
-import schedule
 
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService

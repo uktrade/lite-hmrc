@@ -3,19 +3,19 @@ import time
 from datetime import datetime
 
 
-def scheduled_jobs():
+def scheduled_job():
     # Do some stuff
     # Offload the blocking job to a new thread
 
-    t = threading.Thread(target=some_fn, args=(), kwargs={})
+    t = threading.Thread(target=some_fn, args=(True,))
     t.setDaemon(True)
     t.start()
 
     return True
 
 
-def some_fn():
-    while True:
+def some_fn(x):
+    while x:
         print(datetime.now())
         # if condition:
         #     return
