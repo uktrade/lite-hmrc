@@ -8,7 +8,6 @@ parameterized = "==0.7.0"
 black = "==19.10b0"
 prospector = "==1.1.6.2"
 bandit = "*"
-coverage = ">=4.5.4"
 
 [packages]
 Django = "==2.2.8"

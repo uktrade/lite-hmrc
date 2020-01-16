@@ -14,6 +14,8 @@ class MailboxService(object):
 
     def read_last_message(self, pop3_connection: object):
         _, mails, _ = pop3_connection.list()
+        print(mails)
+        print(pop3_connection.retr(len(mails)))
         return to_mail_message_dto(pop3_connection.retr(len(mails)))
 
     def handle_run_number(self, mail_message_dto: EmailMessageDto):
