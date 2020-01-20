@@ -18,7 +18,7 @@ class EndToEndTest(LiteHMRCTestClient):
         smtp_port = 587
         password = "password"
         user = "test"
-        spire_hostname = "testmail"
+        spire_hostname = "lite-hmrc-spiremail"
         service = MailboxService()
         service.send_email(
             MailServer(
