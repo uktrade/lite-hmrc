@@ -17,7 +17,7 @@ and usage are exchanged as mail attachment between Lite and HMRC
 
 An `.env` file is expected at the root of project. An example provided below
 ```properties
-DATABASE_URL=postgresql://lite:litepass@lite-hmrc-postgres:5432/litehmrc
+DATABASE_URL=postgresql://postgres:password@lite-hmrc-postgres:5432/postgres
 DJANGO_SECRET_KEY='DJANGO_SECRET_KEY'
 EMAIL_PASSWORD=password
 EMAIL_HOSTNAME=lite-hmrc-ditmail
