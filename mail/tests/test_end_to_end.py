@@ -16,7 +16,7 @@ class EndToEndTest(LiteHMRCTestClient):
         # send email to lite from spire
         pop3_port = 995
         smtp_port = 587
-        password = "password"
+        password = "password"  # noqa
         user = "test"
         spire_hostname = "lite-hmrc-spiremail"
         service = MailboxService()

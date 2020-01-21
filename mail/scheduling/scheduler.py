@@ -18,7 +18,8 @@ def scheduled_job():
 
 def some_fn(x):
     while x:
-        # check_and_route_emails()
+        if not x:
+            check_and_route_emails()
         print(datetime.now())
         # if condition:
         #     return
