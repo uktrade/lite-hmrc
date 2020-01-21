@@ -16,16 +16,12 @@ class EndToEndTest(LiteHMRCTestClient):
         # send email to lite from spire
         pop3_port = 995
         smtp_port = 587
-        password = "password"  # noqa
         user = "test"
         spire_hostname = "lite-hmrc-spiremail"
         service = MailboxService()
         service.send_email(
             MailServer(
-                smtp_port=smtp_port,
-                password=password,
-                user=user,
-                hostname=spire_hostname,
+                smtp_port=smtp_port, user=user, hostname=spire_hostname,
             ).connect_to_smtp(),
             build_text_message("test@spire.com", "username@example.com"),
         )
