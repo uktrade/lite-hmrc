@@ -8,4 +8,4 @@ RUN apt-get install -y libpq-dev gcc \
 RUN pip3 install pipenv
 ADD Pipfile* /app/
 RUN pipenv install --dev
-ADD . /app
+COPY . /app
