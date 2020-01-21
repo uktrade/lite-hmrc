@@ -5,9 +5,9 @@ services:
     restart: 'always'
     container_name: "lite-hmrc-postgres"
     environment:
-      - LITEHMRC_DB_USER=lite
-      - LITEHMRC_DB_PASSWORD=litepass
-      - LITEHMRC_DB_SCHEMA=litehmrc
+      - LITEHMRC_DB_USER=postgres
+      - LITEHMRC_DB_PASSWORD=password
+      - LITEHMRC_DB_SCHEMA=postgres
       - POSTGRES_PASSWORD=password
     build: './database'
     expose:

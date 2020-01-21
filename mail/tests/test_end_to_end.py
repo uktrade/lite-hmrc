@@ -11,7 +11,7 @@ from mail.services.MailboxService import MailboxService
 
 
 class EndToEndTest(LiteHMRCTestClient):
-    @tag("only")
+    @tag("end_to_end")
     def test_end_to_end_success_licence_update(self):
         # send email to lite from spire
         pop3_port = 995
