@@ -1,5 +1,5 @@
 db.*
 **/.git/**
-**/database/**
-**/mailserver/**
+database/**
+mailserver/**
 README.md
