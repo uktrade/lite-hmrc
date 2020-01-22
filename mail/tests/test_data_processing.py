@@ -89,12 +89,8 @@ class TestModels(LiteHMRCTestClient):
 
     @tag("only")
     def test_successful_email_db_record_converted_to_dto(self):
-<<<<<<< Updated upstream:mail/tests/test_models.py
-        dto = to_email_message_dto_from(self.mail)
-=======
         self.mail.edi_data = self.file_body.decode("ascii", "replace")
-        dto = collect_and_send_data_to_dto(self.mail)
->>>>>>> Stashed changes:mail/tests/test_data_processing.py
+        dto = to_email_message_dto_from(self.mail)
 
         self.assertEqual(dto.run_number, self.licence_update.hmrc_run_number)
         self.assertEqual(
