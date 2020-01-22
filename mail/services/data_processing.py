@@ -9,6 +9,8 @@ from mail.services.helpers import (
     process_attachment,
     new_hmrc_run_number,
     convert_source_to_sender,
+    get_extract_type,
+    get_licence_ids,
 )
 
 
@@ -37,15 +39,10 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
         else None
     )
     data["licence_update"]["source_run_number"] = dto.run_number
-
     data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
-
-    data["extract_type"] = "insert"  # TODO: extract from data
-    data["licence_update"]["license_ids"] = json.dumps(
-        ["00000000-0000-0000-0000-000000000001"]
-    )  # TODO: extract from data
+    data["extract_type"] = get_extract_type(dto.subject)
+    data["licence_update"]["license_ids"] = get_licence_ids(data["edi_data"])
     data["raw_data"] = dto.raw_data
-
     return data
 
 
@@ -57,7 +54,7 @@ def to_email_message_dto_from(mail):
         sender=convert_source_to_sender(licence_update.source),
         receiver="HMRC",
         body="",
-        subject="some_subject",
+        subject=mail.edi_filename,
         attachment=[mail.edi_filename, mail.edi_data.encode("ascii", "replace")],
         raw_data=None,
     )

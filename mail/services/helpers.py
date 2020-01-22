@@ -1,8 +1,9 @@
+import json
 import string
 from email.message import Message
 from email.parser import Parser
 from mail.dtos import EmailMessageDto
-from mail.enums import SourceEnum
+from mail.enums import SourceEnum, ExtractTypeEnum
 from mail.models import LicenceUpdate
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream"]
@@ -119,6 +120,22 @@ def new_hmrc_run_number(dto_run_number: int):
         return last_licence_update.hmrc_run_number
 
 
-# todo
+def get_extract_type(subject: str):
+    for key, value in ExtractTypeEnum.email_keys:
+        if key in str(subject):
+            return value
+    return None
+
+
+def get_licence_ids(file_body: str):
+    ids = []
+    lines = file_body.split(" " * 24)
+    for line in lines:
+        if ("licenceUsage" in line or "licenceUpdate" in line) and "end" not in line:
+            ids.append(line.split("\\")[4])
+
+    return json.dumps(ids)
+
+
 def build_msg(email_message_dto: EmailMessageDto):
     pass
