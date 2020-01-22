@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="mail",
             name="currently_processed_by",
-            field=models.CharField(max_length=50, null=True),
+            field=models.CharField(max_length=100, null=True),
         ),
         migrations.AddField(
             model_name="mail",

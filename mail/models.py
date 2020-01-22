@@ -42,7 +42,7 @@ class Mail(models.Model):
     errors = models.TextField(blank=True, null=True)
 
     currently_processing_at = models.DateTimeField(null=True)
-    currently_processed_by = models.CharField(null=True, max_length=50)
+    currently_processed_by = models.CharField(null=True, max_length=100)
 
     objects = MailManager()
 
