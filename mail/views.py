@@ -27,7 +27,6 @@ class SendMailView(APIView):
 
 class ReadMailView(APIView):
     def get(self, request):
-        scheduled_job()
         server = MailServer()
         pop3_conn = server.connect_to_pop3()
         last_msg_dto = MailboxService().read_last_message(pop3_conn)
