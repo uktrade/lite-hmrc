@@ -7,7 +7,7 @@ from mail.services.data_processing import (
     to_email_message_dto_from,
     lock_db_for_sending_transaction,
 )
-from mail.services.helpers import build_msg
+from mail.services.helpers import build_email_message
 
 
 def check_and_route_emails():
@@ -32,7 +32,9 @@ def collect_and_send(mail, server, mail_box_service):
         return "email being sent by someone else"
 
     smtp_connection = server.connect_to_smtp()
-    mail_box_service.send_email(smtp_connection, build_msg(message_to_send_dto))
+    mail_box_service.send_email(
+        smtp_connection, build_email_message(message_to_send_dto)
+    )
     server.quit_smtp_connection()
     response_message = "Email routed from {} to {}".format("someone", "receiver tbd")
     return response_message
