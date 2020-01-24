@@ -49,7 +49,6 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
     return data
 
 
-# todo
 def to_email_message_dto_from(mail):
     licence_update = LicenceUpdate.objects.get(mail=mail)
     dto = EmailMessageDto(
