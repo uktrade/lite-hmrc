@@ -141,7 +141,7 @@ def build_email_message(email_message_dto: EmailMessageDto):
     multipart_msg["To"] = email_message_dto.receiver
     multipart_msg["Subject"] = email_message_dto.subject
     # todo: confirm if we need to set `body`
-    payload = MIMEApplication()
+    payload = MIMEApplication(email_message_dto.attachment[1])
     payload.set_payload(email_message_dto.attachment[1])
     payload.add_header(
         "Content-Disposition",
