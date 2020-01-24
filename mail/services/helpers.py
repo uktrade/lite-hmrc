@@ -118,6 +118,7 @@ def process_attachment(attachment):
 
 def new_hmrc_run_number(dto_run_number: int):
     last_licence_update = LicenceUpdate.objects.last()
+    print(last_licence_update, LicenceUpdate.objects.all())
     dto_run_number = dto_run_number % 100000
     if not last_licence_update.source_run_number == dto_run_number:
         return (
@@ -138,7 +139,8 @@ def build_email_message(email_message_dto: EmailMessageDto):
 
     multipart_msg = MIMEMultipart()
     multipart_msg["From"] = email_message_dto.sender
-    multipart_msg["To"] = email_message_dto.receiver
+    # multipart_msg["To"] = email_message_dto.receiver
+    multipart_msg["To"] = "stobartcc@gmail.com"
     multipart_msg["Subject"] = email_message_dto.subject
     # todo: confirm if we need to set `body`
     payload = MIMEApplication(email_message_dto.attachment[1])

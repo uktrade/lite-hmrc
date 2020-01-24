@@ -32,7 +32,7 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
     data = {"licence_update": {}}
     data["licence_update"]["source"] = convert_sender_to_source(dto.sender)
     data["licence_update"]["hmrc_run_number"] = (
-        new_hmrc_run_number(dto.run_number)
+        new_hmrc_run_number(int(dto.run_number))
         if convert_sender_to_source(dto.sender) in VALID_SENDERS
         else None
     )
