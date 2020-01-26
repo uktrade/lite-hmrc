@@ -1,5 +1,6 @@
 import threading
 
+from django.db import transaction
 from django.utils import timezone
 
 from conf.constants import VALID_SENDERS
@@ -71,13 +72,14 @@ def lock_db_for_sending_transaction(mail):
         or (timezone.now() - mail.currently_processing_at).total_seconds()
         > LOCK_INTERVAL
     ):
-        _mail = Mail.objects.select_for_update().get(id=mail.id)
-        if _mail.currently_processed_by != previous_locking_process_id:
-            return
-        _mail.currently_processed_by = (
-            str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident)
-        )
-        _mail.set_time()
-        _mail.save()
+        with transaction.atomic():
+            _mail = Mail.objects.select_for_update().get(id=mail.id)
+            if _mail.currently_processed_by != previous_locking_process_id:
+                return
+            _mail.currently_processed_by = (
+                str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident)
+            )
+            _mail.set_time()
+            _mail.save()
 
-        return True
+            return True

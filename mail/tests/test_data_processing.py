@@ -1,3 +1,5 @@
+import base64
+
 from django.test import tag
 
 from conf.test_client import LiteHMRCTestClient
@@ -18,10 +20,10 @@ class TestModels(LiteHMRCTestClient):
         self.hmrc_run_number = 28
         self.source_run_number = 15
         self.mail = Mail.objects.create(
-            edi_data=self.file_body,
+            edi_data=self.licence_usage_file_body,
             extract_type=ExtractTypeEnum.USAGE_UPDATE,
             status=ReceptionStatusEnum.ACCEPTED,
-            edi_filename=self.file_name,
+            edi_filename=self.licence_usage_file_name,
         )
 
         self.licence_update = LicenceUpdate.objects.create(
@@ -38,8 +40,8 @@ class TestModels(LiteHMRCTestClient):
             sender="test@spire.com",
             receiver="receiver@example.com",
             body="body",
-            subject=self.file_name,
-            attachment=[self.file_name, self.file_body],
+            subject=self.licence_usage_file_name,
+            attachment=[self.licence_usage_file_name, self.licence_usage_file_body],
             raw_data="qwerty",
         )
 
@@ -87,9 +89,8 @@ class TestModels(LiteHMRCTestClient):
         self.assertEqual(email.edi_filename, "")
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
-    @tag("only")
     def test_successful_email_db_record_converted_to_dto(self):
-        self.mail.edi_data = self.file_body.decode("ascii", "replace")
+        self.mail.edi_data = self.licence_usage_file_body.decode("ascii", "replace")
         dto = to_email_message_dto_from(self.mail)
 
         self.assertEqual(dto.run_number, self.licence_update.hmrc_run_number)
@@ -104,3 +105,8 @@ class TestModels(LiteHMRCTestClient):
         self.assertEqual(dto.receiver, "HMRC")
         self.assertEqual(dto.body, "")
         self.assertEqual(dto.raw_data, None)
+
+    @tag("encoding")
+    def test_licence_update_reply_is_saved(self):
+
+        pass

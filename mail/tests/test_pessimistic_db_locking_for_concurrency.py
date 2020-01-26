@@ -17,10 +17,10 @@ class PessimisticDbLockingTests(LiteHMRCTestClient):
         super().setUp()
 
         self.mail = Mail.objects.create(
-            edi_data=self.file_body,
+            edi_data=self.licence_usage_file_body,
             extract_type=ExtractTypeEnum.USAGE_UPDATE,
             status=ReceptionStatusEnum.ACCEPTED,
-            edi_filename=self.file_name,
+            edi_filename=self.licence_usage_file_name,
         )
 
     def test_thread_locks_sending(self):

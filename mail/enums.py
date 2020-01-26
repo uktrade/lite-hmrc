@@ -2,10 +2,16 @@
 
 
 class ReceptionStatusEnum:
+    PENDING = "pending"
     ACCEPTED = "accepted"
+    REPLY_PENDING = "reply_pending"
+    REPLY_SENT = "reply_sent"
 
     choices = [
+        (PENDING, "Pending"),
         (ACCEPTED, "Accepted"),
+        (REPLY_PENDING, "Reply Pending"),
+        (REPLY_SENT, "Reply Sent"),
     ]
 
     @classmethod
@@ -21,10 +27,9 @@ class ReceptionStatusEnum:
 
 class ExtractTypeEnum:
     USAGE_UPDATE = "usage_update"
+    LICENCE_UPDATE = "licence_update"
 
-    choices = [
-        (USAGE_UPDATE, "Usage update"),
-    ]
+    choices = [(USAGE_UPDATE, "Usage update"), (LICENCE_UPDATE, "Licence Update")]
 
     email_keys = [
         ("usageData", USAGE_UPDATE),

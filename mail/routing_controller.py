@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from mail.enums import ReceptionStatusEnum
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
 from mail.services.data_processing import (
@@ -35,6 +36,8 @@ def collect_and_send(mail, server, mail_box_service):
     mail_box_service.send_email(
         smtp_connection, build_email_message(message_to_send_dto)
     )
+    mail.status = ReceptionStatusEnum.REPLY_PENDING
+    mail.save()
     server.quit_smtp_connection()
     response_message = "Email routed from {} to {}".format("someone", "receiver tbd")
     return response_message
