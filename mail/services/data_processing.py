@@ -12,6 +12,7 @@ from mail.serializers import (
     InvalidEmailSerializer,
     LicenceUpdateMailSerializer,
     UpdateResponseSerializer,
+    UsageUpdateMailSerializer,
 )
 from mail.services.helpers import (
     convert_sender_to_source,
@@ -40,6 +41,7 @@ def process_and_save_email_message(dto: EmailMessageDto):
 
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
+    serializer = None
     extract_type = get_extract_type(dto.subject)
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         data = {"licence_update": {}}
@@ -59,11 +61,11 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
 
     elif extract_type == ExtractTypeEnum.USAGE_UPDATE:
         data = {"usage_update": {}}
-        serializer = None
+        serializer = UsageUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
         data = []
-        serializer = None
+        serializer = UpdateResponseSerializer
 
     data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
     extract_type = get_extract_type(dto.subject)
