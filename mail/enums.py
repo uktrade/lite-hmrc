@@ -56,8 +56,9 @@ class ExtractTypeEnum:
 class SourceEnum:
     SPIRE = "SPIRE"
     LITE = "LITE"
+    HMRC = "HMRC"
 
-    choices = [(SPIRE, "SPIRE"), (LITE, "LITE")]
+    choices = [(SPIRE, "SPIRE"), (LITE, "LITE"), (HMRC, "HMRC")]
 
     @classmethod
     def as_list(cls):

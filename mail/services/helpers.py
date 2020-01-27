@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.parser import Parser
 from mail.dtos import EmailMessageDto
 from mail.enums import SourceEnum, ExtractTypeEnum
-from mail.models import LicenceUpdate
+from mail.models import LicenceUpdate, UsageUpdate
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream"]
 
@@ -129,6 +129,21 @@ def new_hmrc_run_number(dto_run_number: int):
             )
         else:
             return last_licence_update.hmrc_run_number
+    return dto_run_number
+
+
+def new_spire_run_number(dto_run_number: int):
+    last_usage_update = UsageUpdate.objects.last()
+    if last_usage_update:
+        dto_run_number = dto_run_number % 100000
+        if not last_usage_update.hmrc_run_number == dto_run_number:
+            return (
+                last_usage_update.spire_run_number + 1
+                if last_usage_update.spire_run_number != 99999
+                else 0
+            )
+        else:
+            return last_usage_update.spire_run_number
     return dto_run_number
 
 

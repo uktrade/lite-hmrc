@@ -18,6 +18,7 @@ from mail.services.helpers import (
     convert_sender_to_source,
     process_attachment,
     new_hmrc_run_number,
+    new_spire_run_number,
     convert_source_to_sender,
     get_extract_type,
     get_licence_ids,
@@ -33,6 +34,7 @@ def process_and_save_email_message(dto: EmailMessageDto):
         mail = serializer.save()
         return mail
     else:
+        print(serializer.errors)
         data["serializer_errors"] = str(serializer.errors)
         serializer = InvalidEmailSerializer(data=data)
         if serializer.is_valid():
@@ -45,6 +47,7 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
     extract_type = get_extract_type(dto.subject)
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         data = {"licence_update": {}}
+        data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
         data["licence_update"]["source"] = convert_sender_to_source(dto.sender)
         data["licence_update"]["hmrc_run_number"] = (
             new_hmrc_run_number(int(dto.run_number))
@@ -61,6 +64,15 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
 
     elif extract_type == ExtractTypeEnum.USAGE_UPDATE:
         data = {"usage_update": {}}
+        print(dto.sender)
+        data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
+        data["usage_update"]["spire_run_number"] = (
+            new_spire_run_number(int(dto.run_number))
+            if convert_sender_to_source(dto.sender) in VALID_SENDERS
+            else None
+        )
+        data["usage_update"]["hmrc_run_number"] = dto.run_number
+        data["usage_update"]["license_ids"] = get_licence_ids(data["edi_data"])
         serializer = UsageUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
