@@ -59,7 +59,9 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
         serializer = LicenceUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.LICENCE_REPLY:
-        data = []
+        print("we are a licence reply")
+        print(dto.attachment)
+        data = {}
         serializer = UpdateResponseSerializer
 
     elif extract_type == ExtractTypeEnum.USAGE_UPDATE:
@@ -76,7 +78,7 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
         serializer = UsageUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
-        data = []
+        data = {}
         serializer = UpdateResponseSerializer
 
     data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
