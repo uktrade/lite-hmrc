@@ -35,6 +35,12 @@ class TestModels(LiteHMRCTestClient):
             source=SourceEnum.SPIRE,
         )
 
+        self.usage_update = UsageUpdate.objects.create(
+            mail=self.mail,
+            spire_run_number=self.source_run_number,
+            hmrc_run_number=self.hmrc_run_number,
+        )
+
     @tag("body")
     def test_email_processed_successfully(self):
         email_message_dto = EmailMessageDto(
@@ -96,20 +102,17 @@ class TestModels(LiteHMRCTestClient):
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
     def test_successful_email_db_record_converted_to_dto(self):
-        self.mail.edi_data = self.licence_usage_file_body.decode("ascii", "replace")
+        self.mail.status = ReceptionStatusEnum.PENDING
+
         dto = to_email_message_dto_from(self.mail)
 
-        self.assertEqual(dto.run_number, self.licence_update.hmrc_run_number)
-        self.assertEqual(
-            dto.sender, convert_source_to_sender(self.licence_update.source)
-        )
+        self.assertEqual(dto.run_number, self.usage_update.spire_run_number)
+        self.assertEqual(dto.sender, convert_source_to_sender("HMRC"))
         self.assertEqual(dto.attachment[0], self.mail.edi_filename)
-        self.assertEqual(
-            dto.attachment[1], self.mail.edi_data.encode("ascii", "replcae")
-        )
+        # self.assertEqual(dto.attachment[1], self.mail.edi_data)
         self.assertEqual(dto.subject, self.mail.edi_filename)
-        self.assertEqual(dto.receiver, "HMRC")
-        self.assertEqual(dto.body, "")
+        self.assertEqual(dto.receiver, "spire")
+        self.assertEqual(dto.body, None)
         self.assertEqual(dto.raw_data, None)
 
     @tag("reply")
