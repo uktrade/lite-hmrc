@@ -45,18 +45,26 @@ class TestModels(LiteHMRCTestClient):
             raw_data="qwerty",
         )
 
+        print(self.licence_usage_file_body)
+        print(str(base64.b64decode(self.licence_usage_file_body)).replace("\\\\", "\\"))
+
         process_and_save_email_message(email_message_dto)
 
         email = Mail.objects.valid().last()
         usage_update = UsageUpdate.objects.get(mail=email)
 
-        self.assertEqual(email.edi_data, str(email_message_dto.attachment[1]))
+        self.assertEqual(
+            email.edi_data,
+            str(base64.b64decode(email_message_dto.attachment[1])).replace(
+                "\\\\", "\\"
+            ),
+        )
         self.assertEqual(email.extract_type, ExtractTypeEnum.USAGE_UPDATE)
         self.assertEqual(email.response_file, None)
         self.assertEqual(email.response_date, None)
         self.assertEqual(email.edi_filename, email_message_dto.attachment[0])
-        self.assertEqual(usage_update.source_run_number, email_message_dto.run_number)
-        self.assertEqual(usage_update.hmrc_run_number, self.hmrc_run_number + 1)
+        self.assertEqual(usage_update.spire_run_number, self.source_run_number + 1)
+        self.assertEqual(usage_update.hmrc_run_number, email_message_dto.run_number)
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
     def test_bad_email_sent_to_issues_log(self):

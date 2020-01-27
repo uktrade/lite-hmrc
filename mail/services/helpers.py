@@ -1,3 +1,4 @@
+import base64
 import json
 import string
 from email.message import Message
@@ -111,7 +112,7 @@ def convert_source_to_sender(source):
 def process_attachment(attachment):
     try:
         edi_filename = attachment[0]
-        edi_data = attachment[1].decode("ascii", "replace")
+        edi_data = str(base64.b64decode(bytes(attachment[1]))).replace("\\\\", "\\")
         return edi_filename, edi_data
     except IndexError:
         return "", ""
@@ -154,9 +155,9 @@ def get_extract_type(subject: str):
     return None
 
 
-def get_licence_ids(file_body: str):
+def get_licence_ids(file_body):
     ids = []
-    lines = file_body.split(" " * 24)
+    lines = file_body.split(r"\n")
     for line in lines:
         if ("licenceUsage" in line or "licenceUpdate" in line) and "end" not in line:
             ids.append(line.split("\\")[4])
