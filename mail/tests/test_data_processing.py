@@ -153,9 +153,9 @@ class TestModels(LiteHMRCTestClient):
             sender="HMRC",
             receiver="receiver@example.com",
             body="body",
-            subject=self.licence_update_reply_name,
+            subject=self.usage_update_reply_name,
             attachment=[
-                self.licence_update_reply_name,
+                self.usage_update_reply_name,
                 bytes(self.licence_update_reply_body, "utf-8"),
             ],
             raw_data="qwerty",
@@ -164,9 +164,10 @@ class TestModels(LiteHMRCTestClient):
         process_and_save_email_message(email_message_dto)
         self.mail.refresh_from_db()
 
+        self.assertEqual(self.mail.status, ReceptionStatusEnum.REPLY_RECEIVED)
+        self.assertIsNotNone(self.mail.response_date)
+
         self.assertEqual(
             self.mail.response_data,
             str(base64.b64decode(self.licence_update_reply_body)).replace("\\\\", "\\"),
         )
-        self.assertEqual(self.mail.status, ReceptionStatusEnum.REPLY_RECEIVED)
-        self.assertIsNotNone(self.mail.response_date)

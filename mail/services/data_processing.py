@@ -95,6 +95,11 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
         data["response_filename"], data["response_data"] = process_attachment(
             dto.attachment
         )
+        data["status"] = ReceptionStatusEnum.REPLY_RECEIVED
+        mail = Mail.objects.get(
+            status=ReceptionStatusEnum.REPLY_PENDING,
+            extract_type=ExtractTypeEnum.USAGE_UPDATE,
+        )
     else:
         data = {}
         data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
