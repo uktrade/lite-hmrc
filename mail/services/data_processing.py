@@ -68,7 +68,6 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
         serializer = UpdateResponseSerializer
 
     data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
-    extract_type = get_extract_type(dto.subject)
     data["extract_type"] = extract_type
     data["raw_data"] = dto.raw_data
     return data, serializer

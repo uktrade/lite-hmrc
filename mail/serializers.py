@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from mail.models import Mail, LicenceUpdate
+from mail.models import Mail, LicenceUpdate, UsageUpdate
 
 
 class LicenceUpdateSerializer(serializers.ModelSerializer):
@@ -63,11 +63,11 @@ class UsageUpdateSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = LicenceUpdate
+        model = UsageUpdate
         fields = "__all__"
 
     def create(self, validated_data):
-        instance, _ = LicenceUpdate.objects.get_or_create(**validated_data)
+        instance, _ = UsageUpdate.objects.get_or_create(**validated_data)
         return instance
 
 
@@ -84,6 +84,20 @@ class UsageUpdateMailSerializer(serializers.ModelSerializer):
             "raw_data",
             "usage_update",
         ]
+
+    def create(self, validated_data):
+        usage_update_data = validated_data.pop("usage_update")
+        mail, _ = Mail.objects.get_or_create(**validated_data)
+
+        usage_update_data["mail"] = mail.id
+
+        usage_update_serializer = UsageUpdateSerializer(data=usage_update_data)
+        if usage_update_serializer.is_valid():
+            usage_update_serializer.save()
+        else:
+            raise serializers.ValidationError(usage_update_serializer.errors)
+
+        return mail
 
 
 class InvalidEmailSerializer(serializers.ModelSerializer):

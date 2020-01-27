@@ -70,7 +70,7 @@ class LicenceUpdate(models.Model):
         return json.loads(self.license_ids)
 
 
-class LicenceUsage(models.Model):
+class UsageUpdate(models.Model):
     license_ids = models.TextField()
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING)
     spire_run_number = models.IntegerField()

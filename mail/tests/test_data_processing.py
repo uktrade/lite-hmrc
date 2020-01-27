@@ -5,7 +5,7 @@ from django.test import tag
 from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
-from mail.models import Mail, LicenceUpdate
+from mail.models import Mail, LicenceUpdate, UsageUpdate
 from mail.services.data_processing import (
     process_and_save_email_message,
     to_email_message_dto_from,
@@ -37,8 +37,8 @@ class TestModels(LiteHMRCTestClient):
     def test_email_processed_successfully(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
-            sender="test@spire.com",
-            receiver="receiver@example.com",
+            sender="HMRC",
+            receiver="test@spire.com",
             body="body",
             subject=self.licence_usage_file_name,
             attachment=[self.licence_usage_file_name, self.licence_usage_file_body],
@@ -48,17 +48,15 @@ class TestModels(LiteHMRCTestClient):
         process_and_save_email_message(email_message_dto)
 
         email = Mail.objects.valid().last()
-        licence_update = LicenceUpdate.objects.get(mail=email)
+        usage_update = UsageUpdate.objects.get(mail=email)
 
-        self.assertEqual(
-            email.edi_data, email_message_dto.attachment[1].decode("ascii", "replace")
-        )
+        self.assertEqual(email.edi_data, str(email_message_dto.attachment[1]))
         self.assertEqual(email.extract_type, ExtractTypeEnum.USAGE_UPDATE)
         self.assertEqual(email.response_file, None)
         self.assertEqual(email.response_date, None)
         self.assertEqual(email.edi_filename, email_message_dto.attachment[0])
-        self.assertEqual(licence_update.source_run_number, email_message_dto.run_number)
-        self.assertEqual(licence_update.hmrc_run_number, self.hmrc_run_number + 1)
+        self.assertEqual(usage_update.source_run_number, email_message_dto.run_number)
+        self.assertEqual(usage_update.hmrc_run_number, self.hmrc_run_number + 1)
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
     def test_bad_email_sent_to_issues_log(self):
