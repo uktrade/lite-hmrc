@@ -1,3 +1,5 @@
+import base64
+
 from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
@@ -32,7 +34,7 @@ class DtoToDtoTests(LiteHMRCTestClient):
     def test_successful_inbound_dto_converts_to_outbound_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
-            sender="test@spire.com",
+            sender="HMRC",
             receiver="receiver@example.com",
             body="body",
             subject=self.licence_usage_file_name,
@@ -44,16 +46,14 @@ class DtoToDtoTests(LiteHMRCTestClient):
         mail = process_and_save_email_message(email_message_dto)
         dto = to_email_message_dto_from(mail)
 
-        self.assertEqual(dto.run_number, self.licence_update.hmrc_run_number + 1)
-        self.assertEqual(
-            dto.sender, convert_source_to_sender(self.licence_update.source)
-        )
+        self.assertEqual(dto.run_number, self.licence_update.source_run_number + 1)
+        self.assertEqual(dto.sender, "HMRC")
         self.assertEqual(dto.attachment[0], email_message_dto.attachment[0])
         self.assertEqual(
             dto.attachment[1], email_message_dto.attachment[1],
         )
         self.assertEqual(dto.subject, self.licence_usage_file_name)
-        self.assertEqual(dto.receiver, "HMRC")
+        self.assertEqual(dto.receiver, "test@spire.com")
         self.assertEqual(dto.body, "")
         self.assertEqual(dto.raw_data, None)
 
