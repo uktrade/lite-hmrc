@@ -39,7 +39,7 @@ class PessimisticDbLockingTests(LiteHMRCTestClient):
             status=ReceptionStatusEnum.ACCEPTED,
         )
         mail.currently_processed_by = "1234567890"
-        mail.set_time(offset=-125)
+        mail.set_locking_time(offset=-125)
         val = lock_db_for_sending_transaction(mail)
 
         mail.refresh_from_db()
@@ -55,7 +55,7 @@ class PessimisticDbLockingTests(LiteHMRCTestClient):
             status=ReceptionStatusEnum.ACCEPTED,
         )
         mail.currently_processed_by = "1234567890"
-        mail.set_time()
+        mail.set_locking_time()
 
         val = lock_db_for_sending_transaction(mail)
 

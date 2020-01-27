@@ -159,7 +159,7 @@ def build_email_message(email_message_dto: EmailMessageDto):
     multipart_msg = MIMEMultipart()
     multipart_msg["From"] = email_message_dto.sender
     # multipart_msg["To"] = email_message_dto.receiver
-    multipart_msg["To"] = "stobartcc@gmail.com"
+    multipart_msg["To"] = "someaddress@gmail.com"
     multipart_msg["Subject"] = email_message_dto.subject
     # todo: confirm if we need to set `body`
     payload = MIMEApplication(email_message_dto.attachment[1])

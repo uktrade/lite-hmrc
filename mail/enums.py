@@ -1,6 +1,3 @@
-# Temporary values, THESE ARE NOT CORRECT OR FINAL
-
-
 class ReceptionStatusEnum:
     PENDING = "pending"
     ACCEPTED = "accepted"
@@ -27,12 +24,22 @@ class ReceptionStatusEnum:
 
 class ExtractTypeEnum:
     USAGE_UPDATE = "usage_update"
+    USAGE_REPLY = "usage_reply"
     LICENCE_UPDATE = "licence_update"
+    LICENCE_REPLY = "licence_reply"
 
-    choices = [(USAGE_UPDATE, "Usage update"), (LICENCE_UPDATE, "Licence Update")]
+    choices = [
+        (USAGE_UPDATE, "Usage update"),
+        (USAGE_REPLY, "Usage Reply"),
+        (LICENCE_UPDATE, "Licence Update"),
+        (LICENCE_REPLY, "Licence Reply"),
+    ]
 
     email_keys = [
         ("usageData", USAGE_UPDATE),
+        ("usageReply", USAGE_REPLY),
+        ("licenceUpdate", LICENCE_UPDATE),
+        ("licenceReply", LICENCE_REPLY),
     ]
 
     @classmethod

@@ -46,10 +46,44 @@ class LicenceUpdateMailSerializer(serializers.ModelSerializer):
         return mail
 
 
-class LicenceUpdateResponseSerializer(serializers.ModelSerializer):
+class UpdateResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mail
-        fields = ["last_submitted_on", "status", "response_file", "response_data"]
+        fields = ["status", "response_file", "response_data"]
+
+        def update(self, instance, validated_data):
+            instance.status = validated_data["status"]
+            instance.response_file = validated_data["response_file"]
+            instance.response_data = validated_data["response_data"]
+
+
+class UsageUpdateSerializer(serializers.ModelSerializer):
+    mail = serializers.PrimaryKeyRelatedField(
+        queryset=Mail.objects.all(), required=False
+    )
+
+    class Meta:
+        model = LicenceUpdate
+        fields = "__all__"
+
+    def create(self, validated_data):
+        instance, _ = LicenceUpdate.objects.get_or_create(**validated_data)
+        return instance
+
+
+class UsageUpdateMailSerializer(serializers.ModelSerializer):
+    usage_update = UsageUpdateSerializer(write_only=True)
+
+    class Meta:
+        model = Mail
+        fields = [
+            "id",
+            "edi_filename",
+            "edi_data",
+            "extract_type",
+            "raw_data",
+            "usage_update",
+        ]
 
 
 class InvalidEmailSerializer(serializers.ModelSerializer):

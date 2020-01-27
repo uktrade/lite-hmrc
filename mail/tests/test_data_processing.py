@@ -106,7 +106,27 @@ class TestModels(LiteHMRCTestClient):
         self.assertEqual(dto.body, "")
         self.assertEqual(dto.raw_data, None)
 
-    @tag("encoding")
+    @tag("reply")
     def test_licence_update_reply_is_saved(self):
+        self.mail.extract_type = ExtractTypeEnum.LICENCE_UPDATE
+        self.mail.status = ReceptionStatusEnum.REPLY_PENDING
+        self.mail.save()
 
-        pass
+        email_message_dto = EmailMessageDto(
+            run_number=self.source_run_number + 1,
+            sender="HMRC",
+            receiver="receiver@example.com",
+            body="body",
+            subject=self.licence_update_reply_name,
+            attachment=[
+                self.licence_update_reply_name,
+                bytes(self.licence_update_reply_body, "utf-8"),
+            ],
+            raw_data="qwerty",
+        )
+
+        process_and_save_email_message(email_message_dto)
+
+        self.assertEqual(
+            self.mail.response_file, base64.b64decode(self.licence_update_reply_body)
+        )

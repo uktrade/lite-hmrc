@@ -21,9 +21,7 @@ class MailManager(models.Manager):
 class Mail(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
-    last_submitted_on = models.DateTimeField(
-        blank=True, null=True
-    )  # TODO: Investigate what this is
+    last_submitted_on = models.DateTimeField(blank=True, null=True)
     edi_filename = models.TextField(null=True, blank=True)
     edi_data = models.TextField(null=True, blank=True)
     status = models.CharField(
@@ -49,8 +47,12 @@ class Mail(models.Model):
     class Meta:
         ordering = ["created_at"]
 
-    def set_time(self, offset=0):
+    def set_locking_time(self, offset: int = 0):
         self.currently_processing_at = timezone.now() + timedelta(seconds=offset)
+        self.save()
+
+    def set_last_submitted_time(self, offset: int = 0):
+        self.last_submitted_on = timezone.now() + timedelta(seconds=offset)
         self.save()
 
 
@@ -71,6 +73,8 @@ class LicenceUpdate(models.Model):
 class LicenceUsage(models.Model):
     license_ids = models.TextField()
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING)
+    spire_run_number = models.IntegerField()
+    hmrc_run_number = models.IntegerField()
 
     def set_licence_ids(self, data: List):
         self.license_ids = json.dumps(data)
