@@ -25,12 +25,15 @@ class Mail(models.Model):
     edi_filename = models.TextField(null=True, blank=True)
     edi_data = models.TextField(null=True, blank=True)
     status = models.CharField(
-        choices=ReceptionStatusEnum.choices, null=True, max_length=20
+        choices=ReceptionStatusEnum.choices,
+        default=ReceptionStatusEnum.PENDING,
+        max_length=20,
     )
     extract_type = models.CharField(
         choices=ExtractTypeEnum.choices, max_length=20, null=True
     )
-    response_file = models.TextField(blank=True, null=True)
+    response_filename = models.TextField(blank=True, null=True)
+    response_data = models.TextField(blank=True, null=True)
     response_date = models.DateTimeField(blank=True, null=True)
 
     raw_data = models.TextField()
@@ -53,6 +56,10 @@ class Mail(models.Model):
 
     def set_last_submitted_time(self, offset: int = 0):
         self.last_submitted_on = timezone.now() + timedelta(seconds=offset)
+        self.save()
+
+    def set_response_date_time(self, offset: int = 0):
+        self.response_date = timezone.now() + timedelta(seconds=offset)
         self.save()
 
 

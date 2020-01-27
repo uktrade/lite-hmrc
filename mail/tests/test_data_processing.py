@@ -20,9 +20,11 @@ class TestModels(LiteHMRCTestClient):
         self.hmrc_run_number = 28
         self.source_run_number = 15
         self.mail = Mail.objects.create(
-            edi_data=self.licence_usage_file_body,
+            edi_data=str(base64.b64decode(self.licence_usage_file_body)).replace(
+                "\\\\", "\\"
+            ),
             extract_type=ExtractTypeEnum.USAGE_UPDATE,
-            status=ReceptionStatusEnum.ACCEPTED,
+            status=ReceptionStatusEnum.REPLY_SENT,
             edi_filename=self.licence_usage_file_name,
         )
 
@@ -45,9 +47,6 @@ class TestModels(LiteHMRCTestClient):
             raw_data="qwerty",
         )
 
-        print(self.licence_usage_file_body)
-        print(str(base64.b64decode(self.licence_usage_file_body)).replace("\\\\", "\\"))
-
         process_and_save_email_message(email_message_dto)
 
         email = Mail.objects.valid().last()
@@ -60,13 +59,14 @@ class TestModels(LiteHMRCTestClient):
             ),
         )
         self.assertEqual(email.extract_type, ExtractTypeEnum.USAGE_UPDATE)
-        self.assertEqual(email.response_file, None)
-        self.assertEqual(email.response_date, None)
+        self.assertEqual(email.response_filename, None)
+        self.assertEqual(email.response_data, None)
         self.assertEqual(email.edi_filename, email_message_dto.attachment[0])
         self.assertEqual(usage_update.spire_run_number, self.source_run_number + 1)
         self.assertEqual(usage_update.hmrc_run_number, email_message_dto.run_number)
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
+    @tag("bad")
     def test_bad_email_sent_to_issues_log(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
@@ -90,8 +90,8 @@ class TestModels(LiteHMRCTestClient):
 
         self.assertEqual(email.edi_data, "")
         self.assertEqual(email.extract_type, None)
-        self.assertEqual(email.response_file, None)
-        self.assertEqual(email.response_date, None)
+        self.assertEqual(email.response_filename, None)
+        self.assertEqual(email.response_data, None)
         self.assertEqual(email.edi_filename, "")
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
@@ -132,7 +132,38 @@ class TestModels(LiteHMRCTestClient):
         )
 
         process_and_save_email_message(email_message_dto)
+        self.mail.refresh_from_db()
 
         self.assertEqual(
-            self.mail.response_file, base64.b64decode(self.licence_update_reply_body)
+            self.mail.response_data,
+            str(base64.b64decode(self.licence_update_reply_body)).replace("\\\\", "\\"),
         )
+        self.assertEqual(self.mail.status, ReceptionStatusEnum.REPLY_RECEIVED)
+        self.assertIsNotNone(self.mail.response_date)
+
+    def test_usage_update_reply_is_saved(self):
+        self.mail.status = ReceptionStatusEnum.REPLY_PENDING
+        self.mail.save()
+
+        email_message_dto = EmailMessageDto(
+            run_number=self.source_run_number + 1,
+            sender="HMRC",
+            receiver="receiver@example.com",
+            body="body",
+            subject=self.licence_update_reply_name,
+            attachment=[
+                self.licence_update_reply_name,
+                bytes(self.licence_update_reply_body, "utf-8"),
+            ],
+            raw_data="qwerty",
+        )
+
+        process_and_save_email_message(email_message_dto)
+        self.mail.refresh_from_db()
+
+        self.assertEqual(
+            self.mail.response_data,
+            str(base64.b64decode(self.licence_update_reply_body)).replace("\\\\", "\\"),
+        )
+        self.assertEqual(self.mail.status, ReceptionStatusEnum.REPLY_RECEIVED)
+        self.assertIsNotNone(self.mail.response_date)

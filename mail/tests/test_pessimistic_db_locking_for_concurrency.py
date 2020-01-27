@@ -19,7 +19,7 @@ class PessimisticDbLockingTests(LiteHMRCTestClient):
         self.mail = Mail.objects.create(
             edi_data=self.licence_usage_file_body,
             extract_type=ExtractTypeEnum.USAGE_UPDATE,
-            status=ReceptionStatusEnum.ACCEPTED,
+            status=ReceptionStatusEnum.PENDING,
             edi_filename=self.licence_usage_file_name,
         )
 
@@ -36,7 +36,7 @@ class PessimisticDbLockingTests(LiteHMRCTestClient):
     def test_expired_lock_can_be_overridden(self):
         mail = Mail.objects.create(
             extract_type=ExtractTypeEnum.USAGE_UPDATE,
-            status=ReceptionStatusEnum.ACCEPTED,
+            status=ReceptionStatusEnum.PENDING,
         )
         mail.currently_processed_by = "1234567890"
         mail.set_locking_time(offset=-125)
@@ -52,7 +52,7 @@ class PessimisticDbLockingTests(LiteHMRCTestClient):
     def test_unexpired_lock_cannot_be_overriden(self):
         mail = Mail.objects.create(
             extract_type=ExtractTypeEnum.USAGE_UPDATE,
-            status=ReceptionStatusEnum.ACCEPTED,
+            status=ReceptionStatusEnum.PENDING,
         )
         mail.currently_processed_by = "1234567890"
         mail.set_locking_time()

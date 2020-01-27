@@ -1,13 +1,13 @@
 class ReceptionStatusEnum:
     PENDING = "pending"
-    ACCEPTED = "accepted"
     REPLY_PENDING = "reply_pending"
+    REPLY_RECEIVED = "reply_received"
     REPLY_SENT = "reply_sent"
 
     choices = [
         (PENDING, "Pending"),
-        (ACCEPTED, "Accepted"),
         (REPLY_PENDING, "Reply Pending"),
+        (REPLY_RECEIVED, "Reply Received"),
         (REPLY_SENT, "Reply Sent"),
     ]
 

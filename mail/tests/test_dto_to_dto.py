@@ -18,7 +18,7 @@ class DtoToDtoTests(LiteHMRCTestClient):
         self.mail = Mail.objects.create(
             edi_data=self.licence_usage_file_body,
             extract_type=ExtractTypeEnum.USAGE_UPDATE,
-            status=ReceptionStatusEnum.ACCEPTED,
+            status=ReceptionStatusEnum.PENDING,
             edi_filename=self.licence_usage_file_name,
         )
 

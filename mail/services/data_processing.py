@@ -1,3 +1,4 @@
+import base64
 import threading
 
 from django.db import transaction
@@ -6,8 +7,8 @@ from django.utils import timezone
 from conf.constants import VALID_SENDERS
 from conf.settings import SYSTEM_INSTANCE_UUID, LOCK_INTERVAL
 from mail.dtos import EmailMessageDto
-from mail.enums import ExtractTypeEnum
-from mail.models import LicenceUpdate, Mail
+from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
+from mail.models import LicenceUpdate, Mail, UsageUpdate
 from mail.serializers import (
     InvalidEmailSerializer,
     LicenceUpdateMailSerializer,
@@ -22,20 +23,24 @@ from mail.services.helpers import (
     convert_source_to_sender,
     get_extract_type,
     get_licence_ids,
+    get_all_serializer_errors_for_mail,
 )
 
 
 def process_and_save_email_message(dto: EmailMessageDto):
-    data, serializer = convert_dto_data_for_serialization(dto)
+    data, serializer, instance = convert_dto_data_for_serialization(dto)
 
-    serializer = serializer(data=data)
-
-    if serializer.is_valid():
+    partial = True if instance else False
+    if serializer:
+        serializer = serializer(instance=instance, data=data, partial=partial)
+    if serializer and serializer.is_valid():
         mail = serializer.save()
+        if data["extract_type"] in ["licence_reply", "usage_reply"]:
+            mail.set_response_date_time()
         return mail
     else:
-        print(serializer.errors)
-        data["serializer_errors"] = str(serializer.errors)
+        data["serializer_errors"] = get_all_serializer_errors_for_mail(data)
+
         serializer = InvalidEmailSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -44,7 +49,9 @@ def process_and_save_email_message(dto: EmailMessageDto):
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
     serializer = None
+    mail = None
     extract_type = get_extract_type(dto.subject)
+
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         data = {"licence_update": {}}
         data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
@@ -59,14 +66,19 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
         serializer = LicenceUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.LICENCE_REPLY:
-        print("we are a licence reply")
-        print(dto.attachment)
         data = {}
         serializer = UpdateResponseSerializer
+        data["response_filename"], data["response_data"] = process_attachment(
+            dto.attachment
+        )
+        data["status"] = ReceptionStatusEnum.REPLY_RECEIVED
+        mail = Mail.objects.get(
+            status=ReceptionStatusEnum.REPLY_PENDING,
+            extract_type=ExtractTypeEnum.LICENCE_UPDATE,
+        )
 
     elif extract_type == ExtractTypeEnum.USAGE_UPDATE:
         data = {"usage_update": {}}
-        print(dto.sender)
         data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
         data["usage_update"]["spire_run_number"] = (
             new_spire_run_number(int(dto.run_number))
@@ -80,22 +92,52 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
         data = {}
         serializer = UpdateResponseSerializer
+        data["response_filename"], data["response_data"] = process_attachment(
+            dto.attachment
+        )
+    else:
+        data = {}
+        data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
 
-    data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
     data["extract_type"] = extract_type
     data["raw_data"] = dto.raw_data
-    return data, serializer
+    return data, serializer, mail
 
 
 def to_email_message_dto_from(mail):
-    licence_update = LicenceUpdate.objects.get(mail=mail)
+    if mail.status == ReceptionStatusEnum.PENDING:
+        if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
+            licence_update = LicenceUpdate.objects.get(mail=mail)
+            run_number = licence_update.hmrc_run_number
+            sender = convert_source_to_sender(licence_update.source)
+            receiver = "hmrc"
+        elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
+            update = UsageUpdate.objects.get(mail=mail)
+            run_number = update.spire_run_number
+            sender = "HMRC"
+            receiver = "spire"
+        subject = mail.edi_filename
+        filename = mail.edi_filename
+        filedata = mail.edi_data
+    elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
+        if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
+            licence_update = LicenceUpdate.objects.get(mail=mail)
+            run_number = licence_update.hmrc_run_number
+            sender = convert_source_to_sender(licence_update.source)
+            receiver = "spire"
+        elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
+            update = LicenceUpdate.objects.get(mail=mail)
+            run_number = update.spire_run_number
+            sender = "spire"
+            receiver = "hmrc"
+
     dto = EmailMessageDto(
-        run_number=licence_update.hmrc_run_number,
-        sender=convert_source_to_sender(licence_update.source),
-        receiver="HMRC",
-        body="",
-        subject=mail.edi_filename,
-        attachment=[mail.edi_filename, mail.edi_data.encode("ascii", "replace")],
+        run_number=run_number,
+        sender=sender,
+        receiver=receiver,
+        subject=subject,
+        body=None,
+        attachment=[filename, base64.b64encode(bytes(filedata, "utf-8"))],
         raw_data=None,
     )
     return dto

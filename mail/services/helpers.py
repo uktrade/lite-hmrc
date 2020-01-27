@@ -8,6 +8,7 @@ from email.parser import Parser
 from mail.dtos import EmailMessageDto
 from mail.enums import SourceEnum, ExtractTypeEnum
 from mail.models import LicenceUpdate, UsageUpdate
+from mail.serializers import LicenceUpdateMailSerializer, UsageUpdateMailSerializer
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream"]
 
@@ -194,3 +195,17 @@ def _validate_dto(email_message_dto):
 
     if email_message_dto.attachment is None:
         raise TypeError("None file attachment received!")
+
+
+def get_all_serializer_errors_for_mail(data):
+    errors = ""
+    if not hasattr(data, "licence_update"):
+        data["licence_update"] = {}
+    if not hasattr(data, "usage_update"):
+        data["usage_update"] = {}
+    for s in [LicenceUpdateMailSerializer, UsageUpdateMailSerializer]:
+        s = s(data=data)
+        if not s.is_valid():
+            errors += str(s.errors)
+
+    return errors
