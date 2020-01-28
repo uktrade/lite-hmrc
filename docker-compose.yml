@@ -34,7 +34,7 @@ services:
 
   lite-hmrc-ditmail:
     container_name: "lite-hmrc-ditmail"
-    build: ./mailserver
+    build: ../mailserver
     ports:
       - "25:25"
       - "587:587"
@@ -52,14 +52,14 @@ services:
 
   lite-hmrc-spiremail:
     container_name: "lite-hmrc-spiremail"
-    build: ./mailserver
+    build: ../mailserver
     ports:
       - "26:25"
       - "588:587"
       - "996:995"
       - "81:80"
     volumes:
-      - ./mailserver/maildata:/var/vmail
+      - ./mailserver/maildata2:/var/vmail
     environment:
       EMAIL_DOMAIN: spire.com
       RELAY_ADDRESS: api:10026

@@ -1,6 +1,7 @@
 # IDE
 *.iml
 .idea/
+.DS_Store
 
 __pycache__/
 *.py[cod]
@@ -70,4 +71,4 @@ target/
 .venv
 
 # Test data
-.mailserver/maildata/
+mailserver/*
