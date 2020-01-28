@@ -113,7 +113,7 @@ def convert_source_to_sender(source):
 def process_attachment(attachment):
     try:
         edi_filename = attachment[0]
-        edi_data = str(base64.b64decode(bytes(attachment[1]))).replace("\\\\", "\\")
+        edi_data = attachment[1]
         return edi_filename, edi_data
     except IndexError:
         return "", ""
@@ -158,11 +158,11 @@ def get_extract_type(subject: str):
 
 def get_licence_ids(file_body):
     ids = []
-    lines = file_body.split(r"\n")
+    file_body = str(base64.b64decode(file_body))
+    lines = file_body.split("\n")
     for line in lines:
         if ("licenceUsage" in line or "licenceUpdate" in line) and "end" not in line:
             ids.append(line.split("\\")[4])
-
     return json.dumps(ids)
 
 
@@ -207,5 +207,4 @@ def get_all_serializer_errors_for_mail(data):
         s = s(data=data)
         if not s.is_valid():
             errors += str(s.errors)
-
     return errors

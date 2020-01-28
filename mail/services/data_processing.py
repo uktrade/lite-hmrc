@@ -1,4 +1,3 @@
-import base64
 import threading
 
 from django.db import transaction
@@ -27,7 +26,7 @@ from mail.services.helpers import (
 )
 
 
-def process_and_save_email_message(dto: EmailMessageDto):
+def serialize_email_message(dto: EmailMessageDto):
     data, serializer, instance = convert_dto_data_for_serialization(dto)
 
     partial = True if instance else False
@@ -135,6 +134,9 @@ def to_email_message_dto_from(mail):
             run_number = update.spire_run_number
             sender = "spire"
             receiver = "hmrc"
+        subject = mail.response_filename
+        filename = mail.response_filename
+        filedata = mail.response_data
 
     dto = EmailMessageDto(
         run_number=run_number,
@@ -142,7 +144,7 @@ def to_email_message_dto_from(mail):
         receiver=receiver,
         subject=subject,
         body=None,
-        attachment=[filename, base64.b64encode(bytes(filedata, "utf-8"))],
+        attachment=[filename, filedata],
         raw_data=None,
     )
     return dto

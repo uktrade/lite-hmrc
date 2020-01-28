@@ -6,7 +6,7 @@ from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate
 from mail.services.data_processing import (
     to_email_message_dto_from,
-    process_and_save_email_message,
+    serialize_email_message,
 )
 from mail.services.helpers import convert_source_to_sender
 
@@ -43,7 +43,7 @@ class DtoToDtoTests(LiteHMRCTestClient):
         )
 
         # dto to dto processing
-        mail = process_and_save_email_message(email_message_dto)
+        mail = serialize_email_message(email_message_dto)
         dto = to_email_message_dto_from(mail)
 
         self.assertEqual(dto.run_number, self.licence_update.source_run_number + 1)
@@ -69,4 +69,4 @@ class DtoToDtoTests(LiteHMRCTestClient):
             raw_data="qwerty",
         )
 
-        self.assertEqual(process_and_save_email_message(email_message_dto), False)
+        self.assertEqual(serialize_email_message(email_message_dto), False)

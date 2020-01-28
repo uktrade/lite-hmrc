@@ -1,5 +1,3 @@
-import base64
-
 from django.test import tag
 
 from conf.test_client import LiteHMRCTestClient
@@ -7,7 +5,7 @@ from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate, UsageUpdate
 from mail.services.data_processing import (
-    process_and_save_email_message,
+    serialize_email_message,
     to_email_message_dto_from,
 )
 from mail.services.helpers import convert_source_to_sender
@@ -20,9 +18,7 @@ class TestModels(LiteHMRCTestClient):
         self.hmrc_run_number = 28
         self.source_run_number = 15
         self.mail = Mail.objects.create(
-            edi_data=str(base64.b64decode(self.licence_usage_file_body)).replace(
-                "\\\\", "\\"
-            ),
+            edi_data=self.licence_usage_file_body,
             extract_type=ExtractTypeEnum.USAGE_UPDATE,
             status=ReceptionStatusEnum.REPLY_SENT,
             edi_filename=self.licence_usage_file_name,
@@ -53,17 +49,12 @@ class TestModels(LiteHMRCTestClient):
             raw_data="qwerty",
         )
 
-        process_and_save_email_message(email_message_dto)
+        serialize_email_message(email_message_dto)
 
         email = Mail.objects.valid().last()
         usage_update = UsageUpdate.objects.get(mail=email)
 
-        self.assertEqual(
-            email.edi_data,
-            str(base64.b64decode(email_message_dto.attachment[1])).replace(
-                "\\\\", "\\"
-            ),
-        )
+        self.assertEqual(email.edi_data, email_message_dto.attachment[1])
         self.assertEqual(email.extract_type, ExtractTypeEnum.USAGE_UPDATE)
         self.assertEqual(email.response_filename, None)
         self.assertEqual(email.response_data, None)
@@ -87,7 +78,7 @@ class TestModels(LiteHMRCTestClient):
         initial_issues_count = Mail.objects.invalid().count()
         initial_license_update_count = Mail.objects.valid().count()
 
-        process_and_save_email_message(email_message_dto)
+        serialize_email_message(email_message_dto)
 
         self.assertEqual(Mail.objects.invalid().count(), initial_issues_count + 1)
         self.assertEqual(Mail.objects.valid().count(), initial_license_update_count)
@@ -109,7 +100,7 @@ class TestModels(LiteHMRCTestClient):
         self.assertEqual(dto.run_number, self.usage_update.spire_run_number)
         self.assertEqual(dto.sender, convert_source_to_sender("HMRC"))
         self.assertEqual(dto.attachment[0], self.mail.edi_filename)
-        # self.assertEqual(dto.attachment[1], self.mail.edi_data)
+        self.assertEqual(dto.attachment[1], self.mail.edi_data)
         self.assertEqual(dto.subject, self.mail.edi_filename)
         self.assertEqual(dto.receiver, "spire")
         self.assertEqual(dto.body, None)
@@ -134,12 +125,11 @@ class TestModels(LiteHMRCTestClient):
             raw_data="qwerty",
         )
 
-        process_and_save_email_message(email_message_dto)
+        serialize_email_message(email_message_dto)
         self.mail.refresh_from_db()
 
         self.assertEqual(
-            self.mail.response_data,
-            str(base64.b64decode(self.licence_update_reply_body)).replace("\\\\", "\\"),
+            self.mail.response_data, self.licence_update_reply_body,
         )
         self.assertEqual(self.mail.status, ReceptionStatusEnum.REPLY_RECEIVED)
         self.assertIsNotNone(self.mail.response_date)
@@ -154,20 +144,16 @@ class TestModels(LiteHMRCTestClient):
             receiver="receiver@example.com",
             body="body",
             subject=self.usage_update_reply_name,
-            attachment=[
-                self.usage_update_reply_name,
-                bytes(self.licence_update_reply_body, "utf-8"),
-            ],
+            attachment=[self.usage_update_reply_name, self.licence_update_reply_body,],
             raw_data="qwerty",
         )
 
-        process_and_save_email_message(email_message_dto)
+        serialize_email_message(email_message_dto)
         self.mail.refresh_from_db()
 
         self.assertEqual(self.mail.status, ReceptionStatusEnum.REPLY_RECEIVED)
         self.assertIsNotNone(self.mail.response_date)
 
-        self.assertEqual(
-            self.mail.response_data,
-            str(base64.b64decode(self.licence_update_reply_body)).replace("\\\\", "\\"),
+        self.assertIn(
+            self.mail.response_data, self.licence_update_reply_body,
         )
