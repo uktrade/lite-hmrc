@@ -18,7 +18,8 @@ class SendMailView(APIView):
         smtp_conn = server.connect_to_smtp()
         mailbox_service = MailboxService()
         mailbox_service.send_email(
-            smtp_conn, build_text_message("junk@mail.com", "username@example.com")
+            smtp_conn,
+            build_text_message("junk@mail.com", "username@example.com", ["", ""]),
         )
         smtp_conn.quit()
         return JsonResponse(status=HTTP_200_OK, data={"message": "email_sent !"})
