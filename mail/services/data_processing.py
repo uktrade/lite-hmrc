@@ -51,6 +51,8 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
     mail = None
     extract_type = get_extract_type(dto.subject)
 
+    print(extract_type)
+
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         data = {"licence_update": {}}
         data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
@@ -65,6 +67,7 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
         serializer = LicenceUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.LICENCE_REPLY:
+        print("i am a licence reply")
         data = {}
         serializer = UpdateResponseSerializer
         data["response_filename"], data["response_data"] = process_attachment(
@@ -110,12 +113,15 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
 
 def to_email_message_dto_from(mail):
     if mail.status == ReceptionStatusEnum.PENDING:
+        print("pending")
         if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
+            print("licence update")
             licence_update = LicenceUpdate.objects.get(mail=mail)
             run_number = licence_update.hmrc_run_number
             sender = convert_source_to_sender(licence_update.source)
             receiver = "hmrc"
         elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
+            print("usage update")
             update = UsageUpdate.objects.get(mail=mail)
             run_number = update.spire_run_number
             sender = "HMRC"
@@ -124,12 +130,15 @@ def to_email_message_dto_from(mail):
         filename = mail.edi_filename
         filedata = mail.edi_data
     elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
+        print("reply pending")
         if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
+            print("licence reply")
             licence_update = LicenceUpdate.objects.get(mail=mail)
-            run_number = licence_update.hmrc_run_number
+            run_number = licence_update.source_run_number
             sender = convert_source_to_sender(licence_update.source)
             receiver = "spire"
         elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
+            print("usage reply")
             update = LicenceUpdate.objects.get(mail=mail)
             run_number = update.spire_run_number
             sender = "spire"
