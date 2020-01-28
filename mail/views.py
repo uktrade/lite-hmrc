@@ -73,8 +73,3 @@ class MailList(APIView):
         last_msg_dto = MailboxService().read_last_message(pop3_conn)
         pop3_conn.quit()
         return JsonResponse(status=HTTP_200_OK, data=to_json(last_msg_dto), safe=False)
-
-
-class TurnOnScheduler(APIView):
-    def get(self, request):
-        pass
