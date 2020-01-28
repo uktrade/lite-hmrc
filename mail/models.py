@@ -48,6 +48,7 @@ class Mail(models.Model):
     objects = MailManager()
 
     class Meta:
+        db_table = "mail"
         ordering = ["created_at"]
 
     def set_locking_time(self, offset: int = 0):

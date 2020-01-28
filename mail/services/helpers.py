@@ -5,6 +5,8 @@ from email.message import Message
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.parser import Parser
+
+from conf.settings import SPIRE_ADDRESS
 from mail.dtos import EmailMessageDto
 from mail.enums import SourceEnum, ExtractTypeEnum
 from mail.models import LicenceUpdate, UsageUpdate
@@ -95,7 +97,7 @@ def get_runnumber(patterned_text: str):
 
 
 def convert_sender_to_source(sender: string):
-    if sender == "test@spire.com":
+    if sender == SPIRE_ADDRESS:
         return "SPIRE"
     elif sender == "test@lite.com":
         return "LITE"
@@ -104,7 +106,7 @@ def convert_sender_to_source(sender: string):
 
 def convert_source_to_sender(source):
     if source == SourceEnum.SPIRE:
-        return "test@spire.com"
+        return SPIRE_ADDRESS
     elif source == SourceEnum.LITE:
         return "test@lite.com"
     return source
@@ -203,8 +205,8 @@ def get_all_serializer_errors_for_mail(data):
         data["licence_update"] = {}
     if not hasattr(data, "usage_update"):
         data["usage_update"] = {}
-    for s in [LicenceUpdateMailSerializer, UsageUpdateMailSerializer]:
-        s = s(data=data)
-        if not s.is_valid():
-            errors += str(s.errors)
+    for serializer in [LicenceUpdateMailSerializer, UsageUpdateMailSerializer]:
+        serializer = serializer(data=data)
+        if not serializer.is_valid():
+            errors += str(serializer.errors)
     return errors

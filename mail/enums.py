@@ -12,7 +12,7 @@ class ReceptionStatusEnum:
     ]
 
     @classmethod
-    def human_readable(cls, status):
+    def get_text(cls, status):
         for k, v in cls.choices:
             if status == k:
                 return v
@@ -43,9 +43,9 @@ class ExtractTypeEnum:
     ]
 
     @classmethod
-    def human_readable(cls, status):
+    def get_text(cls, _type):
         for k, v in cls.choices:
-            if status == k:
+            if _type == k:
                 return v
 
     @classmethod
@@ -58,7 +58,11 @@ class SourceEnum:
     LITE = "LITE"
     HMRC = "HMRC"
 
-    choices = [(SPIRE, "SPIRE"), (LITE, "LITE"), (HMRC, "HMRC")]
+    choices = [
+        (SPIRE, "SPIRE"),
+        (LITE, "LITE"),
+        (HMRC, "HMRC"),
+    ]
 
     @classmethod
     def as_list(cls):

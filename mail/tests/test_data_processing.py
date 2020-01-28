@@ -1,3 +1,4 @@
+from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
 from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
@@ -38,8 +39,8 @@ class TestModels(LiteHMRCTestClient):
     def test_email_processed_successfully(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number,
-            sender="HMRC",
-            receiver="test@spire.com",
+            sender=HMRC_ADDRESS,
+            receiver=SPIRE_ADDRESS,
             body="body",
             subject=self.licence_usage_file_name,
             attachment=[self.licence_usage_file_name, self.licence_usage_file_body],
@@ -109,8 +110,8 @@ class TestModels(LiteHMRCTestClient):
 
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
-            sender="HMRC",
-            receiver="receiver@example.com",
+            sender=HMRC_ADDRESS,
+            receiver=SPIRE_ADDRESS,
             body="body",
             subject=self.licence_update_reply_name,
             attachment=[
@@ -135,8 +136,8 @@ class TestModels(LiteHMRCTestClient):
 
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
-            sender="HMRC",
-            receiver="receiver@example.com",
+            sender=SPIRE_ADDRESS,
+            receiver=HMRC_ADDRESS,
             body="body",
             subject=self.usage_update_reply_name,
             attachment=[self.usage_update_reply_name, self.licence_update_reply_body,],

@@ -146,6 +146,8 @@ def to_email_message_dto_from(mail):
         subject = mail.response_filename
         filename = mail.response_filename
         filedata = mail.response_data
+    else:
+        return
 
     dto = EmailMessageDto(
         run_number=run_number,
