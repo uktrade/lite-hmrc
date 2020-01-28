@@ -96,11 +96,9 @@ EMAIL_HOSTNAME = env("EMAIL_HOSTNAME")
 EMAIL_USER = env("EMAIL_USER")
 EMAIL_POP3_PORT = env("EMAIL_POP3_PORT")
 EMAIL_SMTP_PORT = env("EMAIL_SMTP_PORT")
-
 SPIRE_ADDRESS = env("SPIRE_ADDRESS")
 HMRC_ADDRESS = env("HMRC_ADDRESS")
-
-TIME_TESTS = env("TIME_TESTS")
+TIME_TESTS = env("TIME_TESTS") if env("TIME_TESTS") else 0
 
 LOCK_INTERVAL = float(env("LOCK_INTERVAL"))
 
@@ -163,4 +161,5 @@ LOGGING = {
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
+
 STATIC_URL = "/static/"
