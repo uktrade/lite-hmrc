@@ -1,5 +1,3 @@
-from django.test import tag
-
 from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
@@ -37,16 +35,15 @@ class TestModels(LiteHMRCTestClient):
             hmrc_run_number=self.hmrc_run_number,
         )
 
-    @tag("body")
     def test_email_processed_successfully(self):
         email_message_dto = EmailMessageDto(
-            run_number=self.source_run_number + 1,
+            run_number=self.source_run_number,
             sender="HMRC",
             receiver="test@spire.com",
             body="body",
             subject=self.licence_usage_file_name,
             attachment=[self.licence_usage_file_name, self.licence_usage_file_body],
-            raw_data="qwerty",
+            raw_data="",
         )
 
         serialize_email_message(email_message_dto)
@@ -54,16 +51,15 @@ class TestModels(LiteHMRCTestClient):
         email = Mail.objects.valid().last()
         usage_update = UsageUpdate.objects.get(mail=email)
 
-        self.assertEqual(email.edi_data, email_message_dto.attachment[1])
+        self.assertEqual(email.edi_data, str(email_message_dto.attachment[1]))
         self.assertEqual(email.extract_type, ExtractTypeEnum.USAGE_UPDATE)
         self.assertEqual(email.response_filename, None)
         self.assertEqual(email.response_data, None)
         self.assertEqual(email.edi_filename, email_message_dto.attachment[0])
-        self.assertEqual(usage_update.spire_run_number, self.source_run_number + 1)
-        self.assertEqual(usage_update.hmrc_run_number, email_message_dto.run_number)
+        self.assertEqual(usage_update.hmrc_run_number, self.hmrc_run_number)
+        self.assertEqual(usage_update.spire_run_number, email_message_dto.run_number)
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
-    @tag("bad")
     def test_bad_email_sent_to_issues_log(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
@@ -106,7 +102,6 @@ class TestModels(LiteHMRCTestClient):
         self.assertEqual(dto.body, None)
         self.assertEqual(dto.raw_data, None)
 
-    @tag("reply")
     def test_licence_update_reply_is_saved(self):
         self.mail.extract_type = ExtractTypeEnum.LICENCE_UPDATE
         self.mail.status = ReceptionStatusEnum.REPLY_PENDING
@@ -120,7 +115,7 @@ class TestModels(LiteHMRCTestClient):
             subject=self.licence_update_reply_name,
             attachment=[
                 self.licence_update_reply_name,
-                bytes(self.licence_update_reply_body, "utf-8"),
+                self.licence_update_reply_body,
             ],
             raw_data="qwerty",
         )
@@ -128,7 +123,7 @@ class TestModels(LiteHMRCTestClient):
         serialize_email_message(email_message_dto)
         self.mail.refresh_from_db()
 
-        self.assertEqual(
+        self.assertIn(
             self.mail.response_data, self.licence_update_reply_body,
         )
         self.assertEqual(self.mail.status, ReceptionStatusEnum.REPLY_RECEIVED)

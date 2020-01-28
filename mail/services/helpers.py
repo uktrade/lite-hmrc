@@ -113,7 +113,7 @@ def convert_source_to_sender(source):
 def process_attachment(attachment):
     try:
         edi_filename = attachment[0]
-        edi_data = attachment[1]
+        edi_data = str(attachment[1])
         return edi_filename, edi_data
     except IndexError:
         return "", ""

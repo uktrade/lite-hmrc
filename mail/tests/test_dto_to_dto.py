@@ -1,5 +1,3 @@
-import base64
-
 from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
@@ -8,7 +6,6 @@ from mail.services.data_processing import (
     to_email_message_dto_from,
     serialize_email_message,
 )
-from mail.services.helpers import convert_source_to_sender
 
 
 class DtoToDtoTests(LiteHMRCTestClient):
@@ -44,6 +41,7 @@ class DtoToDtoTests(LiteHMRCTestClient):
 
         # dto to dto processing
         mail = serialize_email_message(email_message_dto)
+        print(mail)
         dto = to_email_message_dto_from(mail)
 
         self.assertEqual(dto.run_number, self.licence_update.source_run_number + 1)

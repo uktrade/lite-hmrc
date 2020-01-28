@@ -32,7 +32,6 @@ class PessimisticDbLockingTests(LiteHMRCTestClient):
             str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident),
         )
 
-    @tag("time")
     def test_expired_lock_can_be_overridden(self):
         mail = Mail.objects.create(
             extract_type=ExtractTypeEnum.USAGE_UPDATE,
