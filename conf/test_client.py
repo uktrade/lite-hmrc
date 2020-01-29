@@ -82,6 +82,10 @@ ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAK"""
             "ILBDOTI_live_CHIEF_usageReply_49543_201902080025"
         )
 
+        self.licence_update_file_name = (
+            "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902080025"
+        )
+
     def tearDown(self):
         """
         Print output time for tests if settings.TIME_TESTS is set to True
