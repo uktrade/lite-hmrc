@@ -29,12 +29,12 @@ class SendMailView(APIView):
 
 class ReadMailView(APIView):
     def get(self, request):
-        server = MailServer()
-        pop3_conn = server.connect_to_pop3()
-        last_msg_dto = MailboxService().read_last_message(pop3_conn)
-        pop3_conn.quit()
+        # server = MailServer()
+        # pop3_conn = server.connect_to_pop3()
+        # last_msg_dto = MailboxService().read_last_message(pop3_conn)
+        # pop3_conn.quit()
         logging.info({"logging test": "successful"})
-        return JsonResponse(status=HTTP_200_OK, data=to_json(last_msg_dto), safe=False)
+        return JsonResponse(status=HTTP_200_OK, data="some data", safe=False)
 
 
 class RouteMailView(APIView):
