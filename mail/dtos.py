@@ -32,6 +32,23 @@ def to_json(email_message_dto: EmailMessageDto):
             "name": email_message_dto.attachment[0],
             "data": email_message_dto.attachment[1],
         },
-        "raw_data": str(email_message_dto.raw_data[1]),
+        "raw_data": str(email_message_dto.raw_data),
     }
     return json.dumps(_dict)
+
+
+def dto_to_logs(email_message_dto: EmailMessageDto):
+    return {
+        "dto": {
+            "run_number": email_message_dto.run_number,
+            "sender": email_message_dto.sender,
+            "subject": email_message_dto.subject,
+            "receiver": email_message_dto.receiver,
+            "body": email_message_dto.body,
+            "attachment": {
+                "name": email_message_dto.attachment[0],
+                "data": email_message_dto.attachment[1][0:50],
+            },
+            "raw_data": str(email_message_dto.raw_data[0:50]),
+        }
+    }

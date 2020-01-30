@@ -1,3 +1,4 @@
+import logging
 import threading
 
 from django.db import transaction
@@ -10,7 +11,7 @@ from conf.settings import (
     HMRC_ADDRESS,
     SPIRE_ADDRESS,
 )
-from mail.dtos import EmailMessageDto
+from mail.dtos import EmailMessageDto, dto_to_logs
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.models import LicenceUpdate, Mail, UsageUpdate
 from mail.serializers import (
@@ -51,11 +52,11 @@ def serialize_email_message(dto: EmailMessageDto):
 
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
+    logging.info(dto_to_logs(dto))
     serializer = None
     mail = None
     extract_type = get_extract_type(dto.subject)
-
-    print(extract_type)
+    logging.info({"email type identified as": extract_type})
 
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         data = {"licence_update": {}}
@@ -71,7 +72,6 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
         serializer = LicenceUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.LICENCE_REPLY:
-        print("i am a licence reply")
         data = {}
         serializer = UpdateResponseSerializer
         data["response_filename"], data["response_data"] = process_attachment(
