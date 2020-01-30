@@ -6,7 +6,7 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.parser import Parser
 
-from conf.settings import SPIRE_ADDRESS
+from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
 from mail.dtos import EmailMessageDto
 from mail.enums import SourceEnum, ExtractTypeEnum
 from mail.models import LicenceUpdate, UsageUpdate
@@ -101,6 +101,8 @@ def convert_sender_to_source(sender: string):
         return "SPIRE"
     elif sender == "test@lite.com":
         return "LITE"
+    elif sender == HMRC_ADDRESS:
+        return "HMRC"
     return sender
 
 

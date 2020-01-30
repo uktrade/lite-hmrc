@@ -37,7 +37,8 @@ class DtoToDtoTests(LiteHMRCTestClient):
             hmrc_run_number=self.hmrc_run_number,
         )
 
-    def test_successful_inbound_dto_converts_to_outbound_dto(self):
+    @tag("failed")
+    def test_successful_usage_update_inbound_dto_converts_to_outbound_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
             sender=HMRC_ADDRESS,
@@ -110,12 +111,11 @@ class DtoToDtoTests(LiteHMRCTestClient):
         self.assertEqual(dto.body, None)
         self.assertEqual(dto.raw_data, None)
 
-    @tag("update")
     def test_licence_update_dto_to_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
-            sender=HMRC_ADDRESS,
-            receiver="receiver@example.com",
+            sender=SPIRE_ADDRESS,
+            receiver=HMRC_ADDRESS,
             body=None,
             subject=self.licence_update_file_name,
             attachment=[self.licence_update_file_name, self.licence_update_reply_body,],
