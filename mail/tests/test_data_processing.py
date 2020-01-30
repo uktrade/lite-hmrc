@@ -95,7 +95,7 @@ class TestModels(LiteHMRCTestClient):
         dto = to_email_message_dto_from(self.mail)
 
         self.assertEqual(dto.run_number, self.usage_update.spire_run_number)
-        self.assertEqual(dto.sender, convert_source_to_sender("HMRC"))
+        self.assertEqual(dto.sender, HMRC_ADDRESS)
         self.assertEqual(dto.attachment[0], self.mail.edi_filename)
         self.assertEqual(dto.attachment[1], self.mail.edi_data)
         self.assertEqual(dto.subject, self.mail.edi_filename)

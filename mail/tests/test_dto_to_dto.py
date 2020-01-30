@@ -40,7 +40,7 @@ class DtoToDtoTests(LiteHMRCTestClient):
     def test_successful_inbound_dto_converts_to_outbound_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
-            sender="HMRC",
+            sender=HMRC_ADDRESS,
             receiver="receiver@example.com",
             body="body",
             subject=self.licence_usage_file_name,
@@ -80,7 +80,7 @@ class DtoToDtoTests(LiteHMRCTestClient):
     def test_licence_reply_dto_to_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
-            sender="HMRC",
+            sender=HMRC_ADDRESS,
             receiver="receiver@example.com",
             body=None,
             subject=self.licence_update_reply_name,
@@ -114,7 +114,7 @@ class DtoToDtoTests(LiteHMRCTestClient):
     def test_licence_update_dto_to_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
-            sender="HMRC",
+            sender=HMRC_ADDRESS,
             receiver="receiver@example.com",
             body=None,
             subject=self.licence_update_file_name,
