@@ -99,7 +99,7 @@ class TestModels(LiteHMRCTestClient):
         self.assertEqual(dto.attachment[0], self.mail.edi_filename)
         self.assertEqual(dto.attachment[1], self.mail.edi_data)
         self.assertEqual(dto.subject, self.mail.edi_filename)
-        self.assertEqual(dto.receiver, "spire")
+        self.assertEqual(dto.receiver, SPIRE_ADDRESS)
         self.assertEqual(dto.body, None)
         self.assertEqual(dto.raw_data, None)
 

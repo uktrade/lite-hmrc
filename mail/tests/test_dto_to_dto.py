@@ -110,6 +110,7 @@ class DtoToDtoTests(LiteHMRCTestClient):
         self.assertEqual(dto.body, None)
         self.assertEqual(dto.raw_data, None)
 
+    @tag("update")
     def test_licence_update_dto_to_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
@@ -131,7 +132,7 @@ class DtoToDtoTests(LiteHMRCTestClient):
         self.assertIn(
             dto.attachment[1], str(email_message_dto.attachment[1]),
         )
-        self.assertEqual(dto.subject, self.licence_update_reply_name)
+        self.assertEqual(dto.subject, self.licence_update_file_name)
         self.assertEqual(dto.receiver, HMRC_ADDRESS)
         self.assertEqual(dto.body, None)
         self.assertEqual(dto.raw_data, None)

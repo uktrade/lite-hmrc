@@ -1,5 +1,6 @@
 from parameterized import parameterized
 
+from conf.settings import SPIRE_ADDRESS
 from conf.test_client import LiteHMRCTestClient
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import LicenceUpdate, Mail
@@ -12,11 +13,11 @@ from mail.services.helpers import (
 
 
 class HelpersTests(LiteHMRCTestClient):
-    @parameterized.expand([["test@spire.com", "SPIRE"], ["test@lite.com", "LITE"]])
+    @parameterized.expand([[SPIRE_ADDRESS, "SPIRE"], ["test@lite.com", "LITE"]])
     def test_convert_sender_to_source(self, sender, source):
         self.assertEqual(convert_sender_to_source(sender), source)
 
-    @parameterized.expand([["test@spire.com", "SPIRE"], ["test@lite.com", "LITE"]])
+    @parameterized.expand([[SPIRE_ADDRESS, "SPIRE"], ["test@lite.com", "LITE"]])
     def test_convert_source_to_sender(self, sender, source):
         self.assertEqual(convert_source_to_sender(source), sender)
 
