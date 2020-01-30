@@ -1,3 +1,5 @@
+import logging
+
 from django.http import JsonResponse
 from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
@@ -31,6 +33,7 @@ class ReadMailView(APIView):
         pop3_conn = server.connect_to_pop3()
         last_msg_dto = MailboxService().read_last_message(pop3_conn)
         pop3_conn.quit()
+        logging.info({"logging test": "successful"})
         return JsonResponse(status=HTTP_200_OK, data=to_json(last_msg_dto), safe=False)
 
 

@@ -112,6 +112,15 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
 
     data["extract_type"] = extract_type
     data["raw_data"] = dto.raw_data
+    logging.info(
+        {
+            "exiting function with": {
+                "data": data,
+                "serializer": serializer,
+                "instance": mail,
+            }
+        }
+    )
     return data, serializer, mail
 
 
