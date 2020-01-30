@@ -24,7 +24,6 @@ from mail.services.helpers import (
     process_attachment,
     new_hmrc_run_number,
     new_spire_run_number,
-    convert_source_to_sender,
     get_extract_type,
     get_licence_ids,
     get_all_serializer_errors_for_mail,
