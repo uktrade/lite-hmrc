@@ -4,7 +4,12 @@ from django.db import transaction
 from django.utils import timezone
 
 from conf.constants import VALID_SENDERS
-from conf.settings import SYSTEM_INSTANCE_UUID, LOCK_INTERVAL
+from conf.settings import (
+    SYSTEM_INSTANCE_UUID,
+    LOCK_INTERVAL,
+    HMRC_ADDRESS,
+    SPIRE_ADDRESS,
+)
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.models import LicenceUpdate, Mail, UsageUpdate
@@ -118,14 +123,14 @@ def to_email_message_dto_from(mail):
             print("licence update")
             licence_update = LicenceUpdate.objects.get(mail=mail)
             run_number = licence_update.hmrc_run_number
-            sender = convert_source_to_sender(licence_update.source)
-            receiver = "hmrc"
+            sender = SPIRE_ADDRESS
+            receiver = HMRC_ADDRESS
         elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
             print("usage update")
             update = UsageUpdate.objects.get(mail=mail)
             run_number = update.spire_run_number
-            sender = "HMRC"
-            receiver = "spire"
+            sender = HMRC_ADDRESS
+            receiver = SPIRE_ADDRESS
         subject = mail.edi_filename
         filename = mail.edi_filename
         filedata = mail.edi_data
@@ -135,14 +140,14 @@ def to_email_message_dto_from(mail):
             print("licence reply")
             licence_update = LicenceUpdate.objects.get(mail=mail)
             run_number = licence_update.source_run_number
-            sender = convert_source_to_sender(licence_update.source)
-            receiver = "spire"
+            sender = HMRC_ADDRESS
+            receiver = SPIRE_ADDRESS
         elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
             print("usage reply")
             update = LicenceUpdate.objects.get(mail=mail)
             run_number = update.spire_run_number
-            sender = "spire"
-            receiver = "hmrc"
+            sender = SPIRE_ADDRESS
+            receiver = HMRC_ADDRESS
         subject = mail.response_filename
         filename = mail.response_filename
         filedata = mail.response_data

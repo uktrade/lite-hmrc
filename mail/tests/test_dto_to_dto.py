@@ -53,13 +53,13 @@ class DtoToDtoTests(LiteHMRCTestClient):
         dto = to_email_message_dto_from(mail)
 
         self.assertEqual(dto.run_number, self.usage_update.spire_run_number + 1)
-        self.assertEqual(dto.sender, "HMRC")
+        self.assertEqual(dto.sender, HMRC_ADDRESS)
         self.assertEqual(dto.attachment[0], email_message_dto.attachment[0])
         self.assertIn(
             dto.attachment[1], str(email_message_dto.attachment[1]),
         )
         self.assertEqual(dto.subject, self.licence_usage_file_name)
-        self.assertEqual(dto.receiver, "spire")
+        self.assertEqual(dto.receiver, SPIRE_ADDRESS)
         self.assertEqual(dto.body, None)
         self.assertEqual(dto.raw_data, None)
 
@@ -100,13 +100,13 @@ class DtoToDtoTests(LiteHMRCTestClient):
         dto = to_email_message_dto_from(mail)
 
         self.assertEqual(dto.run_number, self.licence_update.source_run_number)
-        self.assertEqual(dto.sender, "test@spire.com")
+        self.assertEqual(dto.sender, HMRC_ADDRESS)
         self.assertEqual(dto.attachment[0], email_message_dto.attachment[0])
         self.assertIn(
             dto.attachment[1], str(email_message_dto.attachment[1]),
         )
         self.assertEqual(dto.subject, self.licence_update_reply_name)
-        self.assertEqual(dto.receiver, "spire")
+        self.assertEqual(dto.receiver, SPIRE_ADDRESS)
         self.assertEqual(dto.body, None)
         self.assertEqual(dto.raw_data, None)
 
