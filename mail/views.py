@@ -33,7 +33,15 @@ class ReadMailView(APIView):
         # pop3_conn = server.connect_to_pop3()
         # last_msg_dto = MailboxService().read_last_message(pop3_conn)
         # pop3_conn.quit()
-        logging.info({"logging test": "successful"})
+
+        data = {
+            "message": "liteolog hmrc",
+            "corrID": request.correlation,
+            "method-name": "ReadMailView",
+            "log-info": "successful",
+        }
+        logging.info(data)
+
         return JsonResponse(status=HTTP_200_OK, data="some data", safe=False)
 
 
