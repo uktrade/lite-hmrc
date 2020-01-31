@@ -1,7 +1,6 @@
 from django.http import JsonResponse
 from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
-import random
 
 from mail.builders import build_mail_message_dto
 from mail.services.helpers import build_email_message
