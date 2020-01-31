@@ -52,8 +52,6 @@ class RouteMailView(APIView):
 
 class SeedMail(APIView):
     def get(self, request):
-        number1 = random.randint(1, 99999)
-        number2 = (number1 % 100000) + 10
         if LicenceUpdate.objects.count() == 0:
             mail = Mail.objects.create(
                 edi_data="blank",
@@ -64,8 +62,8 @@ class SeedMail(APIView):
 
             license = LicenceUpdate.objects.create(
                 mail=mail,
-                hmrc_run_number=number1,
-                source_run_number=number2,
+                hmrc_run_number=12,
+                source_run_number=11,
                 source=SourceEnum.SPIRE,
             )
 
