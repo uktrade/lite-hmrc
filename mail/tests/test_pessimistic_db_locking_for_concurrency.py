@@ -1,10 +1,5 @@
 import threading
-from time import sleep
 
-from django.test import tag
-from django.utils import timezone
-
-from conf import settings
 from conf.settings import SYSTEM_INSTANCE_UUID
 from conf.test_client import LiteHMRCTestClient
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
