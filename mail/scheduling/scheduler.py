@@ -1,8 +1,6 @@
 import threading
 import time
-from datetime import datetime
 
-from mail.models import Mail
 from mail.routing_controller import check_and_route_emails
 
 
