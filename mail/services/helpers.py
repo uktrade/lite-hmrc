@@ -122,7 +122,7 @@ def convert_source_to_sender(source):
 def process_attachment(attachment):
     try:
         edi_filename = attachment[0]
-        edi_data = str(attachment[1])
+        edi_data = attachment[1]
         return edi_filename, edi_data
     except IndexError:
         return "", ""
@@ -165,10 +165,10 @@ def get_extract_type(subject: str):
     return None
 
 
-def get_licence_ids(file_body):
+def get_licence_ids(file_body, base64_encoded=False):
     ids = []
-    file_body = str(base64.b64decode(file_body))
-    lines = file_body.split("\n")
+    _file_body = str(base64.b64decode(file_body)) if base64_encoded else file_body
+    lines = _file_body.split("\n")
     for line in lines:
         if ("licenceUsage" in line or "licenceUpdate" in line) and "end" not in line:
             ids.append(line.split("\\")[4])
@@ -215,3 +215,11 @@ def get_all_serializer_errors_for_mail(data):
         if not serializer.is_valid():
             errors += str(serializer.errors)
     return errors
+
+def read_file(file_path:str):
+    _file = open(file_path, "rb")
+    return _file.read()
+
+def decode(data, char_set:str):
+    return data.decode(char_set) if isinstance(data, bytes) else data
+
