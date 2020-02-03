@@ -20,11 +20,9 @@ def scheduled_job():
 def some_fn(x):
     while x:
         check_and_route_emails()
-        print(datetime.now())
-        print(Mail.objects.all())
         # if condition:
         #     return
         # else:
         #     time.sleep(interval in seconds)
         # return 0
-        time.sleep(5)
+        time.sleep(15)

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from mail.enums import ReceptionStatusEnum
@@ -12,16 +13,19 @@ from mail.services.helpers import build_email_message
 
 
 def check_and_route_emails():
-    print("checking mail at ", datetime.now(), "...")
+    logging.info({"message": "liteolog hmrc", "status": "checking for emails"})
     last_message_dto = read_last_message()
     mail = serialize_email_message(last_message_dto)
     if not mail:
-        print("Bad mail")
+        logging.info(
+            {"message": "liteolog hmrc", "info": "last email considered invalid"}
+        )
         return 1
     return collect_and_send(mail)
 
 
 def collect_and_send(mail):
+    logging.info({"message": "liteolog hmrc", "info": "mail id being sent"})
     message_to_send_dto = to_email_message_dto_from(mail)
     is_locked_by_me = lock_db_for_sending_transaction(mail)
     if not is_locked_by_me:

@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 import string
 from email.message import Message
 from email.mime.application import MIMEApplication
@@ -64,6 +65,8 @@ def get_attachment(msg: Message):
             name = part.get_filename()
             data = part.get_payload(decode=True)
             return name, data
+    logging.info({"message": "liteolog hmrc", "attachment": "No attachment found"})
+    return None, None
 
 
 def to_mail_message_dto(mail_data: object):
