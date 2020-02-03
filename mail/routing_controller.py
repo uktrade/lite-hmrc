@@ -1,10 +1,9 @@
 import logging
-from datetime import datetime
 
 from mail.enums import ReceptionStatusEnum
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
-from mail.services.data_processing import (
+from mail.services.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
     lock_db_for_sending_transaction,

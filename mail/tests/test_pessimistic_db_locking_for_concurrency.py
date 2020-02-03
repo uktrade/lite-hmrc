@@ -9,7 +9,7 @@ from conf.settings import SYSTEM_INSTANCE_UUID
 from conf.test_client import LiteHMRCTestClient
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.models import Mail
-from mail.services.data_processing import lock_db_for_sending_transaction
+from mail.services.data_processors import lock_db_for_sending_transaction
 
 
 class PessimisticDbLockingTests(LiteHMRCTestClient):

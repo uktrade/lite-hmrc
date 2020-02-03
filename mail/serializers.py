@@ -108,3 +108,8 @@ class InvalidEmailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mail
         fields = "__all__"
+
+    def create(self, validated_data):
+        mail, _ = Mail.objects.get_or_create(**validated_data)
+
+        return mail
