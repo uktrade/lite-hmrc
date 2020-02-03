@@ -1,3 +1,4 @@
+from django.test import tag
 from parameterized import parameterized
 
 from conf.settings import SPIRE_ADDRESS

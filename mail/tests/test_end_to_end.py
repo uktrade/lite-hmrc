@@ -1,12 +1,13 @@
+from random import randint
 from time import sleep
 
 from django.test import tag
 
+from conf.settings import SPIRE_ADDRESS
 from conf.test_client import LiteHMRCTestClient
 from mail.builders import build_text_message
-from mail.enums import ReceptionStatusEnum
 from mail.models import Mail
-from mail.scheduling.scheduler import scheduled_job
+from mail.routing_controller import check_and_route_emails
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
 
@@ -17,22 +18,36 @@ class EndToEndTest(LiteHMRCTestClient):
 
     @tag("end-to-end")
     def test_end_to_end_success_licence_update(self):
+        file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902" + str(
+            randint(1, 99999)
+        )
+
         # send email to lite from spire
         service = MailboxService()
         service.send_email(
             MailServer().connect_to_smtp(),
             build_text_message(
-                "test@spire.com",
+                SPIRE_ADDRESS,
                 "username@example.com",
-                [
-                    self.licence_usage_file_name,
-                    self.licence_usage_file_body.decode("ascii", "replace"),
-                ],
+                [file_name, self.licence_usage_file_body.decode("ascii", "replace"),],
             ),
         )
-        scheduled_job()
-        sleep(6)
+        sleep(5)
+        check_and_route_emails()
+        sleep(5)
+        server = MailServer()
+        pop3_conn = server.connect_to_pop3()
+        last_msg_dto = MailboxService().read_last_message(pop3_conn)
+        pop3_conn.quit()
 
-        in_mail = Mail.objects.get(edi_filename=self.licence_usage_file_name)
+        print("\n\n\n")
+        print(last_msg_dto)
 
-        self.assertEqual(in_mail.status, ReceptionStatusEnum.REPLY_PENDING)
+        in_mail = Mail.objects.get(edi_filename=file_name)
+        self.assertEqual(
+            in_mail.edi_filename, file_name,
+        )
+
+        print("\n\n\n")
+        print(in_mail.__dict__)
+        print("\n\n\n")

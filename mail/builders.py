@@ -1,6 +1,7 @@
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
 from mail.dtos import EmailMessageDto
 
 
@@ -31,7 +32,7 @@ def _read_file(file_path):
 
 
 def build_mail_message_dto(sender, receiver, file_path):
-    _subject = "ILBDOTI_test_CHIEF_usageData_1010_201901130300"
+    _subject = "ILBDOTI_test_CHIEF_licenceUpdate_1010_201901130300"
     return EmailMessageDto(
         run_number=1010,
         sender=sender,

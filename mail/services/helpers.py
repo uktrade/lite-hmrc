@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 import string
 from email.message import Message
 from email.mime.application import MIMEApplication
@@ -64,6 +65,8 @@ def get_attachment(msg: Message):
             name = part.get_filename()
             data = part.get_payload(decode=True)
             return name, data
+    logging.info({"message": "liteolog hmrc", "attachment": "No attachment found"})
+    return None, None
 
 
 def to_mail_message_dto(mail_data: object):
@@ -97,6 +100,8 @@ def get_runnumber(patterned_text: str):
 
 
 def convert_sender_to_source(sender: string):
+    if "<" in sender and ">" in sender:
+        sender = sender.split("<")[1].split(">")[0]
     if sender == SPIRE_ADDRESS:
         return "SPIRE"
     elif sender == "test@lite.com":
@@ -179,10 +184,8 @@ def build_email_message(email_message_dto: EmailMessageDto):
 
     multipart_msg = MIMEMultipart()
     multipart_msg["From"] = email_message_dto.sender
-    # multipart_msg["To"] = email_message_dto.receiver
-    multipart_msg["To"] = "someaddress@gmail.com"
+    multipart_msg["To"] = email_message_dto.receiver
     multipart_msg["Subject"] = email_message_dto.subject
-    # todo: confirm if we need to set `body`
     payload = MIMEApplication(email_message_dto.attachment[1])
     payload.set_payload(email_message_dto.attachment[1])
     payload.add_header(

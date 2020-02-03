@@ -1,16 +1,16 @@
+import logging
 import threading
 
 from django.db import transaction
 from django.utils import timezone
 
-from conf.constants import VALID_SENDERS
 from conf.settings import (
     SYSTEM_INSTANCE_UUID,
     LOCK_INTERVAL,
     HMRC_ADDRESS,
     SPIRE_ADDRESS,
 )
-from mail.dtos import EmailMessageDto
+from mail.dtos import EmailMessageDto, dto_to_logs
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.models import LicenceUpdate, Mail, UsageUpdate
 from mail.serializers import (
@@ -19,13 +19,15 @@ from mail.serializers import (
     UpdateResponseSerializer,
     UsageUpdateMailSerializer,
 )
+from mail.services.data_converters import (
+    convert_data_for_licence_update,
+    convert_data_for_licence_update_reply,
+    convert_data_for_usage_update,
+    convert_data_for_usage_update_reply,
+)
 from mail.services.helpers import (
-    convert_sender_to_source,
     process_attachment,
-    new_hmrc_run_number,
-    new_spire_run_number,
     get_extract_type,
-    get_licence_ids,
     get_all_serializer_errors_for_mail,
 )
 
@@ -43,7 +45,13 @@ def serialize_email_message(dto: EmailMessageDto):
         return mail
     else:
         data["serializer_errors"] = get_all_serializer_errors_for_mail(data)
-
+        logging.info(
+            {
+                "message": "liteolog hmrc",
+                "info": "email considered invalid",
+                "serializer_errors": data["serializer_errors"],
+            }
+        )
         serializer = InvalidEmailSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -51,67 +59,43 @@ def serialize_email_message(dto: EmailMessageDto):
 
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
+    logging.info(dto_to_logs(dto))
     serializer = None
     mail = None
     extract_type = get_extract_type(dto.subject)
-
-    print(extract_type)
+    logging.info({"email type identified as": extract_type})
 
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
-        data = {"licence_update": {}}
-        data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
-        data["licence_update"]["source"] = convert_sender_to_source(dto.sender)
-        data["licence_update"]["hmrc_run_number"] = (
-            new_hmrc_run_number(int(dto.run_number))
-            if convert_sender_to_source(dto.sender) in VALID_SENDERS
-            else None
-        )
-        data["licence_update"]["source_run_number"] = dto.run_number
-        data["licence_update"]["license_ids"] = get_licence_ids(data["edi_data"])
+        data = convert_data_for_licence_update(dto)
         serializer = LicenceUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.LICENCE_REPLY:
-        print("i am a licence reply")
-        data = {}
+        data, mail = convert_data_for_licence_update_reply(dto)
         serializer = UpdateResponseSerializer
-        data["response_filename"], data["response_data"] = process_attachment(
-            dto.attachment
-        )
-        data["status"] = ReceptionStatusEnum.REPLY_RECEIVED
-        mail = Mail.objects.get(
-            status=ReceptionStatusEnum.REPLY_PENDING,
-            extract_type=ExtractTypeEnum.LICENCE_UPDATE,
-        )
 
     elif extract_type == ExtractTypeEnum.USAGE_UPDATE:
-        data = {"usage_update": {}}
-        data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
-        data["usage_update"]["spire_run_number"] = (
-            new_spire_run_number(int(dto.run_number))
-            if convert_sender_to_source(dto.sender) in VALID_SENDERS
-            else None
-        )
-        data["usage_update"]["hmrc_run_number"] = dto.run_number
-        data["usage_update"]["license_ids"] = get_licence_ids(data["edi_data"])
+        data = convert_data_for_usage_update(dto)
         serializer = UsageUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
-        data = {}
+        data, mail = convert_data_for_usage_update_reply(dto)
         serializer = UpdateResponseSerializer
-        data["response_filename"], data["response_data"] = process_attachment(
-            dto.attachment
-        )
-        data["status"] = ReceptionStatusEnum.REPLY_RECEIVED
-        mail = Mail.objects.get(
-            status=ReceptionStatusEnum.REPLY_PENDING,
-            extract_type=ExtractTypeEnum.USAGE_UPDATE,
-        )
+
     else:
         data = {}
         data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
 
     data["extract_type"] = extract_type
     data["raw_data"] = dto.raw_data
+    logging.info(
+        {
+            "exiting function with": {
+                "data": data,
+                "serializer": serializer,
+                "instance": mail,
+            }
+        }
+    )
     return data, serializer, mail
 
 

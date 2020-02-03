@@ -3,7 +3,7 @@ from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate, UsageUpdate
-from mail.services.data_processing import (
+from mail.services.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
 )
