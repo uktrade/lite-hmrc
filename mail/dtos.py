@@ -35,7 +35,6 @@ def to_json(email_message_dto: EmailMessageDto):
     return json.dumps(_dict)
 
 
-
 def dto_to_logs(email_message_dto: EmailMessageDto):
     return {
         "dto": {
@@ -51,6 +50,7 @@ def dto_to_logs(email_message_dto: EmailMessageDto):
             "raw_data": str(email_message_dto.raw_data[0:50]),
         }
     }
+
 
 def _jsonize(data):
     return data.decode("ASCII") if isinstance(data, bytes) else data

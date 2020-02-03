@@ -3,7 +3,6 @@ from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
 from mail.builders import build_mail_message_dto
-from mail.services.helpers import build_email_message
 from mail.dtos import to_json
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate
