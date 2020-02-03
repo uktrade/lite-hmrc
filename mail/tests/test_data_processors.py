@@ -60,7 +60,7 @@ class TestModels(LiteHMRCTestClient):
         self.assertEqual(usage_update.spire_run_number, email_message_dto.run_number)
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
-    def test_bad_email_sent_to_issues_log(self):
+    def test_bad_email_errors_logged(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
             sender="test@example.com",

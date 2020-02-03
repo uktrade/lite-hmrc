@@ -62,7 +62,6 @@ def serialize_email_message(dto: EmailMessageDto):
 
 @lite_logging_decorator
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
-    logging.info(dto_to_logs(dto))
     serializer = None
     mail = None
     extract_type = get_extract_type(dto.subject)
