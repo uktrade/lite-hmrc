@@ -8,8 +8,7 @@ EmailMessageDto = namedtuple(
 
 
 def to_json(email_message_dto: EmailMessageDto):
-    """
-    Converts EmailMessageDto to JSON str
+    """Converts EmailMessageDto to JSON str
     :param email_message_dto: an object of type EmailMessageDto
     :return: str in JSON format
     """
@@ -21,7 +20,6 @@ def to_json(email_message_dto: EmailMessageDto):
     ):
         raise TypeError("Invalid attribute 'attachment'")
 
-    email_message_dto.attachment[1] = email_message_dto.attachment[1].decode("ascii")
     _dict = {
         "run_number": email_message_dto.run_number,
         "sender": email_message_dto.sender,
@@ -30,11 +28,12 @@ def to_json(email_message_dto: EmailMessageDto):
         "body": email_message_dto.body,
         "attachment": {
             "name": email_message_dto.attachment[0],
-            "data": email_message_dto.attachment[1],
+            "data": _jsonize(email_message_dto.attachment[1]),
         },
-        "raw_data": str(email_message_dto.raw_data),
+        "raw_data": _jsonize(email_message_dto.raw_data[1]),
     }
     return json.dumps(_dict)
+
 
 
 def dto_to_logs(email_message_dto: EmailMessageDto):
@@ -52,3 +51,6 @@ def dto_to_logs(email_message_dto: EmailMessageDto):
             "raw_data": str(email_message_dto.raw_data[0:50]),
         }
     }
+
+def _jsonize(data):
+    return data.decode("ASCII") if isinstance(data, bytes) else data

@@ -3,6 +3,7 @@ from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
 from mail.builders import build_mail_message_dto
+from mail.services.helpers import build_email_message
 from mail.dtos import to_json
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate
@@ -21,9 +22,9 @@ class SendMailView(APIView):
             smtp_conn,
             build_email_message(
                 build_mail_message_dto(
-                    sender="stobartcc@gmail.com",
+                    sender="anemail@gmail.com",
                     receiver="username@example.com",
-                    file_path="absolute_path_to_file",
+                    file_path="/app/Pipfile",
                 )
             ),
         )
@@ -54,14 +55,14 @@ class SeedMail(APIView):
             mail = Mail.objects.create(
                 edi_data="blank",
                 extract_type=ExtractTypeEnum.USAGE_UPDATE,
-                status=ReceptionStatusEnum.PENDING,
+                status=ReceptionStatusEnum.ACCEPTED,
                 edi_filename="blank",
             )
 
             license = LicenceUpdate.objects.create(
                 mail=mail,
-                hmrc_run_number=20,
-                source_run_number=17,
+                hmrc_run_number=12,
+                source_run_number=11,
                 source=SourceEnum.SPIRE,
             )
 
@@ -79,3 +80,8 @@ class MailList(APIView):
         last_msg_dto = MailboxService().read_last_message(pop3_conn)
         pop3_conn.quit()
         return JsonResponse(status=HTTP_200_OK, data=to_json(last_msg_dto), safe=False)
+
+
+class TurnOnScheduler(APIView):
+    def get(self, request):
+        pass
