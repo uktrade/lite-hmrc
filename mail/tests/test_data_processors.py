@@ -7,7 +7,6 @@ from mail.services.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
 )
-from mail.services.helpers import convert_source_to_sender
 
 
 class TestModels(LiteHMRCTestClient):
