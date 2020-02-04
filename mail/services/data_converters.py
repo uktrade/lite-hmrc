@@ -8,8 +8,10 @@ from mail.services.helpers import (
     get_licence_ids,
     new_spire_run_number,
 )
+from mail.services.logging_decorator import lite_logging_decorator
 
 
+@lite_logging_decorator
 def convert_data_for_licence_update(dto):
     data = {"licence_update": {}}
     data["licence_update"]["source"] = convert_sender_to_source(dto.sender)
@@ -24,6 +26,7 @@ def convert_data_for_licence_update(dto):
     return data
 
 
+@lite_logging_decorator
 def convert_data_for_licence_update_reply(dto):
     data = {}
     data["response_filename"], data["response_data"] = process_attachment(
@@ -37,6 +40,7 @@ def convert_data_for_licence_update_reply(dto):
     return data, mail
 
 
+@lite_logging_decorator
 def convert_data_for_usage_update(dto):
     data = {"usage_update": {}}
     data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
@@ -50,6 +54,7 @@ def convert_data_for_usage_update(dto):
     return data
 
 
+@lite_logging_decorator
 def convert_data_for_usage_update_reply(dto):
     data = {}
     data["response_filename"], data["response_data"] = process_attachment(

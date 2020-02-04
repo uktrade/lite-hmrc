@@ -10,6 +10,7 @@ from mail.routing_controller import check_and_route_emails
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
 from mail.services.helpers import build_email_message
+from mail.services.logging_decorator import lite_logging_decorator
 
 
 class SendMailView(APIView):
@@ -32,6 +33,7 @@ class SendMailView(APIView):
 
 
 class ReadMailView(APIView):
+    @lite_logging_decorator
     def get(self, request):
         server = MailServer()
         pop3_conn = server.connect_to_pop3()

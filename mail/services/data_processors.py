@@ -30,8 +30,10 @@ from mail.services.helpers import (
     get_extract_type,
     get_all_serializer_errors_for_mail,
 )
+from mail.services.logging_decorator import lite_logging_decorator
 
 
+@lite_logging_decorator
 def serialize_email_message(dto: EmailMessageDto):
     data, serializer, instance = convert_dto_data_for_serialization(dto)
 
@@ -58,6 +60,7 @@ def serialize_email_message(dto: EmailMessageDto):
     return False
 
 
+@lite_logging_decorator
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
     logging.info(dto_to_logs(dto))
     serializer = None
