@@ -9,8 +9,10 @@ from mail.services.data_processors import (
     lock_db_for_sending_transaction,
 )
 from mail.services.helpers import build_email_message
+from mail.services.logging_decorator import lite_logging_decorator
 
 
+@lite_logging_decorator
 def check_and_route_emails():
     logging.info({"message": "liteolog hmrc", "status": "checking for emails"})
     last_message_dto = read_last_message()
@@ -23,6 +25,7 @@ def check_and_route_emails():
     return collect_and_send(mail)
 
 
+@lite_logging_decorator
 def collect_and_send(mail):
     logging.info({"message": "liteolog hmrc", "info": "mail id being sent"})
     message_to_send_dto = to_email_message_dto_from(mail)
@@ -34,6 +37,7 @@ def collect_and_send(mail):
     return response_message
 
 
+@lite_logging_decorator
 def send(mail, message_to_send_dto):
     server = MailServer()
     mail_box_service = MailboxService()
@@ -49,6 +53,7 @@ def send(mail, message_to_send_dto):
     server.quit_smtp_connection()
 
 
+@lite_logging_decorator
 def read_last_message():
     server = MailServer()
     mail_box_service = MailboxService()
