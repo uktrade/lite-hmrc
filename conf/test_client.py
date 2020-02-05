@@ -14,9 +14,13 @@ class LiteHMRCTestClient(testcases.TestCase):
         if settings.TIME_TESTS:
             self.tick = datetime.now()
         self.licence_usage_file_name = "ILBDOTI_live_CHIEF_usageData_9876_201901130300"
-        self.licence_usage_file_body = decode(read_file('mail/tests/files/license_usage_file'), 'ASCII')
+        self.licence_usage_file_body = decode(
+            read_file("mail/tests/files/license_usage_file"), "ASCII"
+        )
 
-        self.licence_update_reply_body = decode(read_file('mail/tests/files/license_update_reply_file'), 'ASCII')
+        self.licence_update_reply_body = decode(
+            read_file("mail/tests/files/license_update_reply_file"), "ASCII"
+        )
         self.licence_update_reply_name = (
             "ILBDOTI_live_CHIEF_licenceReply_49543_201902080025"
         )

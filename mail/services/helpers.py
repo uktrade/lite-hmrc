@@ -224,3 +224,17 @@ def read_file(file_path: str):
 
 def decode(data, char_set: str):
     return data.decode(char_set) if isinstance(data, bytes) else data
+
+
+def id_owner(licence_id: str):
+    def get_licence_id_number(licence_id):
+        try:
+            return int(licence_id.split("/")[1])
+        except ValueError:
+            licence_id = licence_id[:-1]
+            return get_licence_id_number(licence_id)
+
+    if get_licence_id_number(licence_id) > 50000:
+        return SourceEnum.LITE
+    else:
+        return SourceEnum.SPIRE
