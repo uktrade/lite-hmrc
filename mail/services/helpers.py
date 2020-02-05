@@ -216,10 +216,11 @@ def get_all_serializer_errors_for_mail(data):
             errors += str(serializer.errors)
     return errors
 
-def read_file(file_path:str):
+
+def read_file(file_path: str):
     _file = open(file_path, "rb")
     return _file.read()
 
-def decode(data, char_set:str):
-    return data.decode(char_set) if isinstance(data, bytes) else data
 
+def decode(data, char_set: str):
+    return data.decode(char_set) if isinstance(data, bytes) else data
