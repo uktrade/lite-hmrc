@@ -7,7 +7,6 @@ from mail.services.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
 )
-from mail.services.helpers import convert_source_to_sender
 
 
 class TestModels(LiteHMRCTestClient):
@@ -36,7 +35,7 @@ class TestModels(LiteHMRCTestClient):
             hmrc_run_number=self.hmrc_run_number,
         )
 
-    def test_email_processed_successfully(self):
+    def test_mail_data_serialized_successfully(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number,
             sender=HMRC_ADDRESS,
@@ -61,7 +60,7 @@ class TestModels(LiteHMRCTestClient):
         self.assertEqual(usage_update.spire_run_number, email_message_dto.run_number)
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
-    def test_bad_email_sent_to_issues_log(self):
+    def test_bad_mail_data_serialized_successfully(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
             sender="test@example.com",

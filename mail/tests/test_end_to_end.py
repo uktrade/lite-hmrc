@@ -20,7 +20,7 @@ class EndToEndTest(LiteHMRCTestClient):
     def test_end_to_end_success_licence_update(self):
         file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902" + str(
             randint(1, 99999)
-        )
+        )  # noqa
 
         # send email to lite from spire
         service = MailboxService()
