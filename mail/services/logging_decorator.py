@@ -36,7 +36,7 @@ def lite_logging_decorator(func):
                     "function_end": func.__name__,
                     "function_qualified_name": func.__qualname__,
                     "function_position": "exception thrown",
-                    "exception": e,
+                    "exception": str(e),
                 }
             )
 
