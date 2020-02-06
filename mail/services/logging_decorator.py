@@ -39,5 +39,6 @@ def lite_logging_decorator(func):
                     "exception": str(e),
                 }
             )
+            raise e
 
     return wrapper
