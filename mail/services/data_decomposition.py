@@ -35,7 +35,7 @@ def split_edi_data_by_id(usage_data):
     return spire_blocks, lite_blocks
 
 
-def build_spire_file_from_data_blocks(data_blocks: list):
+def build_edifact_file_from_data_blocks(data_blocks: list):
     spire_file = ""
     i = 1
     for block in data_blocks:

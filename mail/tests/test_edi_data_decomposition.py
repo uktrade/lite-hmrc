@@ -6,7 +6,7 @@ from conf.test_client import LiteHMRCTestClient
 from mail.enums import SourceEnum
 from mail.services.data_decomposition import (
     split_edi_data_by_id,
-    build_spire_file_from_data_blocks,
+    build_edifact_file_from_data_blocks,
     build_json_payload_from_data_blocks,
 )
 from mail.services.helpers import id_owner
@@ -232,7 +232,7 @@ class FileDeconstruction(LiteHMRCTestClient):
 
     @tag("1882", "rebuilding-file-spire")
     def test_spire_file_rebuild(self):
-        spire_file = build_spire_file_from_data_blocks(self.spire_data_expected)
+        spire_file = build_edifact_file_from_data_blocks(self.spire_data_expected)
 
         self.assertEqual(spire_file, self.expected_file_for_spire)
 
