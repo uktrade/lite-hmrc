@@ -47,9 +47,9 @@ def build_spire_file_from_data_blocks(data_blocks: list):
     return spire_file
 
 
-# Keys for good payload
+# Keys for good payload (usage line)
 # """
-# [line number (some int)] = -1
+# [line number (some int)] = -1 <- inaccessible
 # [line start (always usage)] = 0
 # [usage_type] = 1
 # [declaration-ucr] = 2
