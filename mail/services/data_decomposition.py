@@ -48,33 +48,33 @@ def build_spire_file_from_data_blocks(data_blocks: list):
 
 
 # Keys for good payload
-"""
-[line number (some int)] = -1
-[line start (always usage)] = 0
-[usage_type] = 1
-[declaration-ucr] = 2
-[declaration-part-number] = 3
-[control-date] = 4
-[quantity-used] = 5
-[value-used] = 6
-[trader-id / TURN] = 7
-[claim-ref] = 8
-[origin-country (not used for exports)] = 9
-[customs-mic] = 10
-[customs-message] = 11
-[consignee-name] = 12
-"""
+# """
+# [line number (some int)] = -1
+# [line start (always usage)] = 0
+# [usage_type] = 1
+# [declaration-ucr] = 2
+# [declaration-part-number] = 3
+# [control-date] = 4
+# [quantity-used] = 5
+# [value-used] = 6
+# [trader-id / TURN] = 7
+# [claim-ref] = 8
+# [origin-country (not used for exports)] = 9
+# [customs-mic] = 10
+# [customs-message] = 11
+# [consignee-name] = 12
+# """
 # Sample block
-"""
-[
-    "licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\",
-    "line\\1\\0\\0\\",
-    "usage\\O\\9GB000004988000-4750437112345\\G\\20190111\\0\\0\\\\000104\\\\\\\\",
-    "usage\\O\\9GB000004988000-4750436912345\\Y\\20190111\\0\\0\\\\000104\\\\\\\\",
-    "end\\line\\4",
-    "end\\licenceUsage\\6",
-]
-"""
+# """
+# [
+#     "licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\",
+#     "line\\1\\0\\0\\",
+#     "usage\\O\\9GB000004988000-4750437112345\\G\\20190111\\0\\0\\\\000104\\\\\\\\",
+#     "usage\\O\\9GB000004988000-4750436912345\\Y\\20190111\\0\\0\\\\000104\\\\\\\\",
+#     "end\\line\\4",
+#     "end\\licenceUsage\\6",
+# ]
+# """
 
 
 def build_json_payload_from_data_blocks(data_blocks: list):
