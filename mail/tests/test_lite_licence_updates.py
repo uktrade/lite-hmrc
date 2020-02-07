@@ -74,7 +74,7 @@ class LITELicenceTests(LiteHMRCTestClient):
                         }
                     ],
                     "restrictions": "Provisos may apply please see licence",
-                    "commodites": [
+                    "commodities": [
                         {
                             "commodity": "123878",
                             "supplement_1": None,
