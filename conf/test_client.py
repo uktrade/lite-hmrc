@@ -1,11 +1,13 @@
 from datetime import datetime
 from django.test import testcases
+from rest_framework.test import APIClient
+
 from conf import colours, settings
 from mail.services.helpers import read_file
 from mail.services.helpers import decode
 
 
-class LiteHMRCTestClient(testcases.TestCase):
+class LiteHMRCTestClient(testcases.TestCase, APIClient):
     @classmethod
     def tearDownClass(cls):
         pass
