@@ -60,7 +60,6 @@ def serialize_email_message(dto: EmailMessageDto):
     return False
 
 
-@lite_logging_decorator
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
     serializer = None
     mail = None

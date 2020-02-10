@@ -56,7 +56,7 @@ class SeedMail(APIView):
             mail = Mail.objects.create(
                 edi_data="blank",
                 extract_type=ExtractTypeEnum.USAGE_UPDATE,
-                status=ReceptionStatusEnum.ACCEPTED,
+                status=ReceptionStatusEnum.PENDING,
                 edi_filename="blank",
             )
 

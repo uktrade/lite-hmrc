@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import string
+from django.utils.encoding import smart_text
 from email.message import Message
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -14,6 +15,8 @@ from mail.models import LicenceUpdate, UsageUpdate
 from mail.serializers import LicenceUpdateMailSerializer, UsageUpdateMailSerializer
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream"]
+
+logger = logging.getLogger("helpers")
 
 
 def guess_charset(msg: Message):
@@ -124,7 +127,10 @@ def process_attachment(attachment):
         edi_filename = attachment[0]
         edi_data = attachment[1]
         return edi_filename, edi_data
-    except IndexError:
+    except IndexError as ie:
+        logger.warn(
+            "Caught IndexError while processing attachment object. \n{}".format(str(ie))
+        )
         return "", ""
 
 
@@ -165,13 +171,14 @@ def get_extract_type(subject: str):
     return None
 
 
-def get_licence_ids(file_body, base64_encoded=False):
+def get_licence_ids(file_body, b64_encoded=False):
     ids = []
-    _file_body = str(base64.b64decode(file_body)) if base64_encoded else file_body
+    _file_body = to_smart_text(b64decode(file_body)) if b64_encoded else file_body
     lines = _file_body.split("\n")
     for line in lines:
         if ("licenceUsage" in line or "licenceUpdate" in line) and "end" not in line:
             ids.append(line.split("\\")[4])
+    logger.debug("license ids in the file: {}".format(*ids))
     return json.dumps(ids)
 
 
@@ -224,3 +231,15 @@ def read_file(file_path: str):
 
 def decode(data, char_set: str):
     return data.decode(char_set) if isinstance(data, bytes) else data
+
+
+def to_smart_text(byte_str: str, encoding="ASCII"):
+    return smart_text(byte_str, encoding=encoding)
+
+
+def b64encode(byte_text: str):
+    return base64.b64encode(byte_text)
+
+
+def b64decode(b64encoded_text: str):
+    return base64.b64decode(b64encoded_text)

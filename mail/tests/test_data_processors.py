@@ -1,3 +1,4 @@
+import logging
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
 from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
@@ -8,8 +9,10 @@ from mail.services.data_processors import (
     to_email_message_dto_from,
 )
 
+logger = logging.getLogger("TestDataProcessors")
 
-class TestModels(LiteHMRCTestClient):
+
+class TestDataProcessors(LiteHMRCTestClient):
     def setUp(self):
         super().setUp()
 
@@ -122,7 +125,7 @@ class TestModels(LiteHMRCTestClient):
 
         serialize_email_message(email_message_dto)
         self.mail.refresh_from_db()
-
+        logger.debug("resp data: {}".format(self.mail.response_data))
         self.assertIn(
             self.mail.response_data, self.licence_update_reply_body,
         )
