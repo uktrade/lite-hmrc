@@ -33,7 +33,6 @@ class SendMailView(APIView):
 
 
 class ReadMailView(APIView):
-    @lite_logging_decorator
     def get(self, request):
         server = MailServer()
         pop3_conn = server.connect_to_pop3()

@@ -32,7 +32,7 @@ def lite_log(logger: logging.Logger, log_level: int, logging_msg: str):
 
 def lite_logging_decorator(func):
     """A decorator produces logging data before and after an annotated function is called.
-       *Note*: this is only for functions do not return objects
+       *Note*: this is only for functions do not return any values
      """
 
     def wrapper(*args, **kwargs):
@@ -64,6 +64,9 @@ def lite_logging_decorator(func):
             raise e
 
     return wrapper
+
+
+# todo create a new logging decorator which can annotate these functions return values, though not sure we need it
 
 
 def log_debug(logger, msg):
