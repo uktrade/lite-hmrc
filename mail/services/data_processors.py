@@ -10,7 +10,7 @@ from conf.settings import (
     HMRC_ADDRESS,
     SPIRE_ADDRESS,
 )
-from mail.dtos import EmailMessageDto, dto_to_logs
+from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.models import LicenceUpdate, Mail, UsageUpdate
 from mail.serializers import (
@@ -30,30 +30,39 @@ from mail.services.helpers import (
     get_extract_type,
     get_all_serializer_errors_for_mail,
 )
-from mail.services.logging_decorator import lite_logging_decorator
+from mail.services.logging_decorator import lite_logging_decorator, lite_log
+from mail.services.MailboxService import MailboxService
+
+logger = logging.getLogger(__name__)
 
 
-@lite_logging_decorator
-def serialize_email_message(dto: EmailMessageDto):
+def serialize_email_message(dto: EmailMessageDto) -> Mail:
     data, serializer, instance = convert_dto_data_for_serialization(dto)
 
     partial = True if instance else False
     if serializer:
         serializer = serializer(instance=instance, data=data, partial=partial)
-    if serializer and serializer.is_valid():
-        mail = serializer.save()
+        lite_log(
+            logger,
+            logging.DEBUG,
+            "{} initialized with partial [{}]".format(
+                type(serializer).__name__, partial
+            ),
+        )
+    if serializer.is_valid():
+        _mail = serializer.save()
+        lite_log(logger, logging.DEBUG, "{} saved".format(type(serializer).__name__))
         if data["extract_type"] in ["licence_reply", "usage_reply"]:
-            mail.set_response_date_time()
-        return mail
+            _mail.set_response_date_time()
+            lite_log(
+                logger,
+                logging.DEBUG,
+                "mail response datetime updated. status {}".format(_mail.status),
+            )
+        return _mail
     else:
         data["serializer_errors"] = get_all_serializer_errors_for_mail(data)
-        logging.info(
-            {
-                "message": "liteolog hmrc",
-                "info": "email considered invalid",
-                "serializer_errors": data["serializer_errors"],
-            }
-        )
+        lite_log(logger, logging.ERROR, data["serializer_errors"])
         serializer = InvalidEmailSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -64,14 +73,17 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
     serializer = None
     mail = None
     extract_type = get_extract_type(dto.subject)
-    logging.info({"email type identified as": extract_type})
+    lite_log(logger, logging.INFO, "email type identified as {}".format(extract_type))
 
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         data = convert_data_for_licence_update(dto)
         serializer = LicenceUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.LICENCE_REPLY:
-        data, mail = convert_data_for_licence_update_reply(dto)
+        data = convert_data_for_licence_update_reply(dto)
+        mail = MailboxService.find_mail_of(
+            ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING
+        )
         serializer = UpdateResponseSerializer
 
     elif extract_type == ExtractTypeEnum.USAGE_UPDATE:
@@ -79,33 +91,40 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
         serializer = UsageUpdateMailSerializer
 
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
-        data, mail = convert_data_for_usage_update_reply(dto)
+        data = convert_data_for_usage_update_reply(dto)
+        mail = MailboxService.find_mail_of(
+            ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING
+        )
         serializer = UpdateResponseSerializer
 
     else:
-        data = {}
-        data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
+        # todo raise ValueError here
+        data = {
+            "edi_filename": process_attachment(dto.attachment)[0],
+            "edi_data": process_attachment(dto.attachment)[1],
+        }
 
     data["extract_type"] = extract_type
     data["raw_data"] = dto.raw_data
-    logging.info(
-        {
-            "exiting function with": {
-                "data": data,
-                "serializer": serializer,
-                "instance": mail,
-            }
-        }
+    logger.debug(
+        _check_and_return_msg({"data": data, "serializer": serializer, "mail": mail,})
     )
     return data, serializer, mail
 
 
 def to_email_message_dto_from(mail):
+    _check_and_raise_error(mail, "Invalid mail object received!")
     if mail.status == ReceptionStatusEnum.PENDING:
-        print("pending")
+        logger.debug(
+            "building request mail message dto from [{}] mail status".format(
+                mail.status
+            )
+        )
         return _build_request_mail_message_dto(mail)
     elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
-        print("reply pending")
+        logger.debug(
+            "building reply mail message dto from [{}] mail status".format(mail.status)
+        )
         return _build_reply_mail_message_dto(mail)
     raise ValueError("Invalid mail status: {}".format(mail.status))
 
@@ -165,7 +184,7 @@ def _build_reply_mail_message_dto(mail):
         run_number = licence_update.source_run_number
     elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
         print("usage reply")
-        update = LicenceUpdate.objects.get(mail=mail)
+        update = UsageUpdate.objects.get(mail=mail)
         run_number = update.spire_run_number
         sender = SPIRE_ADDRESS
         receiver = HMRC_ADDRESS
@@ -179,3 +198,18 @@ def _build_reply_mail_message_dto(mail):
         attachment=[mail.edi_filename, mail.edi_data],
         raw_data=None,
     )
+
+
+def _check_and_raise_error(obj, error_msg: str):
+    if obj is None:
+        raise ValueError(error_msg)
+
+
+def _check_and_return_msg(dict_obj):
+    output = ""
+    for obj_name, obj in dict_obj.items():
+        if obj:
+            output += "{} is set. ".format(obj_name)
+        else:
+            output += "{} is None. ".format(obj_name)
+    return output

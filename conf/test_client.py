@@ -6,24 +6,29 @@ from mail.services.helpers import (
     to_smart_text,
 )
 import logging
+from mail.services.logging_decorator import lite_log
 
-logger = logging.getLogger('LiteHMRCTestClient')
+logger = logging.getLogger(__name__)
+
 
 class LiteHMRCTestClient(testcases.TestCase):
+    TEST_RUN_NUMBER = '49543'
+
     @classmethod
     def tearDownClass(cls):
-        pass
+        lite_log(logger, logging.DEBUG, "tearDownClass() is called")
+        super().tearDownClass()
 
     def setUp(self):
         if settings.TIME_TESTS:
             self.tick = datetime.now()
+
         self.licence_usage_file_name = "ILBDOTI_live_CHIEF_usageData_9876_201901130300"
         self.licence_usage_file_body = to_smart_text(
             read_file('mail/tests/files/license_usage_file')
         )
-        # print("licence_usage_file_body: \n{}".format(self.licence_usage_file_body))
         self.licence_update_reply_body = to_smart_text(read_file('mail/tests/files/license_update_reply_file'))
-        logger.debug("licence_update_reply_body: \n{}".format(self.licence_update_reply_body))
+        lite_log(logger, logging.DEBUG, "licence_update_reply_body: \n{}".format(self.licence_update_reply_body))
         self.licence_update_reply_name = (
             "ILBDOTI_live_CHIEF_licenceReply_49543_201902080025"
         )

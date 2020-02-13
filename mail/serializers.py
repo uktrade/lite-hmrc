@@ -1,6 +1,9 @@
 from rest_framework import serializers
-
 from mail.models import Mail, LicenceUpdate, UsageUpdate
+from mail.services.logging_decorator import lite_log
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LicenceUpdateSerializer(serializers.ModelSerializer):
@@ -41,6 +44,7 @@ class LicenceUpdateMailSerializer(serializers.ModelSerializer):
         if licence_update_serializer.is_valid():
             licence_update_serializer.save()
         else:
+            lite_log(logger, logging.ERROR, licence_update_serializer.errors)
             raise serializers.ValidationError(licence_update_serializer.errors)
 
         return mail
@@ -53,7 +57,7 @@ class UpdateResponseSerializer(serializers.ModelSerializer):
 
         def update(self, instance, validated_data):
             instance.status = validated_data["status"]
-            instance.response_file = validated_data["response_file"]
+            instance.response_file = validated_data["response_filename"]
             instance.response_data = validated_data["response_data"]
 
             instance.save()

@@ -29,7 +29,7 @@ class EndToEndTest(LiteHMRCTestClient):
             build_text_message(
                 SPIRE_ADDRESS,
                 "username@example.com",
-                [file_name, self.licence_usage_file_body.decode("ascii", "replace"),],
+                [file_name, self.licence_usage_file_body],
             ),
         )
         sleep(5)

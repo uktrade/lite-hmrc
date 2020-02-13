@@ -1,4 +1,5 @@
 import logging
+from django.test import tag
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
 from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
@@ -12,6 +13,7 @@ from mail.services.data_processors import (
 logger = logging.getLogger("TestDataProcessors")
 
 
+@tag("skip")
 class TestDataProcessors(LiteHMRCTestClient):
     def setUp(self):
         super().setUp()

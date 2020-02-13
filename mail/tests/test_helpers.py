@@ -1,6 +1,5 @@
-from django.test import tag
 from parameterized import parameterized
-
+import logging
 from conf.settings import SPIRE_ADDRESS
 from conf.test_client import LiteHMRCTestClient
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
@@ -11,6 +10,9 @@ from mail.services.helpers import (
     new_hmrc_run_number,
     get_runnumber,
 )
+from mail.services.logging_decorator import lite_log
+
+logger = logging.getLogger(__name__)
 
 
 class HelpersTests(LiteHMRCTestClient):
@@ -72,3 +74,15 @@ class HelpersTests(LiteHMRCTestClient):
             status=ReceptionStatusEnum.PENDING,
             edi_filename="blank",
         )
+
+
+def print_all_mails():
+    all_mails = Mail.objects.all()
+    for mail in all_mails:
+        rec = {
+            "id": mail.id,
+            "edi_filename": mail.edi_filename,
+            "status": mail.status,
+            "extract_type": mail.extract_type,
+        }
+        lite_log(logger, logging.DEBUG, "Mail -> {}".format(rec))
