@@ -141,22 +141,20 @@ LOGGING = {
             "format": "(asctime)(levelname)(message)(filename)(lineno)(threadName)(name)(thread)(created)(process)(processName)(relativeCreated)(module)(funcName)(levelno)(msecs)(pathname)",  # noqa
         },
         "simple": {
-            "format": '%(asctime)s - %(name)s:%(lineno)s - %(funcName)s - %(message)s'
-        }
+            "format": "%(asctime)s - %(name)s:%(lineno)s - %(funcName)s - %(message)s"
+        },
     },
-    "handlers": {
-        "console": {"class": "logging.StreamHandler", "formatter": "simple"}
-    },
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "simple"}},
     "loggers": {
         "": {
             "handlers": ["console"],
             "level": env("LOG_LEVEL").upper(),
-            'propagate': True,
+            "propagate": True,
         },
         "django.db.models.BaseManager": {
-           "handlers": ["console"],
-           "level": 'DEBUG',
-           'propagate': True,
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
         },
     },
 }

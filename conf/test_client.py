@@ -2,9 +2,7 @@ from datetime import datetime
 from django.test import testcases
 from conf import colours, settings
 from mail.services.helpers import read_file
-from mail.services.helpers import (
-    to_smart_text,
-)
+from mail.services.helpers import to_smart_text
 import logging
 from mail.services.logging_decorator import lite_log
 
@@ -12,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class LiteHMRCTestClient(testcases.TestCase):
-    TEST_RUN_NUMBER = '49543'
+    TEST_RUN_NUMBER = "49543"
 
     @classmethod
     def tearDownClass(cls):
@@ -25,10 +23,16 @@ class LiteHMRCTestClient(testcases.TestCase):
 
         self.licence_usage_file_name = "ILBDOTI_live_CHIEF_usageData_9876_201901130300"
         self.licence_usage_file_body = to_smart_text(
-            read_file('mail/tests/files/license_usage_file')
+            read_file("mail/tests/files/license_usage_file")
         )
-        self.licence_update_reply_body = to_smart_text(read_file('mail/tests/files/license_update_reply_file'))
-        lite_log(logger, logging.DEBUG, "licence_update_reply_body: \n{}".format(self.licence_update_reply_body))
+        self.licence_update_reply_body = to_smart_text(
+            read_file("mail/tests/files/license_update_reply_file")
+        )
+        lite_log(
+            logger,
+            logging.DEBUG,
+            "licence_update_reply_body: \n{}".format(self.licence_update_reply_body),
+        )
         self.licence_update_reply_name = (
             "ILBDOTI_live_CHIEF_licenceReply_49543_201902080025"
         )
