@@ -1,10 +1,12 @@
 import logging
 
 
-def lite_logging(logging_data: dict = None, keys_to_exclude: list = []):
+def lite_logging(logging_data: dict, keys_to_exclude: list = None):
+    if keys_to_exclude is None:
+        keys_to_exclude = []
     data = {"message": "liteolog hmrc"}
     for key in logging_data:
-        if key not in keys_to_exclude:
+        if len(keys_to_exclude) == 0 or key not in keys_to_exclude:
             value = logging_data[key]
             if len(value) > 100:
                 value = value[0:100]

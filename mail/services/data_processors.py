@@ -30,7 +30,7 @@ from mail.services.helpers import (
     get_extract_type,
     get_all_serializer_errors_for_mail,
 )
-from mail.services.logging_decorator import lite_logging_decorator, lite_log
+from mail.services.logging_decorator import lite_log
 from mail.services.MailboxService import MailboxService
 
 logger = logging.getLogger(__name__)
@@ -116,14 +116,12 @@ def to_email_message_dto_from(mail):
     _check_and_raise_error(mail, "Invalid mail object received!")
     if mail.status == ReceptionStatusEnum.PENDING:
         logger.debug(
-            "building request mail message dto from [{}] mail status".format(
-                mail.status
-            )
+            f"building request mail message dto from [{mail.status}] mail status"
         )
         return _build_request_mail_message_dto(mail)
     elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
         logger.debug(
-            "building reply mail message dto from [{}] mail status".format(mail.status)
+            f"building reply mail message dto from [{mail.status}] mail status"
         )
         return _build_reply_mail_message_dto(mail)
     raise ValueError("Invalid mail status: {}".format(mail.status))

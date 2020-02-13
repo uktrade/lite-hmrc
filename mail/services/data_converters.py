@@ -1,7 +1,6 @@
 import logging
 from conf.constants import VALID_SENDERS
-from mail.enums import ReceptionStatusEnum, ExtractTypeEnum
-from mail.models import Mail
+from mail.enums import ReceptionStatusEnum
 from mail.services.helpers import (
     convert_sender_to_source,
     new_hmrc_run_number,

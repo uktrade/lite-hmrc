@@ -129,7 +129,7 @@ def process_attachment(attachment):
         return edi_filename, edi_data
     except IndexError as ie:
         logger.warn(
-            "Caught IndexError while processing attachment object. \n{}".format(str(ie))
+            f"Caught IndexError while processing attachment object. \n{str(ie)}"
         )
         return "", ""
 
@@ -178,7 +178,7 @@ def get_licence_ids(file_body, b64_encoded=False):
     for line in lines:
         if ("licenceUsage" in line or "licenceUpdate" in line) and "end" not in line:
             ids.append(line.split("\\")[4])
-    logger.debug("license ids in the file: {}".format(*ids))
+    logger.debug(f"license ids in the file: {ids}")
     return json.dumps(ids)
 
 
