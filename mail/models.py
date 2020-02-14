@@ -35,6 +35,7 @@ class Mail(models.Model):
     response_filename = models.TextField(blank=True, null=True)
     response_data = models.TextField(blank=True, null=True)
     response_date = models.DateTimeField(blank=True, null=True)
+    response_subject = models.TextField(null=True, blank=True)
 
     raw_data = models.TextField()
 

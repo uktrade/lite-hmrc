@@ -79,7 +79,7 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
     serializer = None
     mail = None
     extract_type = get_extract_type(dto.subject)
-    lite_log(logger, logging.INFO, f"email type identified as {extract_type}")
+    lite_log(logger, logging.INFO, f"Email type identified as {extract_type}")
 
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         data = convert_data_for_licence_update(dto)
@@ -121,6 +121,11 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
 
 def to_email_message_dto_from(mail):
     _check_and_raise_error(mail, "Invalid mail object received!")
+    lite_log(
+        logger,
+        logging.DEBUG,
+        f"converting mail with status {mail.status} extract_type [{mail.extract_type}] to EmailMessageDto",
+    )
     if mail.status == ReceptionStatusEnum.PENDING:
         logger.debug(
             f"building request mail message dto from [{mail.status}] mail status"
@@ -131,7 +136,9 @@ def to_email_message_dto_from(mail):
             f"building reply mail message dto from [{mail.status}] mail status"
         )
         return _build_reply_mail_message_dto(mail)
-    raise ValueError("Invalid mail status: {}".format(mail.status))
+    raise ValueError(
+        f"Unexpected mail with status: {mail.status} while converting to EmailMessageDto"
+    )
 
 
 def lock_db_for_sending_transaction(mail):
@@ -159,11 +166,9 @@ def _build_request_mail_message_dto(mail):
     sender = SPIRE_ADDRESS
     receiver = HMRC_ADDRESS
     if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
-        print("licence update")
         licence_update = LicenceUpdate.objects.get(mail=mail)
         run_number = licence_update.hmrc_run_number
     elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
-        print("usage update")
         update = UsageUpdate.objects.get(mail=mail)
         run_number = update.spire_run_number
         sender = HMRC_ADDRESS
@@ -184,13 +189,11 @@ def _build_reply_mail_message_dto(mail):
     sender = HMRC_ADDRESS
     receiver = SPIRE_ADDRESS
     if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
-        print("licence reply")
         licence_update = LicenceUpdate.objects.get(mail=mail)
         run_number = licence_update.source_run_number
     elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
-        print("usage reply")
-        update = UsageUpdate.objects.get(mail=mail)
-        run_number = update.spire_run_number
+        usage_update = UsageUpdate.objects.get(mail=mail)
+        run_number = usage_update.spire_run_number
         sender = SPIRE_ADDRESS
         receiver = HMRC_ADDRESS
 
@@ -198,9 +201,9 @@ def _build_reply_mail_message_dto(mail):
         run_number=run_number,
         sender=sender,
         receiver=receiver,
-        subject=mail.edi_filename,
+        subject=mail.response_subject,
         body=None,
-        attachment=[mail.edi_filename, mail.edi_data],
+        attachment=[mail.response_filename, mail.response_data],
         raw_data=None,
     )
 

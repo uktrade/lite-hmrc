@@ -49,6 +49,10 @@ class LiteHMRCTestClient(testcases.TestCase):
             "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902080025"
         )
 
+        self.licence_update_file_body = to_smart_text(
+            read_file("mail/tests/files/license_update_file")
+        )
+
     def tearDown(self):
         """
         Print output time for tests if settings.TIME_TESTS is set to True

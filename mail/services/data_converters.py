@@ -8,8 +8,9 @@ from mail.services.helpers import (
     get_licence_ids,
     new_spire_run_number,
 )
+from mail.services.logging_decorator import lite_log
 
-logger = logging.getLogger("data_converters")
+logger = logging.getLogger(__name__)
 
 
 def convert_data_for_licence_update(dto):
@@ -28,20 +29,14 @@ def convert_data_for_licence_update(dto):
 
 
 def convert_data_for_licence_update_reply(dto):
+    file_name, file_data = process_attachment(dto.attachment)
     data = {
-        "response_filename": process_attachment(dto.attachment)[0],
-        "response_data": process_attachment(dto.attachment)[1],
+        "response_filename": file_name,
+        "response_data": file_data,
         "status": ReceptionStatusEnum.REPLY_RECEIVED,
+        "response_subject": file_name,
     }
-    # mail = Mail.objects.get(
-    #     status=ReceptionStatusEnum.REPLY_PENDING,
-    #     extract_type=ExtractTypeEnum.LICENCE_UPDATE,
-    # )
-    # if mail:
-    #     logger.debug("Found mail in {} of extract type {} ".
-    #                  format(ReceptionStatusEnum.REPLY_PENDING, ExtractTypeEnum.LICENCE_UPDATE))
-    # else:
-    #     logger.warn("Can not find any mail in REPLY_PENDING of extract type LICENCE_UPDATE")
+    _print_nice(data)
     return data
 
 
@@ -62,10 +57,12 @@ def convert_data_for_usage_update(dto):
 
 
 def convert_data_for_usage_update_reply(dto):
+    file_name, file_data = process_attachment(dto.attachment)
     data = {
-        "response_filename": process_attachment(dto.attachment)[0],
-        "response_data": process_attachment(dto.attachment)[1],
+        "response_filename": file_name,
+        "response_data": file_data,
         "status": ReceptionStatusEnum.REPLY_RECEIVED,
+        "response_subject": file_name,
     }
     return data
 
@@ -74,3 +71,4 @@ def _print_nice(data):
     output = ""
     for k, v in data.items():
         output += "{}->[{}] ".format(k, str(v))
+    lite_log(logger, logging.DEBUG, f"{output}")
