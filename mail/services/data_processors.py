@@ -49,7 +49,7 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail:
                 type(serializer).__name__, partial
             ),
         )
-    if serializer.is_valid():
+    if serializer and serializer.is_valid():
         _mail = serializer.save()
         lite_log(logger, logging.DEBUG, "{} saved".format(type(serializer).__name__))
         if data["extract_type"] in ["licence_reply", "usage_reply"]:
@@ -70,10 +70,16 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail:
 
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto):
+    """
+    Based on given mail message dto, prepare data for mail serialization.
+    :param dto: the dto to be used
+    :return: new dto for different extract type; corresponding Serializer;
+            and existing mail if extract type is of reply. Both serializer and mail could be None
+    """
     serializer = None
     mail = None
     extract_type = get_extract_type(dto.subject)
-    lite_log(logger, logging.INFO, "email type identified as {}".format(extract_type))
+    lite_log(logger, logging.INFO, f"email type identified as {extract_type}")
 
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         data = convert_data_for_licence_update(dto)
@@ -99,9 +105,10 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
 
     else:
         # todo raise ValueError here
+        filename, filedata = process_attachment(dto.attachment)
         data = {
-            "edi_filename": process_attachment(dto.attachment)[0],
-            "edi_data": process_attachment(dto.attachment)[1],
+            "edi_filename": filename,
+            "edi_data": filedata,
         }
 
     data["extract_type"] = extract_type

@@ -1,5 +1,4 @@
 import logging
-from django.test import tag
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
 from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
@@ -9,11 +8,12 @@ from mail.services.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
 )
+from mail.services.logging_decorator import lite_log
+from mail.tests.test_helpers import print_all_mails
 
-logger = logging.getLogger("TestDataProcessors")
+logger = logging.getLogger(__name__)
 
 
-@tag("skip")
 class TestDataProcessors(LiteHMRCTestClient):
     def setUp(self):
         super().setUp()
@@ -78,7 +78,11 @@ class TestDataProcessors(LiteHMRCTestClient):
 
         initial_issues_count = Mail.objects.invalid().count()
         initial_license_update_count = Mail.objects.valid().count()
-
+        lite_log(
+            logger,
+            logging.DEBUG,
+            f"ini: issue count={initial_issues_count}, license update count {initial_license_update_count}",
+        )
         serialize_email_message(email_message_dto)
 
         self.assertEqual(Mail.objects.invalid().count(), initial_issues_count + 1)
@@ -137,14 +141,14 @@ class TestDataProcessors(LiteHMRCTestClient):
     def test_usage_update_reply_is_saved(self):
         self.mail.status = ReceptionStatusEnum.REPLY_PENDING
         self.mail.save()
-
+        print_all_mails()
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
             sender=SPIRE_ADDRESS,
             receiver=HMRC_ADDRESS,
             body="body",
             subject=self.usage_update_reply_name,
-            attachment=[self.usage_update_reply_name, self.licence_update_reply_body,],
+            attachment=[self.usage_update_reply_name, self.usage_update_reply_body,],
             raw_data="qwerty",
         )
 
@@ -155,5 +159,5 @@ class TestDataProcessors(LiteHMRCTestClient):
         self.assertIsNotNone(self.mail.response_date)
 
         self.assertIn(
-            self.mail.response_data, self.licence_update_reply_body,
+            self.mail.response_data, self.usage_update_reply_body,
         )

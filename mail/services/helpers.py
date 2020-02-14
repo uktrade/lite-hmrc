@@ -13,10 +13,11 @@ from mail.dtos import EmailMessageDto
 from mail.enums import SourceEnum, ExtractTypeEnum
 from mail.models import LicenceUpdate, UsageUpdate
 from mail.serializers import LicenceUpdateMailSerializer, UsageUpdateMailSerializer
+from mail.services.logging_decorator import lite_log
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream"]
 
-logger = logging.getLogger("helpers")
+logger = logging.getLogger(__name__)
 
 
 def guess_charset(msg: Message):
@@ -123,15 +124,14 @@ def convert_source_to_sender(source):
 
 
 def process_attachment(attachment):
-    try:
-        edi_filename = attachment[0]
-        edi_data = attachment[1]
-        return edi_filename, edi_data
-    except IndexError as ie:
-        logger.warn(
-            f"Caught IndexError while processing attachment object. \n{str(ie)}"
-        )
-        return "", ""
+    file_name = attachment[0] if attachment and attachment[0] is not None else ""
+    file_data = attachment[1] if attachment and attachment[1] is not None else ""
+    lite_log(
+        logger,
+        logging.DEBUG,
+        f"attachment filename: {file_name}, filedata:\n{file_data}",
+    )
+    return file_name, file_data
 
 
 def new_hmrc_run_number(dto_run_number: int):

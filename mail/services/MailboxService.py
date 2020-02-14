@@ -1,10 +1,6 @@
 import logging
 from mail.services.helpers import to_mail_message_dto
 from mail.services.logging_decorator import lite_log
-from mail.enums import (
-    ReceptionStatusEnum,
-    ExtractTypeEnum,
-)
 from mail.models import Mail
 
 logger = logging.getLogger(__name__)
@@ -24,10 +20,7 @@ class MailboxService(object):
     @staticmethod
     def find_mail_of(extract_type: str, reception_status: str):
         try:
-            mail = Mail.objects.get(
-                status=ReceptionStatusEnum.REPLY_PENDING,
-                extract_type=ExtractTypeEnum.LICENCE_UPDATE,
-            )
+            mail = Mail.objects.get(status=reception_status, extract_type=extract_type,)
             lite_log(
                 logger,
                 logging.DEBUG,
