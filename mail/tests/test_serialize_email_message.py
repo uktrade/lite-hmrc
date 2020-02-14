@@ -15,7 +15,6 @@ class SerializeEmailMessageTests(DataProcessorsTestBase):
     def setUp(self):
         super().setUp()
 
-    @tag("failed")
     def test_successful_usage_update_inbound_dto_converts_to_outbound_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
@@ -55,7 +54,6 @@ class SerializeEmailMessageTests(DataProcessorsTestBase):
 
         self.assertEqual(serialize_email_message(email_message_dto), False)
 
-    @tag("skip")
     def test_licence_update_dto_to_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
