@@ -31,7 +31,7 @@ class HealthCheckView(APIView):
 
 def _build_pingdom_dto(request, start_time) -> PingdomHealthDto:
     # todo check request headers, dependencies such as Database connection, Mail server connection, etc
-    duration_ms = (time.time() - start_time)*1000
+    duration_ms = (time.time() - start_time) * 1000
     resp_time = "{:.3f}".format(duration_ms)
     return PingdomHealthDto(status="OK", response_time=f"{resp_time}")
 
