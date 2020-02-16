@@ -1,6 +1,11 @@
 from django.urls import path
 
-from mail.views import SendMailView, ReadMailView, SeedMail, RouteMailView
+from mail.views.test_endpoints import (
+    SendMailView,
+    ReadMailView,
+    SeedMail,
+    RouteMailView,
+)
 
 app_name = "mail"
 

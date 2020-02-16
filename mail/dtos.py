@@ -6,6 +6,16 @@ EmailMessageDto = namedtuple(
     "run_number, sender, receiver, subject, body, attachment, raw_data",
 )
 
+PingdomHealthDto = namedtuple("PingdomHealthDto", "status, response_time")
+
+
+def jsonize_pingdom_dto(pingdom_dto: PingdomHealthDto):
+    _dict = {
+        "status": pingdom_dto.status,
+        "response_time": pingdom_dto.response_time,
+    }
+    return json.dumps(_dict)
+
 
 def to_json(email_message_dto: EmailMessageDto):
     """Converts EmailMessageDto to JSON str
