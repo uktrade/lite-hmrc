@@ -37,7 +37,18 @@ logger = logging.getLogger(__name__)
 
 
 def serialize_email_message(dto: EmailMessageDto) -> Mail:
-    data, serializer, instance = convert_dto_data_for_serialization(dto)
+    extract_type = get_extract_type(dto.subject)
+    lite_log(logger, logging.INFO, f"Email type identified as {extract_type}")
+
+    data = convert_dto_data_for_serialization(dto, extract_type)
+    serializer = get_serializer_for_dto(extract_type)
+    instance = get_mail_instance(extract_type)
+
+    logger.debug(
+        _check_and_return_msg(
+            {"data": data, "serializer": serializer, "mail": instance,}
+        )
+    )
 
     partial = True if instance else False
     if serializer:
@@ -66,43 +77,25 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail:
         serializer = InvalidEmailSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
+
     return False
 
 
-def convert_dto_data_for_serialization(dto: EmailMessageDto):
+def convert_dto_data_for_serialization(dto: EmailMessageDto, extract_type):
     """
     Based on given mail message dto, prepare data for mail serialization.
     :param dto: the dto to be used
     :return: new dto for different extract type; corresponding Serializer;
             and existing mail if extract type is of reply. Both serializer and mail could be None
     """
-    serializer = None
-    mail = None
-    extract_type = get_extract_type(dto.subject)
-    lite_log(logger, logging.INFO, f"Email type identified as {extract_type}")
-
     if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         data = convert_data_for_licence_update(dto)
-        serializer = LicenceUpdateMailSerializer
-
     elif extract_type == ExtractTypeEnum.LICENCE_REPLY:
         data = convert_data_for_licence_update_reply(dto)
-        mail = MailboxService.find_mail_of(
-            ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING
-        )
-        serializer = UpdateResponseSerializer
-
     elif extract_type == ExtractTypeEnum.USAGE_UPDATE:
         data = convert_data_for_usage_update(dto)
-        serializer = UsageUpdateMailSerializer
-
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
         data = convert_data_for_usage_update_reply(dto)
-        mail = MailboxService.find_mail_of(
-            ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING
-        )
-        serializer = UpdateResponseSerializer
-
     else:
         # todo raise ValueError here
         filename, filedata = process_attachment(dto.attachment)
@@ -113,10 +106,35 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto):
 
     data["extract_type"] = extract_type
     data["raw_data"] = dto.raw_data
-    logger.debug(
-        _check_and_return_msg({"data": data, "serializer": serializer, "mail": mail,})
-    )
-    return data, serializer, mail
+
+    return data
+
+
+def get_serializer_for_dto(extract_type):
+    serializer = None
+    if extract_type == ExtractTypeEnum.LICENCE_UPDATE:
+        serializer = LicenceUpdateMailSerializer
+    elif extract_type == ExtractTypeEnum.LICENCE_REPLY:
+        serializer = UpdateResponseSerializer
+    elif extract_type == ExtractTypeEnum.USAGE_UPDATE:
+        serializer = UsageUpdateMailSerializer
+    elif extract_type == ExtractTypeEnum.USAGE_REPLY:
+        serializer = UpdateResponseSerializer
+
+    return serializer
+
+
+def get_mail_instance(extract_type):
+    mail = None
+    if extract_type == ExtractTypeEnum.LICENCE_REPLY:
+        mail = MailboxService.find_mail_of(
+            ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING
+        )
+    elif extract_type == ExtractTypeEnum.USAGE_REPLY:
+        mail = MailboxService.find_mail_of(
+            ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING
+        )
+    return mail
 
 
 def to_email_message_dto_from(mail):
