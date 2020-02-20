@@ -1,4 +1,3 @@
-import datetime
 import logging
 import threading
 import time
@@ -20,6 +19,6 @@ def polling_job(x):
 
         try:
             check_and_route_emails()
-        except Exception as e:
+        except Exception as e:  # noqa
             logging.info({"message": "liteolog hmrc", "status": "Exception: " + str(e)})
         time.sleep(POLL_INTERVAL)
