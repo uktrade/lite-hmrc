@@ -103,6 +103,8 @@ TIME_TESTS = env("TIME_TESTS")
 
 LOCK_INTERVAL = float(env("LOCK_INTERVAL"))
 
+POLL_INTERVAL = env("POLL_INTERVAL")
+
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
