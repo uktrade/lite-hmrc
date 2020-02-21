@@ -21,4 +21,4 @@ def polling_job(x):
             check_and_route_emails()
         except Exception as e:  # noqa
             logging.info({"message": "liteolog hmrc", "status": "Exception: " + str(e)})
-        time.sleep(POLL_INTERVAL)
+        time.sleep(int(POLL_INTERVAL))
