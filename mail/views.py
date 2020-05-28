@@ -1,4 +1,5 @@
 from django.http import JsonResponse
+from rest_framework import status
 from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
@@ -90,4 +91,12 @@ class TurnOnScheduler(APIView):
 class UpdateLicence(APIView):
     def post(self, request):
         print(request.data)
-        return JsonResponse(status=HTTP_200_OK, data={"data": request.data})
+
+        data = request.data
+
+        if not data:
+            return JsonResponse(
+                status=status.HTTP_400_BAD_REQUEST, data={"errors": "no data"}
+            )
+
+        return JsonResponse(status=status.HTTP_200_OK, data={"data": request.data})
