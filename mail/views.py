@@ -85,3 +85,9 @@ class MailList(APIView):
 class TurnOnScheduler(APIView):
     def get(self, request):
         pass
+
+
+class UpdateLicence(APIView):
+    def post(self, request):
+        print(request.data)
+        return JsonResponse(status=HTTP_200_OK, data={"data": request.data})
