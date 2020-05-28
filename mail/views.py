@@ -37,6 +37,7 @@ class ReadMailView(APIView):
         pop3_conn = server.connect_to_pop3()
         last_msg_dto = MailboxService().read_last_message(pop3_conn)
         pop3_conn.quit()
+        print(last_msg_dto)
         return JsonResponse(status=HTTP_200_OK, data=last_msg_dto, safe=False)
 
 

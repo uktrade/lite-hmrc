@@ -15,7 +15,7 @@ from mail.models import LicenceUpdate, UsageUpdate
 from mail.serializers import LicenceUpdateMailSerializer, UsageUpdateMailSerializer
 from mail.services.logging_decorator import lite_log
 
-ALLOWED_FILE_MIMETYPES = ["application/octet-stream"]
+ALLOWED_FILE_MIMETYPES = ["application/octet-stream", "text/plain"]
 
 logger = logging.getLogger(__name__)
 
@@ -66,9 +66,13 @@ def get_attachment(msg: Message):
     """
     for part in msg.walk():
         if part.get_content_type() in ALLOWED_FILE_MIMETYPES:
+            print("\n\n\n", part, "\n")
             name = part.get_filename()
             data = part.get_payload(decode=True)
-            return name, data
+            print(name, data)
+            print("\n\n\n")
+            if name:
+                return name, data
     logging.info({"message": "liteolog hmrc", "attachment": "No attachment found"})
     return None, None
 
@@ -97,10 +101,13 @@ def get_runnumber(patterned_text: str):
     if patterned_text is None:
         raise ValueError("None received")
 
-    split_str = patterned_text.split("_", 6)
-    if len(split_str) != 6 or not split_str[4].isdigit():
-        raise ValueError("Can not find valid run-number")
-    return patterned_text.split("_", 6)[4]
+    try:
+        split_str = patterned_text.split("_", 6)
+        if len(split_str) != 6 or not split_str[4].isdigit():
+            raise ValueError("Can not find valid run-number")
+        return patterned_text.split("_", 6)[4]
+    except Exception:
+        return 10000
 
 
 def convert_sender_to_source(sender: string):
