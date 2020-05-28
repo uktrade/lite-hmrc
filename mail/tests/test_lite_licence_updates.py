@@ -28,6 +28,7 @@ class LITELicenceTests(LiteHMRCTestClient):
         #   Licence line(s)
         #   127[line-number]\line[record-type]\1[line-number]\[commodity]\[supplement-1]\[supplement-2]\[commodity-group]\Open Licence goods - see actual licence for information[goods-description]\[something]
         #   67[line-number]\line[record-type]\4[line-number]\[commodity]\[supplement-1]\[supplement-2]\[commodity-group]\[goods-description]\[controlled-by]\[quantity-unit]\[quantity-issued]\[sub-period]
+        #                                                                                       8\line\2\\\\\SARBE6-406GBE611 ASSEMBLY\Q\\30\\5
         # Trailer
         # 7[line-number]\end[record-type]\licence[start-record-type]\6[record-count]
 

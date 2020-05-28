@@ -17,7 +17,7 @@ def json_to_edifact(payload: dict):
         edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
             i,
             34567,
-            licence.get("action"),
+            licence.get("action"),  # We figure this out
             licence.get("licence_reference"),
             licence.get("licence_type"),
             licence.get("usage"),
@@ -53,7 +53,7 @@ def json_to_edifact(payload: dict):
                 )
         for trader in licence_payload.get("foreign_traders"):
             i += 1
-            edifact_file += "\n{}\\foreignTrader\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
+            edifact_file += "\n{}\\foreignTrader\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
                 i,
                 trader.get("name"),
                 trader.get("address_1"),
@@ -62,6 +62,7 @@ def json_to_edifact(payload: dict):
                 trader.get("address_4"),
                 trader.get("address_5"),
                 trader.get("postcode"),
+                trader.get("country"),
             )
         i += 1
         edifact_file += "\n{}\\restrictions\\{}".format(
@@ -71,6 +72,10 @@ def json_to_edifact(payload: dict):
         for commodity in licence_payload.get("commodities"):
             i += 1
             edifact_file += "\n{}\\line"
+            commodity.get("description")
+            commodity.get("quantity")
+            commodity.get("unit")  # convert from something
+            commodity.get("id")  # map this to line number in licence id: <licence_id>
 
     print("\n\n\n\n")
     print(edifact_file)
