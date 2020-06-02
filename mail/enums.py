@@ -67,3 +67,15 @@ class SourceEnum:
     @classmethod
     def as_list(cls):
         return [{"status": choice[0]} for choice in cls.choices]
+
+
+class UnitMapping:
+    number = 30
+
+    choices = [(number, "NAR")]
+
+    @classmethod
+    def convert(cls, unit):
+        for k, v in cls.choices:
+            if unit == v:
+                return k

@@ -118,3 +118,69 @@ class InvalidEmailSerializer(serializers.ModelSerializer):
         mail, _ = Mail.objects.get_or_create(**validated_data)
 
         return mail
+
+
+class GoodSerializer(serializers.Serializer):
+    description = serializers.CharField(max_length=2000, allow_blank=False)
+    quantity = serializers.DecimalField(decimal_places=3, max_digits=13)
+    unit = serializers.CharField()
+
+    class Meta:
+        fields = ("description", "quantity", "unit")
+
+
+class TraderSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=80, allow_blank=False)
+    address_1 = serializers.CharField(max_length=35)
+    address_2 = serializers.CharField(max_length=35, required=False)
+    address_3 = serializers.CharField(max_length=35, required=False)
+    address_4 = serializers.CharField(max_length=35, required=False)
+    address_5 = serializers.CharField(max_length=35, required=False)
+    postcode = serializers.CharField()
+
+    class Meta:
+        fields = (
+            "name",
+            "address_1",
+            "address_2",
+            "address_3",
+            "address_4",
+            "address_5",
+            "postcode",
+        )
+
+
+class ForiegnTraderSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=80, allow_blank=False)
+    address_1 = serializers.CharField(max_length=35)
+    address_2 = serializers.CharField(max_length=35, required=False)
+    address_3 = serializers.CharField(max_length=35, required=False)
+    address_4 = serializers.CharField(max_length=35, required=False)
+    address_5 = serializers.CharField(max_length=35, required=False)
+    postcode = serializers.CharField()
+    country = serializers.CharField(allow_blank=False)
+
+    class Meta:
+        fields = (
+            "name",
+            "address_1",
+            "address_2",
+            "address_3",
+            "address_4",
+            "address_5",
+            "postcode",
+            "country",
+        )
+
+
+class LiteLicenceUpdateSerializer(serializers.Serializer):
+    id = serializers.CharField(max_length=35)
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
+
+    class Meta:
+        fields = (
+            "id",
+            "start_date",
+            "end_date",
+        )

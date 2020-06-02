@@ -8,6 +8,11 @@ from mail.dtos import to_json
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate
 from mail.routing_controller import check_and_route_emails
+from mail.serializers import (
+    LiteLicenceUpdateSerializer,
+    ForiegnTraderSerializer,
+    GoodSerializer,
+)
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
 from mail.services.helpers import build_email_message
@@ -91,12 +96,49 @@ class TurnOnScheduler(APIView):
 class UpdateLicence(APIView):
     def post(self, request):
         print(request.data)
-
         data = request.data
+        print(type(data))
 
-        if not data:
+        errors = []
+
+        serializer = LiteLicenceUpdateSerializer(data=data)
+
+        if not serializer.is_valid():
+            errors += serializer.errors
+
+        print(errors)
+
+        application_data = data.get("application")
+
+        org = application_data.get("end_user")
+        print("end_user", org)
+        serializer = ForiegnTraderSerializer(data=org)
+        if not serializer.is_valid():
+            errors.append({"end_user_errors": serializer.errors})
+
+        print(errors)
+
+        goods = application_data.get("goods")
+        print(goods)
+        g = 0
+        for good in goods:
+            print(good)
+            serializer = GoodSerializer(data=good)
+            if not serializer.is_valid():
+                errors.append({"good_errors": serializer.errors})
+            else:
+                data = self._map_unit(data, g)
+            g += 1
+
+        print(errors)
+
+        if errors:
             return JsonResponse(
-                status=status.HTTP_400_BAD_REQUEST, data={"errors": "no data"}
+                status=status.HTTP_400_BAD_REQUEST, data={"errors": errors}
             )
+        return JsonResponse(status=status.HTTP_200_OK, data={"data": serializer.data})
 
-        return JsonResponse(status=status.HTTP_200_OK, data={"data": request.data})
+    def _map_unit(self, data: dict, g: int):
+        unit = data["application"]["goods"][g]["unit"]
+        data["application"]["goods"][g]["unit"] = convert(unit)
+        return data
