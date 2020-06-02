@@ -117,19 +117,16 @@ class UpdateLicence(APIView):
             if not serializer.is_valid():
                 errors.append({"end_user_errors": serializer.errors})
 
-            # print(errors)
-
-            goods = data.get("goods")
-            # print(goods)
-            g = 0
-            for good in goods:
-                # print(good)
-                serializer = GoodSerializer(data=good)
-                if not serializer.is_valid():
-                    errors.append({"good_errors": serializer.errors})
-                else:
-                    data = map_unit(data, g)
-                g += 1
+            if data.get("goods") and data.get("type") == "siel":
+                goods = data.get("goods")
+                g = 0
+                for good in goods:
+                    serializer = GoodSerializer(data=good)
+                    if not serializer.is_valid():
+                        errors.append({"good_errors": serializer.errors})
+                    else:
+                        data = map_unit(data, g)
+                    g += 1
 
             if not errors:
                 return JsonResponse(

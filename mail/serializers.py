@@ -181,6 +181,7 @@ class LiteLicenceUpdateSerializer(serializers.Serializer):
     class Meta:
         fields = (
             "id",
+            "type",
             "start_date",
             "end_date",
         )

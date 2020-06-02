@@ -22,27 +22,39 @@ class UpdateLicenceEndpointTests(LiteHMRCTestClient):
     @tag("2448", "success")
     def test_post_data_success(self):
         data = {
-            "id": "GBSEI2020/50001",
-            "start_date": "2018-09-10",
-            "end_date": "2019-10-11",
+            "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
+            "reference": "GBSIEL/2020/0000001/P",
+            "type": "siel",
+            "status": "Submitted",
+            "start_date": "2020-06-02",
+            "end_date": "2022-06-02",
             "organisation": {
-                "name": "john",
-                "address_1": "an address",
-                "postcode": "ALSDJA",
+                "name": "Organisation",
+                "address": {
+                    "line_1": "might",
+                    "line_2": "248 James Key Apt. 515",
+                    "line_3": "Apt. 942",
+                    "line_4": "West Ashleyton",
+                    "line_5": "Tennessee",
+                    "postcode": "99580",
+                    "country": {"id": "GB", "name": "United Kingdom"},
+                },
+            },
+            "end_user": {
+                "name": "End User",
+                "address": {
+                    "line_1": "42 Road, London, Buckinghamshire",
+                    "country": {"id": "GB", "name": "United Kingdom"},
+                },
             },
             "goods": [
                 {
-                    "description": "This is a good description",
-                    "quantity": 10,
+                    "id": "f95ded2a-354f-46f1-a572-c7f97d63bed1",
+                    "description": "finally",
                     "unit": "NAR",
+                    "quantity": 10.0,
                 }
             ],
-            "end_user": {
-                "name": "Bob",
-                "address_1": "an address",
-                "postcode": "ALSDJA",
-                "country": "FR",
-            },
         }
 
         response = self.client.post(
@@ -115,11 +127,37 @@ class UpdateLicenceEndpointTests(LiteHMRCTestClient):
 #         {
 #             "id": "f95ded2a-354f-46f1-a572-c7f97d63bed1",
 #             "description": "finally",
-#             "usage": 0.0,
 #             "unit": "NAR",
 #             "quantity": 10.0,
-#             "licenced_quantity": null,
-#             "licenced_value": null,
+#         }
+#     ],
+# }
+
+
+# {
+#     "id": "ea589f5b-c1d1-41d3-852a-0cb7d138dda3",
+#     "reference": "GBOIEL/2020/0000002/P",
+#     "type": "oiel",
+#     "status": "Submitted",
+#     "start_date": "2020-06-02",
+#     "end_date": "02 June 2023",
+#     "organisation": {
+#         "name": "Organisation",
+#         "address": {
+#             "line_1": "describe",
+#             "line_2": "09633 Lisa Fort Suite 356",
+#             "line_3": "Suite 491",
+#             "line_4": "Kathleenmouth",
+#             "line_5": "Colorado",
+#             "postcode": "13288",
+#             "country": {"id": "GB", "name": "United Kingdom"},
+#         },
+#     },
+#     "countries": [{"id": "GB", "name": "United Kingdom"}],
+#     "goods": [
+#         {
+#             "id": "bad2e6eb-9e8b-4a59-be26-cfd5850bc8f7",
+#             "description": "television",
 #         }
 #     ],
 # }
