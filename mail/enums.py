@@ -71,8 +71,22 @@ class SourceEnum:
 
 class UnitMapping:
     number = 30
+    gram = 21
+    kilogram = 23
+    meters_squared = 45
+    meters = 57
+    litre = 94
+    meters_cubed = 2
 
-    choices = [(number, "NAR")]
+    choices = [
+        (number, "NAR"),
+        (gram, "GRM"),
+        (kilogram, "KGM"),
+        (meters_squared, "MTK"),
+        (meters, "MTR"),
+        (litre, "LTR"),
+        (meters_cubed, "MTQ"),
+    ]
 
     @classmethod
     def convert(cls, unit):

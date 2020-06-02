@@ -10,7 +10,7 @@ from email.parser import Parser
 
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
 from mail.dtos import EmailMessageDto
-from mail.enums import SourceEnum, ExtractTypeEnum
+from mail.enums import SourceEnum, ExtractTypeEnum, UnitMapping
 from mail.models import LicenceUpdate, UsageUpdate
 from mail.serializers import LicenceUpdateMailSerializer, UsageUpdateMailSerializer
 from mail.services.logging_decorator import lite_log
@@ -250,3 +250,9 @@ def b64encode(byte_text: str):
 
 def b64decode(b64encoded_text: str):
     return base64.b64decode(b64encoded_text)
+
+
+def map_unit(data: dict, g: int):
+    unit = data["goods"][g]["unit"]
+    data["goods"][g]["unit"] = UnitMapping.convert(unit)
+    return data
