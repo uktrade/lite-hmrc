@@ -1,8 +1,8 @@
-import logging
-import threading
-import time
-
-from conf.settings import POLL_INTERVAL
+# import logging
+# import threading
+# import time
+#
+# from conf.settings import POLL_INTERVAL
 
 
 def scheduled_job():

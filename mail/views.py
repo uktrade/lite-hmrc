@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from conf.authentication import HawkOnlyAuthentication
 from mail.builders import build_mail_message_dto
 from mail.dtos import to_json
-from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum, UnitMapping
+from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate, LicencePayload
 from mail.routing_controller import check_and_route_emails
 from mail.serializers import (
@@ -16,7 +16,7 @@ from mail.serializers import (
 )
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
-from mail.services.helpers import build_email_message, map_unit
+from mail.services.helpers import build_email_message
 
 
 class SendMailView(APIView):
@@ -28,9 +28,7 @@ class SendMailView(APIView):
             smtp_conn,
             build_email_message(
                 build_mail_message_dto(
-                    sender="anemail@gmail.com",
-                    receiver="username@example.com",
-                    file_path="/app/Pipfile",
+                    sender="anemail@gmail.com", receiver="username@example.com", file_path="/app/Pipfile",
                 )
             ),
         )
@@ -51,9 +49,7 @@ class ReadMailView(APIView):
 class RouteMailView(APIView):
     def get(self, request):
         response_message = check_and_route_emails()
-        return JsonResponse(
-            status=HTTP_200_OK, data={"message": response_message}, safe=False
-        )
+        return JsonResponse(status=HTTP_200_OK, data={"message": response_message}, safe=False)
 
 
 class SeedMail(APIView):
@@ -67,17 +63,10 @@ class SeedMail(APIView):
             )
 
             license = LicenceUpdate.objects.create(
-                mail=mail,
-                hmrc_run_number=12,
-                source_run_number=11,
-                source=SourceEnum.SPIRE,
+                mail=mail, hmrc_run_number=12, source_run_number=11, source=SourceEnum.SPIRE,
             )
 
-            return JsonResponse(
-                status=HTTP_200_OK,
-                data={"message": str(mail) + str(license)},
-                safe=False,
-            )
+            return JsonResponse(status=HTTP_200_OK, data={"message": str(mail) + str(license)}, safe=False,)
 
 
 class MailList(APIView):
