@@ -98,3 +98,4 @@ class LicencePayload(models.Model):
     reference = models.CharField(null=False, blank=False, max_length=35)
     data = JSONField()
     received_at = models.DateTimeField(default=timezone.now)
+    is_processed = models.BooleanField(default=False)
