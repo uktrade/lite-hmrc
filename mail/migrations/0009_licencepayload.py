@@ -9,18 +9,29 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('mail', '0008_mail_response_subject'),
+        ("mail", "0008_mail_response_subject"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='LicencePayload',
+            name="LicencePayload",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('reference', models.CharField(max_length=35)),
-                ('data', jsonfield.fields.JSONField(default=dict)),
-                ('received_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('is_processed', models.BooleanField(default=False)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("reference", models.CharField(max_length=35)),
+                ("data", jsonfield.fields.JSONField(default=dict)),
+                (
+                    "received_at",
+                    models.DateTimeField(default=django.utils.timezone.now),
+                ),
+                ("is_processed", models.BooleanField(default=False)),
             ],
         ),
     ]

@@ -178,5 +178,9 @@ HAWK_CREDENTIALS = {
         "key": env("LITE_HMRC_INTEGRATION_HAWK_KEY"),
         "algorithm": SHA_ALGORITHM,
     },
-    "lite-api": {"id": "lite-api", "key": env("LITE_API_HAWK_KEY"), "algorithm": SHA_ALGORITHM},
+    "lite-api": {
+        "id": "lite-api",
+        "key": env("LITE_API_HAWK_KEY"),
+        "algorithm": SHA_ALGORITHM,
+    },
 }
