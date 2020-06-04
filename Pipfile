@@ -18,6 +18,7 @@ djangorestframework = "==3.9.2"
 psycopg2 = "==2.8.2"
 python-json-logger = "==0.1.11"
 mohawk = ">=1.1"
+django-jsonfield = "~=1.4"
 
 [requires]
 python_version = "3.7"

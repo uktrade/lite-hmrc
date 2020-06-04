@@ -6,6 +6,7 @@ from typing import List
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from jsonfield import JSONField
 
 from mail.enums import ReceptionStatusEnum, ExtractTypeEnum, SourceEnum
 
@@ -90,3 +91,10 @@ class UsageUpdate(models.Model):
 
     def get_licence_ids(self):
         return json.loads(self.license_ids)
+
+
+class LicencePayload(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    reference = models.CharField(null=False, blank=False, max_length=35)
+    data = JSONField()
+    received_at = models.DateTimeField(default=timezone.now)
