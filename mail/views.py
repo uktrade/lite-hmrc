@@ -133,9 +133,7 @@ class UpdateLicence(APIView):
                 print(serializer.data)
                 print("\n\n\n")
 
-                return JsonResponse(
-                    status=status.HTTP_200_OK, data={"data": serializer.data}
-                )
+                return JsonResponse(status=status.HTTP_200_OK, data={"data": data})
         print("\n\n\n")
 
         print(errors)
