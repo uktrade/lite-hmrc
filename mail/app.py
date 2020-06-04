@@ -11,7 +11,7 @@ class MailConfig(AppConfig):
         from mail.tasks import email_licences
 
         if not Task.objects.filter(task_name="mail.tasks.email_licences").exists():
-            email_licences()
+            email_licences(repeat=Task.HOURLY//3, repeat_until=None)
 
     def ready(self):
         post_migrate.connect(self.initialize_background_tasks, sender=self)

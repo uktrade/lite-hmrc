@@ -1,7 +1,6 @@
 import logging
 
 from background_task import background
-from background_task.models import Task
 from django.db import transaction
 
 from mail.models import LicencePayload
@@ -9,7 +8,7 @@ from mail.models import LicencePayload
 TASK_QUEUE = "email_licences_queue"
 
 
-@background(queue=TASK_QUEUE, schedule=0, repeat=Task.HOURLY//3, repeat_until=None)
+@background(queue=TASK_QUEUE, schedule=0)
 def email_licences():
     with transaction.atomic():
         licences = LicencePayload.objects.filter(is_processed=False).select_for_update(nowait=True)
