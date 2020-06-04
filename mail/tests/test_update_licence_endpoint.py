@@ -11,7 +11,7 @@ from mail.services.helpers import map_unit
 class UpdateLicenceEndpointTests(LiteHMRCTestClient):
     url = reverse("mail:update_licence")
 
-    @tag("2448")
+    @tag("2448", "fail")
     def test_post_data_failure_no_data(self):
         data = {}
 
@@ -74,6 +74,7 @@ class UpdateLicenceEndpointTests(LiteHMRCTestClient):
             ("MTR", 57),
             ("LTR", 94),
             ("MTQ", 2),
+            ("ITG", 30),
         ]
     )
     @tag("2448", "unit")
@@ -89,6 +90,7 @@ class UpdateLicenceEndpointTests(LiteHMRCTestClient):
             ("MTR", 57),
             ("LTR", 94),
             ("MTQ", 2),
+            ("ITG", 30),
         ]
     )
     @tag("2448", "mapping")

@@ -96,7 +96,7 @@ class TurnOnScheduler(APIView):
 class UpdateLicence(APIView):
     def post(self, request):
         # print(request.data)
-        data = request.data
+        data = request.data.get("licence")
         # print(type(data))
 
         errors = []
@@ -129,8 +129,16 @@ class UpdateLicence(APIView):
                     g += 1
 
             if not errors:
+                print("\n\n\n")
+                print(serializer.data)
+                print("\n\n\n")
+
                 return JsonResponse(
                     status=status.HTTP_200_OK, data={"data": serializer.data}
                 )
+        print("\n\n\n")
+
+        print(errors)
+        print("\n\n\n")
 
         return JsonResponse(status=status.HTTP_400_BAD_REQUEST, data={"errors": errors})

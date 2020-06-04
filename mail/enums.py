@@ -77,6 +77,7 @@ class UnitMapping:
     meters = 57
     litre = 94
     meters_cubed = 2
+    intangible = 30
 
     choices = [
         (number, "NAR"),
@@ -86,6 +87,7 @@ class UnitMapping:
         (meters, "MTR"),
         (litre, "LTR"),
         (meters_cubed, "MTQ"),
+        (intangible, "ITG"),
     ]
 
     @classmethod
