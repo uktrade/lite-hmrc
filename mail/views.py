@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
+from conf.authentication import HawkOnlyAuthentication
 from mail.builders import build_mail_message_dto
 from mail.dtos import to_json
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum, UnitMapping
@@ -94,6 +95,8 @@ class TurnOnScheduler(APIView):
 
 
 class UpdateLicence(APIView):
+    authentication_classes = (HawkOnlyAuthentication,)
+
     def post(self, request):
         # print(request.data)
         data = request.data.get("licence")
@@ -117,16 +120,16 @@ class UpdateLicence(APIView):
             if not serializer.is_valid():
                 errors.append({"end_user_errors": serializer.errors})
 
-            if data.get("goods") and data.get("type") == "siel":
-                goods = data.get("goods")
-                g = 0
-                for good in goods:
-                    serializer = GoodSerializer(data=good)
-                    if not serializer.is_valid():
-                        errors.append({"good_errors": serializer.errors})
-                    else:
-                        data = map_unit(data, g)
-                    g += 1
+            # if data.get("goods") and data.get("type") == "siel":
+            #     goods = data.get("goods")
+            #     g = 0
+            #     for good in goods:
+            #         serializer = GoodSerializer(data=good)
+            #         if not serializer.is_valid():
+            #             errors.append({"good_errors": serializer.errors})
+            #         else:
+            #             data = map_unit(data, g)
+            #         g += 1
 
             if not errors:
                 print("\n\n\n")

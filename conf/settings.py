@@ -27,6 +27,7 @@ env = Env(
     DEBUG=(bool, False),
     LOG_LEVEL=(str, "INFO"),
     BACKGROUND_TASK_ENABLED=(bool, False),
+    HAWK_AUTHENTICATION_ENABLED=(bool, False),
 )
 
 # Quick-start development settings - unsuitable for production
@@ -166,3 +167,15 @@ LOGGING = {
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = "/static/"
+
+HAWK_AUTHENTICATION_ENABLED = env("HAWK_AUTHENTICATION_ENABLED")
+HAWK_RECEIVER_NONCE_EXPIRY_SECONDS = 60
+SHA_ALGORITHM = "sha256"
+HAWK_CREDENTIALS = {
+    "hmrc-integration": {
+        "id": "hmrc-integration",
+        "key": env("LITE_HMRC_INTEGRATION_HAWK_KEY"),
+        "algorithm": SHA_ALGORITHM,
+    },
+    "lite-api": {"id": "lite-api", "key": env("LITE_API_HAWK_KEY"), "algorithm": SHA_ALGORITHM},
+}
