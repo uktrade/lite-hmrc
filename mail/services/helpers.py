@@ -134,9 +134,7 @@ def process_attachment(attachment):
     file_name = attachment[0] if attachment and attachment[0] is not None else ""
     file_data = attachment[1] if attachment and attachment[1] is not None else ""
     lite_log(
-        logger,
-        logging.DEBUG,
-        f"attachment filename: {file_name}, filedata:\n{file_data}",
+        logger, logging.DEBUG, f"attachment filename: {file_name}, filedata:\n{file_data}",
     )
     return file_name, file_data
 
@@ -146,11 +144,7 @@ def new_hmrc_run_number(dto_run_number: int):
     if last_licence_update:
         dto_run_number = dto_run_number % 100000
         if not last_licence_update.source_run_number == dto_run_number:
-            return (
-                last_licence_update.hmrc_run_number + 1
-                if last_licence_update.hmrc_run_number != 99999
-                else 0
-            )
+            return last_licence_update.hmrc_run_number + 1 if last_licence_update.hmrc_run_number != 99999 else 0
         else:
             return last_licence_update.hmrc_run_number
     return dto_run_number
@@ -161,11 +155,7 @@ def new_spire_run_number(dto_run_number: int):
     if last_usage_update:
         dto_run_number = dto_run_number % 100000
         if not last_usage_update.hmrc_run_number == dto_run_number:
-            return (
-                last_usage_update.spire_run_number + 1
-                if last_usage_update.spire_run_number != 99999
-                else 0
-            )
+            return last_usage_update.spire_run_number + 1 if last_usage_update.spire_run_number != 99999 else 0
         else:
             return last_usage_update.spire_run_number
     return dto_run_number
@@ -203,8 +193,7 @@ def build_email_message(email_message_dto: EmailMessageDto):
     payload = MIMEApplication(email_message_dto.attachment[1])
     payload.set_payload(email_message_dto.attachment[1])
     payload.add_header(
-        "Content-Disposition",
-        "attachment; filename= %s" % email_message_dto.attachment[0],
+        "Content-Disposition", "attachment; filename= %s" % email_message_dto.attachment[0],
     )
     multipart_msg.attach(payload)
     return multipart_msg

@@ -7,9 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class LicenceUpdateSerializer(serializers.ModelSerializer):
-    mail = serializers.PrimaryKeyRelatedField(
-        queryset=Mail.objects.all(), required=False
-    )
+    mail = serializers.PrimaryKeyRelatedField(queryset=Mail.objects.all(), required=False)
 
     class Meta:
         model = LicenceUpdate
@@ -67,9 +65,7 @@ class UpdateResponseSerializer(serializers.ModelSerializer):
 
 
 class UsageUpdateSerializer(serializers.ModelSerializer):
-    mail = serializers.PrimaryKeyRelatedField(
-        queryset=Mail.objects.all(), required=False
-    )
+    mail = serializers.PrimaryKeyRelatedField(queryset=Mail.objects.all(), required=False)
 
     class Meta:
         model = UsageUpdate

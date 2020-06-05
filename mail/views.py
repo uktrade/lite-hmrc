@@ -28,9 +28,7 @@ class SendMailView(APIView):
             smtp_conn,
             build_email_message(
                 build_mail_message_dto(
-                    sender="anemail@gmail.com",
-                    receiver="username@example.com",
-                    file_path="/app/Pipfile",
+                    sender="anemail@gmail.com", receiver="username@example.com", file_path="/app/Pipfile",
                 )
             ),
         )
@@ -51,9 +49,7 @@ class ReadMailView(APIView):
 class RouteMailView(APIView):
     def get(self, request):
         response_message = check_and_route_emails()
-        return JsonResponse(
-            status=HTTP_200_OK, data={"message": response_message}, safe=False
-        )
+        return JsonResponse(status=HTTP_200_OK, data={"message": response_message}, safe=False)
 
 
 class SeedMail(APIView):
@@ -67,17 +63,10 @@ class SeedMail(APIView):
             )
 
             license = LicenceUpdate.objects.create(
-                mail=mail,
-                hmrc_run_number=12,
-                source_run_number=11,
-                source=SourceEnum.SPIRE,
+                mail=mail, hmrc_run_number=12, source_run_number=11, source=SourceEnum.SPIRE,
             )
 
-            return JsonResponse(
-                status=HTTP_200_OK,
-                data={"message": str(mail) + str(license)},
-                safe=False,
-            )
+            return JsonResponse(status=HTTP_200_OK, data={"message": str(mail) + str(license)}, safe=False,)
 
 
 class MailList(APIView):
@@ -126,9 +115,7 @@ class UpdateLicence(APIView):
                         errors.append({"good_errors": serializer.errors})
 
             if not errors:
-                LicencePayload.objects.create(
-                    id=data["id"], reference=data["reference"], data=data
-                )
+                LicencePayload.objects.create(id=data["id"], reference=data["reference"], data=data)
 
                 return JsonResponse(status=status.HTTP_200_OK, data={"data": data})
 

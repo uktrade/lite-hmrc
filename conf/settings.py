@@ -111,9 +111,7 @@ POLL_INTERVAL = env("POLL_INTERVAL")
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
@@ -143,22 +141,12 @@ LOGGING = {
             "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
             "format": "(asctime)(levelname)(message)(filename)(lineno)(threadName)(name)(thread)(created)(process)(processName)(relativeCreated)(module)(funcName)(levelno)(msecs)(pathname)",  # noqa
         },
-        "simple": {
-            "format": "%(asctime)s - %(name)s:%(lineno)s - %(funcName)s - %(message)s"
-        },
+        "simple": {"format": "%(asctime)s - %(name)s:%(lineno)s - %(funcName)s - %(message)s"},
     },
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "simple"}},
     "loggers": {
-        "": {
-            "handlers": ["console"],
-            "level": env("LOG_LEVEL").upper(),
-            "propagate": True,
-        },
-        "django.db.models.BaseManager": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
+        "": {"handlers": ["console"], "level": env("LOG_LEVEL").upper(), "propagate": True,},
+        "django.db.models.BaseManager": {"handlers": ["console"], "level": "DEBUG", "propagate": True,},
     },
 }
 # else:
@@ -178,9 +166,5 @@ HAWK_CREDENTIALS = {
         "key": env("LITE_HMRC_INTEGRATION_HAWK_KEY"),
         "algorithm": SHA_ALGORITHM,
     },
-    "lite-api": {
-        "id": "lite-api",
-        "key": env("LITE_API_HAWK_KEY"),
-        "algorithm": SHA_ALGORITHM,
-    },
+    "lite-api": {"id": "lite-api", "key": env("LITE_API_HAWK_KEY"), "algorithm": SHA_ALGORITHM,},
 }
