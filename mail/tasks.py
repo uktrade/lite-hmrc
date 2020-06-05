@@ -6,8 +6,12 @@ from email.mime.multipart import MIMEMultipart
 from background_task import background
 from django.db import transaction
 
+from mail.builders import build_mail_message_dto
 from mail.models import LicencePayload
+from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
+from mail.services.helpers import build_email_message
+from mail.services.lite_to_edifact_converter import licences_to_edifact
 
 TASK_QUEUE = "email_licences_queue"
 
@@ -17,17 +21,27 @@ def email_licences():
     with transaction.atomic():
         licences = LicencePayload.objects.filter(is_processed=False).select_for_update(nowait=True)
 
-        email, licences_with_errors = prepare_email(licences)
+        file_string = licences_to_edifact(licences)
 
-        if licences_with_errors:
-            logging.warning(f"The following licences could not be processed: {licences_with_errors}")
-
+        server = MailServer()
+        smtp_conn = server.connect_to_smtp()
+        mailbox_service = MailboxService()
         try:
-            MailboxService().send_email(None, email)
+            mailbox_service.send_email(
+                smtp_conn,
+                build_email_message(
+                    build_mail_message_dto(
+                        sender="icmshmrc@mailgate.trade.gov.uk",
+                        receiver="hmrc@mailgate.trade.gov.uk",
+                        file_string=file_string,
+                    )
+                ),
+            )
         except Exception as exc:  # noqa
             logging.error(f"An unexpected error occurred when sending email -> {type(exc).__name__}: {exc}")
         else:
-            licences.exclude(id__in=licences_with_errors).update(is_processed=True)
+            licences.update(is_processed=True)
+        smtp_conn.quit()
 
 
 def prepare_email(licences):

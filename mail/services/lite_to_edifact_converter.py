@@ -1,0 +1,93 @@
+from datetime import datetime
+
+from django.db.models import QuerySet
+
+from mail.enums import UnitMapping
+
+
+def licences_to_edifact(licences: QuerySet):
+    now = datetime.now()
+    time_stamp = "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
+    edifact_file = "1\\fileHeader\\SPIRE\CHIEF\\licenceData\\{}\\{}".format(time_stamp, 1234)
+    i = 1
+    for licence in licences:
+        licence_payload = licence.data.get("licence")
+        print(type(licence_payload))
+        start_line = i
+        i += 1
+        edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
+            i,
+            34567,
+            "insert",  # licence_payload.get("action"),  # We figure this out
+            licence_payload.get("reference"),
+            licence_payload.get("type"),
+            "E",
+            licence_payload.get("start_date"),
+            licence_payload.get("end_date"),
+        )
+        trader = licence_payload.get("organisation")
+        print(type(trader))
+        i += 1
+        edifact_file += "\n{}\\trader\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
+            i,
+            "0192301",  # trader.get("turn"),
+            "123791",  # trader.get("rpa_trader_id"),
+            licence_payload.get("start_date"),
+            licence_payload.get("end_date"),
+            trader.get("name"),
+            trader.get("address").get("line_1"),
+            trader.get("address").get("line_2", ""),
+            trader.get("address").get("line_3", ""),
+            trader.get("address").get("line_4", ""),
+            trader.get("address").get("line_5", ""),
+            trader.get("address").get("postcode"),
+        )
+        if licence_payload.get("country_group"):
+            i += 1
+            edifact_file += "\n{}\\country\\\\{}\\{}".format(
+                i, licence_payload.get("country_group"), licence_payload.get("use")
+            )
+        elif licence_payload.get("countries"):
+            for country in licence_payload.get("countries"):
+                i += 1
+                edifact_file += "\n{}\\country\\{}\\\\{}".format(i, country, licence_payload.get("use"))
+        if licence_payload.get("end_user"):
+            trader = licence_payload.get("end_user")
+            i += 1
+            edifact_file += "\n{}\\foreignTrader\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
+                i,
+                trader.get("name"),
+                trader.get("address").get("line_1"),
+                trader.get("address").get("line_2", ""),
+                trader.get("address").get("line_3", ""),
+                trader.get("address").get("line_4", ""),
+                trader.get("address").get("line_5", ""),
+                trader.get("address").get("postcode", ""),
+                trader.get("address").get("country").get("id"),
+            )
+        i += 1
+        edifact_file += "\n{}\\restrictions\\{}".format(i, "Provisos may apply please see licence")
+        g = 0
+        if licence_payload.get("goods") and licence_payload.get("type") == "siel":
+            for commodity in licence_payload.get("goods"):
+                i += 1
+                g += 1
+                edifact_file += "\n{}\\line\\{}\\\\\\\\\\{}\\Q\\{}\\{}".format(
+                    i,
+                    g,
+                    commodity.get("description"),
+                    UnitMapping.convert(commodity.get("unit")),
+                    int(commodity.get("quantity")) if commodity.get("unit") == "NAR" else commodity.get("quantity"),
+                )
+                # convert from something
+            # map this to line number in licence id: <licence_id>
+        if licence_payload.get("type") == "oiel":
+            i += 1
+            edifact_file += "\n{}\\line\\1\\\\\\\\\\Open Licence goods - see actual licence for information\\".format(i)
+        i += 1
+        edifact_file += "\n{}\\end\\licence\\{}".format(i, i - start_line)
+    i += 1
+    edifact_file += "\n{}\\fileTrailer\\{}".format(i, licences.count())
+    print("\n\n\n\n")
+    print(edifact_file)
+    return edifact_file
