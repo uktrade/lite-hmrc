@@ -1,6 +1,7 @@
 from datetime import datetime
 from django.test import testcases
 from conf import colours, settings
+from mail.models import LicencePayload
 from mail.services.helpers import read_file
 from mail.services.helpers import to_smart_text
 import logging
@@ -36,6 +37,45 @@ class LiteHMRCTestClient(testcases.TestCase):
         self.licence_update_file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902080025"
 
         self.licence_update_file_body = to_smart_text(read_file("mail/tests/files/license_update_file"))
+
+        self.single_siel_licence_payload = LicencePayload.objects.create(
+            reference="GBSIEL2020/50001",
+            data={
+                "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
+                "reference": "GBSIEL/2020/0000001/P",
+                "type": "siel",
+                "status": "Submitted",
+                "start_date": "2020-06-02",
+                "end_date": "2022-06-02",
+                "organisation": {
+                    "name": "Organisation",
+                    "address": {
+                        "line_1": "might",
+                        "line_2": "248 James Key Apt. 515",
+                        "line_3": "Apt. 942",
+                        "line_4": "West Ashleyton",
+                        "line_5": "Tennessee",
+                        "postcode": "99580",
+                        "country": {"id": "GB", "name": "United Kingdom"},
+                    },
+                },
+                "end_user": {
+                    "name": "End User",
+                    "address": {
+                        "line_1": "42 Road, London, Buckinghamshire",
+                        "country": {"id": "GB", "name": "United Kingdom"},
+                    },
+                },
+                "goods": [
+                    {
+                        "id": "f95ded2a-354f-46f1-a572-c7f97d63bed1",
+                        "description": "finally",
+                        "unit": "NAR",
+                        "quantity": 10.0,
+                    }
+                ],
+            },
+        )
 
     def tearDown(self):
         """

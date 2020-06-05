@@ -1,6 +1,4 @@
-import io
 import logging
-from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 
 from background_task import background
@@ -23,21 +21,10 @@ def email_licences():
 
         file_string = licences_to_edifact(licences)
 
-        server = MailServer()
-        smtp_conn = server.connect_to_smtp()
-        mailbox_service = MailboxService()
         try:
-            mailbox_service.send_email(
-                smtp_conn,
-                build_email_message(
-                    build_mail_message_dto(
-                        sender="icmshmrc@mailgate.trade.gov.uk",
-                        receiver="hmrc@mailgate.trade.gov.uk",
-                        file_string=file_string,
-                    )
-                ),
-            )
+            smtp_conn = send_email(file_string)
         except Exception as exc:  # noqa
+            print(exc)
             logging.error(f"An unexpected error occurred when sending email -> {type(exc).__name__}: {exc}")
         else:
             licences.update(is_processed=True)
@@ -73,3 +60,18 @@ def prepare_email(licences):
 
 def process_licence(licence):
     return str(licence)
+
+
+def send_email(file_string):
+    server = MailServer()
+    smtp_conn = server.connect_to_smtp()
+    mailbox_service = MailboxService()
+    mailbox_service.send_email(
+        smtp_conn,
+        build_email_message(
+            build_mail_message_dto(
+                sender="icmshmrc@mailgate.trade.gov.uk", receiver="hmrc@mailgate.trade.gov.uk", file_string=file_string,
+            )
+        ),
+    )
+    return smtp_conn

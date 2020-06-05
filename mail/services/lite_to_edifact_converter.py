@@ -11,8 +11,7 @@ def licences_to_edifact(licences: QuerySet):
     edifact_file = "1\\fileHeader\\SPIRE\CHIEF\\licenceData\\{}\\{}".format(time_stamp, 1234)
     i = 1
     for licence in licences:
-        licence_payload = licence.data.get("licence")
-        print(type(licence_payload))
+        licence_payload = licence.data
         start_line = i
         i += 1
         edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
@@ -22,18 +21,17 @@ def licences_to_edifact(licences: QuerySet):
             licence_payload.get("reference"),
             licence_payload.get("type"),
             "E",
-            licence_payload.get("start_date"),
-            licence_payload.get("end_date"),
+            licence_payload.get("start_date").replace("-", ""),
+            licence_payload.get("end_date").replace("-", ""),
         )
         trader = licence_payload.get("organisation")
-        print(type(trader))
         i += 1
         edifact_file += "\n{}\\trader\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
             i,
             "0192301",  # trader.get("turn"),
             "123791",  # trader.get("rpa_trader_id"),
-            licence_payload.get("start_date"),
-            licence_payload.get("end_date"),
+            licence_payload.get("start_date").replace("-", ""),
+            licence_payload.get("end_date").replace("-", ""),
             trader.get("name"),
             trader.get("address").get("line_1"),
             trader.get("address").get("line_2", ""),
@@ -88,6 +86,4 @@ def licences_to_edifact(licences: QuerySet):
         edifact_file += "\n{}\\end\\licence\\{}".format(i, i - start_line)
     i += 1
     edifact_file += "\n{}\\fileTrailer\\{}".format(i, licences.count())
-    print("\n\n\n\n")
-    print(edifact_file)
     return edifact_file
