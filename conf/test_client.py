@@ -22,36 +22,20 @@ class LiteHMRCTestClient(testcases.TestCase):
             self.tick = datetime.now()
 
         self.licence_usage_file_name = "ILBDOTI_live_CHIEF_usageData_49543_201901130300"
-        self.licence_usage_file_body = to_smart_text(
-            read_file("mail/tests/files/license_usage_file")
-        )
-        self.licence_update_reply_body = to_smart_text(
-            read_file("mail/tests/files/license_update_reply_file")
-        )
+        self.licence_usage_file_body = to_smart_text(read_file("mail/tests/files/license_usage_file"))
+        self.licence_update_reply_body = to_smart_text(read_file("mail/tests/files/license_update_reply_file"))
         # todo need to see a real example
-        self.usage_update_reply_body = to_smart_text(
-            read_file("mail/tests/files/usage_update_reply_file")
-        )
+        self.usage_update_reply_body = to_smart_text(read_file("mail/tests/files/usage_update_reply_file"))
         lite_log(
-            logger,
-            logging.DEBUG,
-            "licence_update_reply_body: \n{}".format(self.licence_update_reply_body),
+            logger, logging.DEBUG, "licence_update_reply_body: \n{}".format(self.licence_update_reply_body),
         )
-        self.licence_update_reply_name = (
-            "ILBDOTI_live_CHIEF_licenceReply_49543_201902080025"
-        )
+        self.licence_update_reply_name = "ILBDOTI_live_CHIEF_licenceReply_49543_201902080025"
 
-        self.usage_update_reply_name = (
-            "ILBDOTI_live_CHIEF_usageReply_49543_201902080025"
-        )
+        self.usage_update_reply_name = "ILBDOTI_live_CHIEF_usageReply_49543_201902080025"
 
-        self.licence_update_file_name = (
-            "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902080025"
-        )
+        self.licence_update_file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902080025"
 
-        self.licence_update_file_body = to_smart_text(
-            read_file("mail/tests/files/license_update_file")
-        )
+        self.licence_update_file_body = to_smart_text(read_file("mail/tests/files/license_update_file"))
 
     def tearDown(self):
         """

@@ -10,20 +10,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name="mail", old_name="response_file", new_name="response_data",
-        ),
+        migrations.RenameField(model_name="mail", old_name="response_file", new_name="response_data",),
         migrations.AddField(
-            model_name="mail",
-            name="response_filename",
-            field=models.TextField(blank=True, null=True),
+            model_name="mail", name="response_filename", field=models.TextField(blank=True, null=True),
         ),
         migrations.AlterField(
             model_name="licenceupdate",
             name="source",
-            field=models.CharField(
-                choices=[("SPIRE", "SPIRE"), ("LITE", "LITE"), ("HMRC", "HMRC")],
-                max_length=10,
-            ),
+            field=models.CharField(choices=[("SPIRE", "SPIRE"), ("LITE", "LITE"), ("HMRC", "HMRC")], max_length=10,),
         ),
     ]

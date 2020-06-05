@@ -23,15 +23,11 @@ class PessimisticDbLockingTests(LiteHMRCTestClient):
         self.mail.refresh_from_db()
         self.assertTrue(val)
         self.assertEqual(
-            self.mail.currently_processed_by,
-            str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident),
+            self.mail.currently_processed_by, str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident),
         )
 
     def test_expired_lock_can_be_overridden(self):
-        mail = Mail.objects.create(
-            extract_type=ExtractTypeEnum.USAGE_UPDATE,
-            status=ReceptionStatusEnum.PENDING,
-        )
+        mail = Mail.objects.create(extract_type=ExtractTypeEnum.USAGE_UPDATE, status=ReceptionStatusEnum.PENDING,)
         mail.currently_processed_by = "1234567890"
         mail.set_locking_time(offset=-125)
         val = lock_db_for_sending_transaction(mail)
@@ -39,15 +35,11 @@ class PessimisticDbLockingTests(LiteHMRCTestClient):
         mail.refresh_from_db()
         self.assertTrue(val)
         self.assertEqual(
-            mail.currently_processed_by,
-            str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident),
+            mail.currently_processed_by, str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident),
         )
 
     def test_unexpired_lock_cannot_be_overriden(self):
-        mail = Mail.objects.create(
-            extract_type=ExtractTypeEnum.USAGE_UPDATE,
-            status=ReceptionStatusEnum.PENDING,
-        )
+        mail = Mail.objects.create(extract_type=ExtractTypeEnum.USAGE_UPDATE, status=ReceptionStatusEnum.PENDING,)
         mail.currently_processed_by = "1234567890"
         mail.set_locking_time()
 

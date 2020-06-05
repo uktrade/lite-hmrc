@@ -25,23 +25,16 @@ class MailToMailMessageDtoTests(DataProcessorsTestBase):
             receiver="receiver@example.com",
             body=None,
             subject=self.licence_update_reply_name,
-            attachment=[
-                self.licence_update_reply_name,
-                self.licence_update_reply_body,
-            ],
+            attachment=[self.licence_update_reply_name, self.licence_update_reply_body,],
             raw_data="qwerty",
         )
 
         _mail = serialize_email_message(email_message_dto)
         reply_mail_message_dto = to_email_message_dto_from(_mail)
 
-        self.assertEqual(
-            reply_mail_message_dto.run_number, self.licence_update.source_run_number
-        )
+        self.assertEqual(reply_mail_message_dto.run_number, self.licence_update.source_run_number)
         self.assertEqual(reply_mail_message_dto.sender, HMRC_ADDRESS)
-        self.assertEqual(
-            reply_mail_message_dto.attachment[0], email_message_dto.attachment[0]
-        )
+        self.assertEqual(reply_mail_message_dto.attachment[0], email_message_dto.attachment[0])
         self.assertIn(
             reply_mail_message_dto.attachment[1], str(email_message_dto.attachment[1]),
         )

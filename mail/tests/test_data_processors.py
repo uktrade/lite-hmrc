@@ -35,9 +35,7 @@ class TestDataProcessors(LiteHMRCTestClient):
         )
 
         self.usage_update = UsageUpdate.objects.create(
-            mail=self.mail,
-            spire_run_number=self.source_run_number,
-            hmrc_run_number=self.hmrc_run_number,
+            mail=self.mail, spire_run_number=self.source_run_number, hmrc_run_number=self.hmrc_run_number,
         )
 
     def test_mail_data_serialized_successfully(self):
@@ -122,10 +120,7 @@ class TestDataProcessors(LiteHMRCTestClient):
             receiver=SPIRE_ADDRESS,
             body="body",
             subject=self.licence_update_reply_name,
-            attachment=[
-                self.licence_update_reply_name,
-                self.licence_update_reply_body,
-            ],
+            attachment=[self.licence_update_reply_name, self.licence_update_reply_body,],
             raw_data="qwerty",
         )
 

@@ -15,31 +15,13 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Mail",
             fields=[
-                (
-                    "id",
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
+                ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False,),),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("last_submitted_on", models.DateTimeField(blank=True, null=True)),
                 ("edi_filename", models.TextField(blank=True, null=True)),
                 ("edi_data", models.TextField(blank=True, null=True)),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[("accepted", "Accepted")], max_length=20, null=True
-                    ),
-                ),
-                (
-                    "extract_type",
-                    models.CharField(
-                        choices=[("insert", "Insert")], max_length=20, null=True
-                    ),
-                ),
+                ("status", models.CharField(choices=[("accepted", "Accepted")], max_length=20, null=True),),
+                ("extract_type", models.CharField(choices=[("insert", "Insert")], max_length=20, null=True),),
                 ("response_file", models.TextField(blank=True, null=True)),
                 ("response_date", models.DateTimeField(blank=True, null=True)),
                 ("raw_data", models.TextField()),
@@ -51,51 +33,20 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="LicenceUsage",
             fields=[
-                (
-                    "id",
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
                 ("license_ids", models.TextField()),
-                (
-                    "mail",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.DO_NOTHING, to="mail.Mail"
-                    ),
-                ),
+                ("mail", models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to="mail.Mail"),),
             ],
         ),
         migrations.CreateModel(
             name="LicenceUpdate",
             fields=[
-                (
-                    "id",
-                    models.AutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
                 ("license_ids", models.TextField()),
                 ("hmrc_run_number", models.IntegerField()),
                 ("source_run_number", models.IntegerField(null=True)),
-                (
-                    "source",
-                    models.CharField(
-                        choices=[("SPIRE", "SPIRE"), ("LITE", "LITE")], max_length=10
-                    ),
-                ),
-                (
-                    "mail",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.DO_NOTHING, to="mail.Mail"
-                    ),
-                ),
+                ("source", models.CharField(choices=[("SPIRE", "SPIRE"), ("LITE", "LITE")], max_length=10),),
+                ("mail", models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to="mail.Mail"),),
             ],
         ),
     ]

@@ -18,7 +18,7 @@ def email_licences():
         try:
             send_email(email)
         except Exception as exc:  # noqa
-            raise Exception(f"An unexpected error occurred when sending email -> {type(exc).__name__}: {exc}")
+            logging.error(f"An unexpected error occurred when sending email -> {type(exc).__name__}: {exc}")
         else:
             licences.exclude(id__in=licences_with_errors).update(is_processed=True)
 

@@ -17,9 +17,7 @@ def check_and_route_emails():
     last_message_dto = _read_last_message()
     mail = serialize_email_message(last_message_dto)
     if not mail:
-        logging.info(
-            {"message": "liteolog hmrc", "info": "last email considered invalid"}
-        )
+        logging.info({"message": "liteolog hmrc", "info": "last email considered invalid"})
         return 1
     return _collect_and_send(mail)
 
@@ -49,9 +47,7 @@ def _send(message_to_send_dto):
     server = MailServer()
     mail_box_service = MailboxService()
     smtp_connection = server.connect_to_smtp()
-    mail_box_service.send_email(
-        smtp_connection, build_email_message(message_to_send_dto)
-    )
+    mail_box_service.send_email(smtp_connection, build_email_message(message_to_send_dto))
     server.quit_smtp_connection()
 
 

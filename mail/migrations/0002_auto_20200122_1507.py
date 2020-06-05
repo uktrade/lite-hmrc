@@ -11,20 +11,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="mail",
-            name="currently_processed_by",
-            field=models.CharField(max_length=100, null=True),
+            model_name="mail", name="currently_processed_by", field=models.CharField(max_length=100, null=True),
         ),
-        migrations.AddField(
-            model_name="mail",
-            name="currently_processing_at",
-            field=models.DateTimeField(null=True),
-        ),
+        migrations.AddField(model_name="mail", name="currently_processing_at", field=models.DateTimeField(null=True),),
         migrations.AlterField(
             model_name="mail",
             name="extract_type",
-            field=models.CharField(
-                choices=[("usage_update", "Usage update")], max_length=20, null=True
-            ),
+            field=models.CharField(choices=[("usage_update", "Usage update")], max_length=20, null=True),
         ),
     ]

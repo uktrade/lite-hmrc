@@ -60,9 +60,7 @@ class UpdateLicenceEndpointTests(LiteHMRCTestClient):
             }
         }
 
-        response = self.client.post(
-            self.url, data=data, content_type="application/json"
-        )
+        response = self.client.post(self.url, data=data, content_type="application/json")
 
         print(response.json())
 
@@ -70,32 +68,14 @@ class UpdateLicenceEndpointTests(LiteHMRCTestClient):
         self.assertTrue(LicencePayload.objects.count() == 1)
 
     @parameterized.expand(
-        [
-            ("NAR", 30),
-            ("GRM", 21),
-            ("KGM", 23),
-            ("MTK", 45),
-            ("MTR", 57),
-            ("LTR", 94),
-            ("MTQ", 2),
-            ("ITG", 30),
-        ]
+        [("NAR", 30), ("GRM", 21), ("KGM", 23), ("MTK", 45), ("MTR", 57), ("LTR", 94), ("MTQ", 2), ("ITG", 30),]
     )
     @tag("2448", "unit")
     def test_convert(self, lite_input, output):
         self.assertEqual(output, UnitMapping.convert(lite_input))
 
     @parameterized.expand(
-        [
-            ("NAR", 30),
-            ("GRM", 21),
-            ("KGM", 23),
-            ("MTK", 45),
-            ("MTR", 57),
-            ("LTR", 94),
-            ("MTQ", 2),
-            ("ITG", 30),
-        ]
+        [("NAR", 30), ("GRM", 21), ("KGM", 23), ("MTK", 45), ("MTR", 57), ("LTR", 94), ("MTQ", 2), ("ITG", 30),]
     )
     @tag("2448", "mapping")
     def test_mapping(self, lite_input, output):

@@ -25,14 +25,8 @@ class Mail(models.Model):
     last_submitted_on = models.DateTimeField(blank=True, null=True)
     edi_filename = models.TextField(null=True, blank=True)
     edi_data = models.TextField(null=True, blank=True)
-    status = models.CharField(
-        choices=ReceptionStatusEnum.choices,
-        default=ReceptionStatusEnum.PENDING,
-        max_length=20,
-    )
-    extract_type = models.CharField(
-        choices=ExtractTypeEnum.choices, max_length=20, null=True
-    )
+    status = models.CharField(choices=ReceptionStatusEnum.choices, default=ReceptionStatusEnum.PENDING, max_length=20,)
+    extract_type = models.CharField(choices=ExtractTypeEnum.choices, max_length=20, null=True)
     response_filename = models.TextField(blank=True, null=True)
     response_data = models.TextField(blank=True, null=True)
     response_date = models.DateTimeField(blank=True, null=True)

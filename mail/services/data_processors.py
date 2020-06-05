@@ -44,21 +44,13 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail:
     serializer = get_serializer_for_dto(extract_type)
     instance = get_mail_instance(extract_type)
 
-    logger.debug(
-        _check_and_return_msg(
-            {"data": data, "serializer": serializer, "mail": instance,}
-        )
-    )
+    logger.debug(_check_and_return_msg({"data": data, "serializer": serializer, "mail": instance,}))
 
     partial = True if instance else False
     if serializer:
         serializer = serializer(instance=instance, data=data, partial=partial)
         lite_log(
-            logger,
-            logging.DEBUG,
-            "{} initialized with partial [{}]".format(
-                type(serializer).__name__, partial
-            ),
+            logger, logging.DEBUG, "{} initialized with partial [{}]".format(type(serializer).__name__, partial),
         )
     if serializer and serializer.is_valid():
         _mail = serializer.save()
@@ -66,9 +58,7 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail:
         if data["extract_type"] in ["licence_reply", "usage_reply"]:
             _mail.set_response_date_time()
             lite_log(
-                logger,
-                logging.DEBUG,
-                "mail response datetime updated. status {}".format(_mail.status),
+                logger, logging.DEBUG, "mail response datetime updated. status {}".format(_mail.status),
             )
         return _mail
     else:
@@ -127,13 +117,9 @@ def get_serializer_for_dto(extract_type):
 def get_mail_instance(extract_type):
     mail = None
     if extract_type == ExtractTypeEnum.LICENCE_REPLY:
-        mail = MailboxService.find_mail_of(
-            ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING
-        )
+        mail = MailboxService.find_mail_of(ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
-        mail = MailboxService.find_mail_of(
-            ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING
-        )
+        mail = MailboxService.find_mail_of(ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
     return mail
 
 
@@ -145,18 +131,12 @@ def to_email_message_dto_from(mail):
         f"converting mail with status {mail.status} extract_type [{mail.extract_type}] to EmailMessageDto",
     )
     if mail.status == ReceptionStatusEnum.PENDING:
-        logger.debug(
-            f"building request mail message dto from [{mail.status}] mail status"
-        )
+        logger.debug(f"building request mail message dto from [{mail.status}] mail status")
         return _build_request_mail_message_dto(mail)
     elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
-        logger.debug(
-            f"building reply mail message dto from [{mail.status}] mail status"
-        )
+        logger.debug(f"building reply mail message dto from [{mail.status}] mail status")
         return _build_reply_mail_message_dto(mail)
-    raise ValueError(
-        f"Unexpected mail with status: {mail.status} while converting to EmailMessageDto"
-    )
+    raise ValueError(f"Unexpected mail with status: {mail.status} while converting to EmailMessageDto")
 
 
 def lock_db_for_sending_transaction(mail):
@@ -164,16 +144,13 @@ def lock_db_for_sending_transaction(mail):
     previous_locking_process_id = mail.currently_processed_by
     if (
         not previous_locking_process_id
-        or (timezone.now() - mail.currently_processing_at).total_seconds()
-        > LOCK_INTERVAL
+        or (timezone.now() - mail.currently_processing_at).total_seconds() > LOCK_INTERVAL
     ):
         with transaction.atomic():
             _mail = Mail.objects.select_for_update().get(id=mail.id)
             if _mail.currently_processed_by != previous_locking_process_id:
                 return
-            _mail.currently_processed_by = (
-                str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident)
-            )
+            _mail.currently_processed_by = str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident)
             _mail.set_locking_time()
             _mail.save()
 

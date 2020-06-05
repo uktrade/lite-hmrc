@@ -22,19 +22,13 @@ class MailboxService(object):
         try:
             mail = Mail.objects.get(status=reception_status, extract_type=extract_type,)
             lite_log(
-                logger,
-                logging.DEBUG,
-                "Found mail in {} of extract type {} ".format(
-                    reception_status, extract_type
-                ),
+                logger, logging.DEBUG, "Found mail in {} of extract type {} ".format(reception_status, extract_type),
             )
             return mail
         except Mail.DoesNotExist as ex:
             lite_log(
                 logger,
                 logging.WARN,
-                "Can not find any mail in [{}] of extract type [{}]".format(
-                    reception_status, extract_type
-                ),
+                "Can not find any mail in [{}] of extract type [{}]".format(reception_status, extract_type),
             )
             raise ex

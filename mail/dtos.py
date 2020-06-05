@@ -1,10 +1,7 @@
 from collections import namedtuple
 import json
 
-EmailMessageDto = namedtuple(
-    "EmailMessageDto",
-    "run_number, sender, receiver, subject, body, attachment, raw_data",
-)
+EmailMessageDto = namedtuple("EmailMessageDto", "run_number, sender, receiver, subject, body, attachment, raw_data",)
 
 
 def to_json(email_message_dto: EmailMessageDto):
@@ -15,9 +12,7 @@ def to_json(email_message_dto: EmailMessageDto):
     if email_message_dto is None:
         raise TypeError("given EmailMessageDto is invalid!")
 
-    if email_message_dto.attachment is None or not isinstance(
-        email_message_dto.attachment[1], bytes
-    ):
+    if email_message_dto.attachment is None or not isinstance(email_message_dto.attachment[1], bytes):
         raise TypeError("Invalid attribute 'attachment'")
 
     _dict = {
@@ -26,10 +21,7 @@ def to_json(email_message_dto: EmailMessageDto):
         "subject": email_message_dto.subject,
         "receiver": email_message_dto.receiver,
         "body": email_message_dto.body,
-        "attachment": {
-            "name": email_message_dto.attachment[0],
-            "data": _jsonize(email_message_dto.attachment[1]),
-        },
+        "attachment": {"name": email_message_dto.attachment[0], "data": _jsonize(email_message_dto.attachment[1]),},
         "raw_data": _jsonize(email_message_dto.raw_data[1]),
     }
     return json.dumps(_dict)
@@ -43,10 +35,7 @@ def dto_to_logs(email_message_dto: EmailMessageDto):
             "subject": email_message_dto.subject,
             "receiver": email_message_dto.receiver,
             "body": email_message_dto.body,
-            "attachment": {
-                "name": email_message_dto.attachment[0],
-                "data": email_message_dto.attachment[1][0:50],
-            },
+            "attachment": {"name": email_message_dto.attachment[0], "data": email_message_dto.attachment[1][0:50],},
             "raw_data": str(email_message_dto.raw_data[0:50]),
         }
     }

@@ -24,26 +24,16 @@ class HelpersTests(LiteHMRCTestClient):
     def test_convert_source_to_sender(self, sender, source):
         self.assertEqual(convert_source_to_sender(source), sender)
 
-    @parameterized.expand(
-        [[5, 4, 5], [1234568, 34567, 34568], [0, 99999, 0], [7, 7, 7]]
-    )
+    @parameterized.expand([[5, 4, 5], [1234568, 34567, 34568], [0, 99999, 0], [7, 7, 7]])
     def test_new_hmrc_run_number(self, source, old, new):
         mail = self._setup_mail()
         LicenceUpdate.objects.create(
-            mail=mail,
-            hmrc_run_number=old,
-            source_run_number=old,
-            source=SourceEnum.SPIRE,
+            mail=mail, hmrc_run_number=old, source_run_number=old, source=SourceEnum.SPIRE,
         )
         self.assertEqual(new_hmrc_run_number(source), new)
 
     @parameterized.expand(
-        [
-            [["name", b"data"], "name", "data"],
-            [[], "", ""],
-            [["something"], "", ""],
-            ["something", "", ""],
-        ]
+        [[["name", b"data"], "name", "data"], [[], "", ""], [["something"], "", ""], ["something", "", ""],]
     )
     def test_process_attachment(self, attachment, attachment_name, attachment_data):
         # todo

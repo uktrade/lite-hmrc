@@ -18,19 +18,13 @@ class EndToEndTest(LiteHMRCTestClient):
 
     @tag("end-to-end")
     def test_end_to_end_success_licence_update(self):
-        file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902" + str(
-            randint(1, 99999)  # nosec
-        )
+        file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902" + str(randint(1, 99999))  # nosec
 
         # send email to lite from spire
         service = MailboxService()
         service.send_email(
             MailServer().connect_to_smtp(),
-            build_text_message(
-                SPIRE_ADDRESS,
-                "username@example.com",
-                [file_name, self.licence_usage_file_body],
-            ),
+            build_text_message(SPIRE_ADDRESS, "username@example.com", [file_name, self.licence_usage_file_body],),
         )
         sleep(5)
         check_and_route_emails()

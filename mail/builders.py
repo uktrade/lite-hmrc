@@ -5,9 +5,7 @@ from email.mime.text import MIMEText
 from mail.dtos import EmailMessageDto
 
 
-def build_text_message(
-    sender, receiver, body="Body_of_the_mail 2", file_path="/app/Pipfile"
-):
+def build_text_message(sender, receiver, body="Body_of_the_mail 2", file_path="/app/Pipfile"):
     """build a message of `MineMultipart` with a text attachment and octet-stream payload.\n
         Todo: using a custom builder to build mail message
     """

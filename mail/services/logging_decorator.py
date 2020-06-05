@@ -26,9 +26,7 @@ def lite_log(logger: logging.Logger, log_level: int, logging_msg: str):
         logging.WARN: log_warn,
         logging.ERROR: log_error,
     }
-    _func = logger_funcs.get(
-        log_level, lambda: "{} log level is not recognized".format(log_level)
-    )
+    _func = logger_funcs.get(log_level, lambda: "{} log level is not recognized".format(log_level))
     _func(logger, data)
 
 
