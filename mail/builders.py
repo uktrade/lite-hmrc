@@ -1,3 +1,5 @@
+import base64
+import io
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -5,10 +7,16 @@ from email.mime.text import MIMEText
 from mail.dtos import EmailMessageDto
 
 
-def build_text_message(sender, receiver, body="Body_of_the_mail 2", file_path="/app/Pipfile"):
+def build_text_message(sender, receiver, body="Body_of_the_mail 2", file=None, file_path=None, file_string="Test file"):
     """build a message of `MineMultipart` with a text attachment and octet-stream payload.\n
         Todo: using a custom builder to build mail message
     """
+    if file_path:
+        file = open(file_path, "rb")
+    elif file:
+        file = file
+    else:
+        file = io.BytesIO(b"file_string")
     msg = MIMEMultipart()
     msg["From"] = sender
     msg["To"] = receiver
@@ -16,7 +24,7 @@ def build_text_message(sender, receiver, body="Body_of_the_mail 2", file_path="/
     body = body
     msg.attach(MIMEText(body, "plain"))
     filename = "ILBDOTI_test_CHIEF_usageData_9876_201901130300"
-    attachment = open(file_path, "rb")
+    attachment = file
     payload = MIMEBase("application", "octet-stream")
     payload.set_payload(attachment.read())
     payload.add_header("Content-Disposition", "attachment; filename= %s" % filename)
@@ -29,14 +37,22 @@ def _read_file(file_path):
     return _file.read()
 
 
-def build_mail_message_dto(sender, receiver, file_path):
+def build_mail_message_dto(sender, receiver, file=None, file_path=None, file_string="Test file"):
     _subject = "ILBDOTI_test_CHIEF_licenceUpdate_1010_201901130300"
+    if file_path:
+        file = _read_file(file_path)
+    elif file:
+        file = file
+    else:
+        string = "\\this\\is\\file\\text\nThis\\is\\a\\new\\\\line\\"
+        file = base64.b64encode(bytes(string, "ASCII"))
+    attachment = [_subject, file]
     return EmailMessageDto(
         run_number=1010,
         sender=sender,
         receiver=receiver,
         body="mail body",
         subject=_subject,
-        attachment=[_subject, _read_file(file_path)],
+        attachment=attachment,
         raw_data=build_text_message(sender, receiver, "mail body ..."),
     )

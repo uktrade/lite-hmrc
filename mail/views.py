@@ -27,9 +27,7 @@ class SendMailView(APIView):
         mailbox_service.send_email(
             smtp_conn,
             build_email_message(
-                build_mail_message_dto(
-                    sender="anemail@gmail.com", receiver="username@example.com", file_path="/app/Pipfile",
-                )
+                build_mail_message_dto(sender="icmshmrc@mailgate.trade.gov.uk", receiver="hmrc@mailgate.trade.gov.uk",)
             ),
         )
         smtp_conn.quit()
