@@ -36,14 +36,14 @@ def _collect_and_send(mail):
     is_locked_by_me = lock_db_for_sending_transaction(mail)
     if not is_locked_by_me:
         return "email being sent by another thread"
-    _send(message_to_send_dto)
+    send(message_to_send_dto)
     _update_mail_status(mail)
     response_message = f"Email routed from {message_to_send_dto.sender} to {message_to_send_dto.receiver}"
     return response_message
 
 
 @lite_logging_decorator
-def _send(message_to_send_dto):
+def send(message_to_send_dto):
     server = MailServer()
     mail_box_service = MailboxService()
     smtp_connection = server.connect_to_smtp()
