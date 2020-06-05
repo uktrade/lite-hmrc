@@ -44,6 +44,7 @@ def build_mail_message_dto(sender, receiver, file=None, file_path=None, file_str
     elif file:
         file = file
     else:
+        # ATTENTION THIS ACTUALLY WORKS!!!!!!
         string = "\\this\\is\\file\\text\nThis\\is\\a\\new\\\\line\\"
         file = base64.b64encode(bytes(string, "ASCII"))
     attachment = [_subject, file]
