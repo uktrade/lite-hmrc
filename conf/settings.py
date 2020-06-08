@@ -157,14 +157,19 @@ LOGGING = {
 
 STATIC_URL = "/static/"
 
+# HAWK
 HAWK_AUTHENTICATION_ENABLED = env("HAWK_AUTHENTICATION_ENABLED")
 HAWK_RECEIVER_NONCE_EXPIRY_SECONDS = 60
-SHA_ALGORITHM = "sha256"
+HAWK_ALGORITHM = "sha256"
 HAWK_CREDENTIALS = {
     "hmrc-integration": {
         "id": "hmrc-integration",
         "key": env("LITE_HMRC_INTEGRATION_HAWK_KEY"),
-        "algorithm": SHA_ALGORITHM,
+        "algorithm": HAWK_ALGORITHM,
     },
-    "lite-api": {"id": "lite-api", "key": env("LITE_API_HAWK_KEY"), "algorithm": SHA_ALGORITHM,},
+    "lite-api": {"id": "lite-api", "key": env("LITE_API_HAWK_KEY"), "algorithm": HAWK_ALGORITHM},
 }
+
+# Background Tasks
+BACKGROUND_TASK_ENABLED = env("BACKGROUND_TASK_ENABLED")
+BACKGROUND_TASK_RUN_ASYNC = True

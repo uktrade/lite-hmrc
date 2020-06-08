@@ -1,5 +1,4 @@
 from django.apps import AppConfig
-from django.db.models.signals import post_migrate
 
 
 class MailConfig(AppConfig):
@@ -10,8 +9,8 @@ class MailConfig(AppConfig):
         from background_task.models import Task
         from mail.tasks import email_licences
 
-        if not Task.objects.filter(task_name="mail.tasks.email_licences").exists():
-            email_licences(repeat=Task.HOURLY // 3, repeat_until=None)  # noqa
+        Task.objects.filter(task_name="mail.tasks.email_licences").delete()
+        email_licences(repeat=Task.HOURLY // 3, repeat_until=None)  # noqa
 
     def ready(self):
-        post_migrate.connect(self.initialize_background_tasks, sender=self)
+        self.initialize_background_tasks()
