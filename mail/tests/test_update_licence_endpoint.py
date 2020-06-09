@@ -62,7 +62,7 @@ class UpdateLicenceEndpointTests(LiteHMRCTestClient):
 
         response = self.client.post(self.url, data=data, content_type="application/json")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(LicencePayload.objects.count() == 1)
 
     @parameterized.expand(

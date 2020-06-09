@@ -89,6 +89,8 @@ class UsageUpdate(models.Model):
 
 class LicencePayload(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Convenience field for cross-referencing LITE services
+    lite_id = models.CharField(null=False, blank=False, max_length=36)
     reference = models.CharField(null=False, blank=False, max_length=35)
     data = JSONField()
     received_at = models.DateTimeField(default=timezone.now)

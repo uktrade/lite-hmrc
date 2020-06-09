@@ -65,6 +65,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "conf.middleware.LoggingMiddleware",
+    "conf.middleware.HawkSigningMiddleware",
 ]
 
 ROOT_URLCONF = "conf.urls"

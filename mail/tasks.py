@@ -17,18 +17,23 @@ TASK_QUEUE = "email_licences_queue"
 @background(queue=TASK_QUEUE, schedule=0)
 def email_licences():
     with transaction.atomic():
+        logging.info("Fetching licences to send to HRMC")
         licences = LicencePayload.objects.filter(is_processed=False).select_for_update(nowait=True)
 
-        file_string = licences_to_edifact(licences)
+        if not licences.exists():
+            logging.info("There are currently no licences to send")
+            return
 
         try:
+            file_string = licences_to_edifact(licences)
             smtp_conn = send_email(file_string)
         except Exception as exc:  # noqa
-            print(exc)
-            logging.error(f"An unexpected error occurred when sending email -> {type(exc).__name__}: {exc}")
+            logging.error(f"An unexpected error occurred when sending email to HMRC -> {type(exc).__name__}: {exc}")
         else:
             licences.update(is_processed=True)
-        smtp_conn.quit()
+        finally:
+            smtp_conn.quit()
+            logging.info("Email successfully sent to HMRC")
 
 
 def prepare_email(licences):
@@ -38,7 +43,7 @@ def prepare_email(licences):
     multipart_msg = MIMEMultipart()
     multipart_msg["From"] = "icmshmrc@mailgate.trade.gov.uk"
     multipart_msg["To"] = "hmrc@mailgate.trade.gov.uk"
-    multipart_msg["Subject"] = "Hahahaha"
+    multipart_msg["Subject"] = "testing"
 
     for licence in licences:
         try:

@@ -113,8 +113,8 @@ class UpdateLicence(APIView):
                         errors.append({"good_errors": serializer.errors})
 
             if not errors:
-                LicencePayload.objects.create(id=data["id"], reference=data["reference"], data=data)
+                LicencePayload.objects.create(lite_id=data["id"], reference=data["reference"], data=data)
 
-                return JsonResponse(status=status.HTTP_200_OK, data={"data": data})
+                return JsonResponse(status=status.HTTP_201_CREATED, data={"data": data})
 
         return JsonResponse(status=status.HTTP_400_BAD_REQUEST, data={"errors": errors})
