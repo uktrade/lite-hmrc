@@ -8,7 +8,7 @@ from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.parser import Parser
 
-from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
+from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS, EMAIL_USER
 from mail.dtos import EmailMessageDto
 from mail.enums import SourceEnum, ExtractTypeEnum, UnitMapping
 from mail.models import LicenceUpdate, UsageUpdate
@@ -66,11 +66,8 @@ def get_attachment(msg: Message):
     """
     for part in msg.walk():
         if part.get_content_type() in ALLOWED_FILE_MIMETYPES:
-            print("\n\n\n", part, "\n")
             name = part.get_filename()
             data = part.get_payload(decode=True)
-            print(name, data)
-            print("\n\n\n")
             if name:
                 return name, data
     logging.info({"message": "liteolog hmrc", "attachment": "No attachment found"})
@@ -133,6 +130,7 @@ def convert_source_to_sender(source):
 def process_attachment(attachment):
     file_name = attachment[0] if attachment and attachment[0] is not None else ""
     file_data = attachment[1] if attachment and attachment[1] is not None else ""
+    file_data = file_data.decode("utf-8")
     lite_log(
         logger, logging.DEBUG, f"attachment filename: {file_name}, filedata:\n{file_data}",
     )
@@ -170,10 +168,9 @@ def get_extract_type(subject: str):
 
 def get_licence_ids(file_body, b64_encoded=False):
     ids = []
-    _file_body = to_smart_text(b64decode(file_body)) if b64_encoded else file_body
-    lines = _file_body.split("\n")
+    lines = file_body.split("\n")
     for line in lines:
-        if ("licenceUsage" in line or "licenceUpdate" in line) and "end" not in line:
+        if "licence" in line.split("\\")[1]:
             ids.append(line.split("\\")[4])
     logger.debug(f"license ids in the file: {ids}")
     return json.dumps(ids)
@@ -186,16 +183,19 @@ def build_email_message(email_message_dto: EmailMessageDto):
     """
     _validate_dto(email_message_dto)
 
+    file = base64.b64encode(bytes(email_message_dto.attachment[1], "ASCII"))
+
     multipart_msg = MIMEMultipart()
-    multipart_msg["From"] = email_message_dto.sender
+    multipart_msg["From"] = EMAIL_USER
     multipart_msg["To"] = email_message_dto.receiver
     multipart_msg["Subject"] = email_message_dto.subject
-    payload = MIMEApplication(email_message_dto.attachment[1])
-    payload.set_payload(email_message_dto.attachment[1])
+    payload = MIMEApplication(file)
+    payload.set_payload(file)
     payload.add_header(
         "Content-Disposition", "attachment; filename= %s" % email_message_dto.attachment[0],
     )
     multipart_msg.attach(payload)
+    print(multipart_msg)
     return multipart_msg
 
 
