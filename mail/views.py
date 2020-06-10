@@ -118,3 +118,9 @@ class UpdateLicence(APIView):
                 return JsonResponse(status=status.HTTP_201_CREATED, data={"data": data})
 
         return JsonResponse(status=status.HTTP_400_BAD_REQUEST, data={"errors": errors})
+
+
+class Status(APIView):
+    def get(self, request):
+        last_email = Mail.objects.last()
+        return JsonResponse(data={"status": last_email.status}, status=HTTP_200_OK)

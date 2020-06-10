@@ -37,9 +37,9 @@ def email_licences():
             logging.error(f"An unexpected error occurred when sending email to HMRC -> {type(exc).__name__}: {exc}")
         else:
             licences.update(is_processed=True)
+            logging.info("Email successfully sent to HMRC")
         finally:
             smtp_conn.quit()
-            logging.info("Email successfully sent to HMRC")
 
 
 def prepare_email(licences):

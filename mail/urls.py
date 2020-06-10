@@ -16,4 +16,5 @@ urlpatterns = [
     path("seed/", SeedMail.as_view(), name="seed"),
     path("route/", RouteMailView.as_view(), name="route"),
     path("update-licence/", UpdateLicence.as_view(), name="update_licence"),
+    path("status", Status.as_view(), name="status"),
 ]
