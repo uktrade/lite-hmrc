@@ -112,7 +112,7 @@ def convert_sender_to_source(sender: string):
         sender = sender.split("<")[1].split(">")[0]
     if sender == SPIRE_ADDRESS:
         return "SPIRE"
-    elif sender == "test@lite.com":
+    elif sender == "LITE":
         return "LITE"
     elif sender == HMRC_ADDRESS:
         return "HMRC"

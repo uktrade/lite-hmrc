@@ -5,7 +5,7 @@ from django.test import tag
 from django.urls import reverse
 
 from conf.test_client import LiteHMRCTestClient
-from mail.models import LicencePayload
+from mail.models import LicencePayload, Mail
 from mail.services.lite_to_edifact_converter import licences_to_edifact
 
 from mail.tasks import email_licences
@@ -43,6 +43,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
     def test_licence_is_marked_as_processed_after_sending(self, send_email):
         send_email.return_value = SmtpMock()
         email_licences.now()
+        self.assertEqual(Mail.objects.count(), 1)
         self.single_siel_licence_payload.refresh_from_db()
         self.assertEqual(self.single_siel_licence_payload.is_processed, True)
 

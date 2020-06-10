@@ -1,6 +1,6 @@
 import logging
 from conf.constants import VALID_SENDERS
-from mail.enums import ReceptionStatusEnum
+from mail.enums import ReceptionStatusEnum, SourceEnum
 from mail.services.helpers import (
     convert_sender_to_source,
     new_hmrc_run_number,
@@ -14,13 +14,19 @@ logger = logging.getLogger(__name__)
 
 
 def convert_data_for_licence_update(dto):
+    source = convert_sender_to_source(dto.sender)
     data = {"licence_update": {}}
-    data["licence_update"]["source"] = convert_sender_to_source(dto.sender)
+    data["licence_update"]["source"] = source
     data["licence_update"]["hmrc_run_number"] = (
         new_hmrc_run_number(int(dto.run_number)) if convert_sender_to_source(dto.sender) in VALID_SENDERS else None
     )
     data["licence_update"]["source_run_number"] = dto.run_number
-    data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
+    if source == SourceEnum.SPIRE:
+        data["edi_filename"], data["edi_data"] = process_attachment(dto.attachment)
+    else:
+        data["edi_filename"] = dto.attachment[0]
+        data["edi_data"] = dto.attachment[1]
+
     data["licence_update"]["license_ids"] = get_licence_ids(data["edi_data"])
     _print_nice(data)
     print(data["licence_update"]["source"])
