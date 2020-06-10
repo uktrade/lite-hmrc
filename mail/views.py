@@ -125,13 +125,16 @@ class Status(APIView):
 
         last_email = Mail.objects.last()
         if last_email:
-            response_date = last_email.response_date
             status = last_email.status
-            response = (
-                ReplyStatusEnum.REJECTED
-                if ReplyStatusEnum.REJECTED in last_email.response_data
-                else ReplyStatusEnum.ACCEPTED
-            )
+            if status == ReceptionStatusEnum.REPLY_SENT:
+                response_date = last_email.response_date
+
+                if ReplyStatusEnum.REJECTED in last_email.response_data.lower():
+                    response = ReplyStatusEnum.REJECTED
+                else:
+                    response = ReplyStatusEnum.ACCEPTED
+            else:
+                response = "in flight"
 
         return JsonResponse(
             data={"status": status, "response": response, "response_date": response_date}, status=HTTP_200_OK

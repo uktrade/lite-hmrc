@@ -36,7 +36,8 @@ def _collect_and_send(mail):
     is_locked_by_me = lock_db_for_sending_transaction(mail)
     if not is_locked_by_me:
         return "email being sent by another thread"
-    send(message_to_send_dto)
+    if message_to_send_dto.receiver != "LITE":
+        send(message_to_send_dto)
     _update_mail_status(mail)
     response_message = f"Email routed from {message_to_send_dto.sender} to {message_to_send_dto.receiver}"
     return response_message

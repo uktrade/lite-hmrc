@@ -1,5 +1,7 @@
 from django.apps import AppConfig
 
+from mail.scheduling.scheduler import scheduled_job
+
 
 class MailConfig(AppConfig):
     name = "mail"
@@ -14,3 +16,5 @@ class MailConfig(AppConfig):
 
     def ready(self):
         self.initialize_background_tasks()
+
+        scheduled_job()

@@ -123,7 +123,7 @@ def convert_source_to_sender(source):
     if source == SourceEnum.SPIRE:
         return SPIRE_ADDRESS
     elif source == SourceEnum.LITE:
-        return "test@lite.com"
+        return "LITE"
     return source
 
 
