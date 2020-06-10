@@ -53,6 +53,7 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail:
             logger, logging.DEBUG, "{} initialized with partial [{}]".format(type(serializer).__name__, partial),
         )
     if serializer and serializer.is_valid():
+        print("\nis valid\n")
         _mail = serializer.save()
         lite_log(logger, logging.DEBUG, "{} saved".format(type(serializer).__name__))
         if data["extract_type"] in ["licence_reply", "usage_reply"]:
@@ -62,6 +63,7 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail:
             )
         return _mail
     else:
+        print(serializer.errors)
         data["serializer_errors"] = get_all_serializer_errors_for_mail(data)
         lite_log(logger, logging.ERROR, data["serializer_errors"])
         serializer = InvalidEmailSerializer(data=data)

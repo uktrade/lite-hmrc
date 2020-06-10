@@ -1,7 +1,11 @@
 from django.test import tag
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
+from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
+from mail.models import Mail
+from mail.servers import MailServer
+from mail.services.MailboxService import MailboxService
 from mail.services.data_processors import (
     to_email_message_dto_from,
     serialize_email_message,
