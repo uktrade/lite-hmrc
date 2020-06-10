@@ -1,9 +1,9 @@
 import logging
-from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 
 from background_task import background
 from django.db import transaction
+from django.utils import timezone
 
 from conf.settings import HMRC_ADDRESS
 from mail.builders import build_mail_message_dto
@@ -23,6 +23,8 @@ TASK_QUEUE = "email_licences_queue"
 @background(queue=TASK_QUEUE, schedule=0)
 def email_licences():
     with transaction.atomic():
+        smtp_conn = None
+
         try:
             last_email = Mail.objects.last()
             if last_email and (
@@ -39,9 +41,11 @@ def email_licences():
                 return
 
             file_string = licences_to_edifact(licences)
+
             last_lite_update = LicenceUpdate.objects.filter(source=SourceEnum.LITE).last()
             last_lite_run_number = last_lite_update.source_run_number + 1 if last_lite_update else 1
-            now = datetime.now()
+
+            now = timezone.now()
             file_name = (
                 "ILBDOTI_live_CHIEF_licenceUpdate_"
                 + str(last_lite_run_number + 1)
@@ -66,30 +70,8 @@ def email_licences():
             licences.update(is_processed=True)
             logging.info("Email successfully sent to HMRC")
         finally:
-            smtp_conn.quit()
-
-
-def prepare_email(licences):
-    payload_string = ""
-    licences_with_errors = []
-
-    multipart_msg = MIMEMultipart()
-    multipart_msg["From"] = "icmshmrc@mailgate.trade.gov.uk"
-    multipart_msg["To"] = "hmrc@mailgate.trade.gov.uk"
-    multipart_msg["Subject"] = "testing"
-
-    for licence in licences:
-        try:
-            payload_string += process_licence(licence)
-        except Exception as exc:  # noqa
-            logging.warning(f"An unexpected error occurred when processing licence -> {type(exc).__name__}: {exc}")
-            licences_with_errors += licence.id
-
-    return multipart_msg, licences_with_errors
-
-
-def process_licence(licence):
-    return str(licence)
+            if smtp_conn:
+                smtp_conn.quit()
 
 
 def send_email(file_string, mail):

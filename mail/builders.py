@@ -37,16 +37,9 @@ def _read_file(file_path):
     return _file.read()
 
 
-def build_mail_message_dto(sender, receiver, file=None, file_path=None, file_string="Test file"):
+def build_mail_message_dto(sender, receiver, file_string="Test file"):
     _subject = "ILBDOTI_test_CHIEF_licenceUpdate_1010_201901130300"
-    if file_path:
-        file = _read_file(file_path)
-    elif file:
-        file = file
-    else:
-        # ATTENTION THIS ACTUALLY WORKS!!!!!!
-        file = base64.b64encode(bytes(file_string, "ASCII"))
-    attachment = [_subject, file]
+    attachment = [_subject, file_string]
     return EmailMessageDto(
         run_number=1010,
         sender=sender,
