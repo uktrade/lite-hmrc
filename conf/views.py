@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from rest_framework.views import APIView
 
-from mail.tasks import TASK_QUEUE
+from mail.tasks import LICENCE_UPDATES_TASK_QUEUE
 
 
 class HealthCheck(APIView):
@@ -18,7 +18,7 @@ class HealthCheck(APIView):
         start_time = time.time()
         status = (HTTP_200_OK, "OK")
 
-        task = Task.objects.get(queue=TASK_QUEUE)
+        task = Task.objects.get(queue=LICENCE_UPDATES_TASK_QUEUE)
         if task.run_at + datetime.timedelta(seconds=task.repeat) < timezone.now():
             status = (HTTP_503_SERVICE_UNAVAILABLE, "not OK")
 

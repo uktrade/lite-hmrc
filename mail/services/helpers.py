@@ -70,7 +70,7 @@ def get_attachment(msg: Message):
             data = part.get_payload(decode=True)
             if name:
                 return name, data
-    logging.info({"message": "liteolog hmrc", "attachment": "No attachment found"})
+    logging.info("No attachment found")
     return None, None
 
 

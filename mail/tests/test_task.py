@@ -5,7 +5,7 @@ from django.test import tag
 from conf.test_client import LiteHMRCTestClient
 from mail.enums import ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
-from mail.tasks import email_licences
+from mail.tasks import email_lite_licence_updates
 from mail.tests.test_licence_to_edifact import SmtpMock
 
 
@@ -16,7 +16,7 @@ class TastTests(LiteHMRCTestClient):
         mail = Mail(status=ReceptionStatusEnum.PENDING)
         mail.save()
         send_email.return_value = SmtpMock()
-        email_licences.now()
+        email_lite_licence_updates.now()
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 0)
 
     @tag("missed-timing")
@@ -25,7 +25,7 @@ class TastTests(LiteHMRCTestClient):
         mail = Mail(status=ReceptionStatusEnum.REPLY_PENDING)
         mail.save()
         send_email.return_value = SmtpMock()
-        email_licences.now()
+        email_lite_licence_updates.now()
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 0)
 
     @tag("missed-timing")
@@ -34,7 +34,7 @@ class TastTests(LiteHMRCTestClient):
         mail = Mail(status=ReceptionStatusEnum.REPLY_RECEIVED)
         mail.save()
         send_email.return_value = SmtpMock()
-        email_licences.now()
+        email_lite_licence_updates.now()
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 0)
 
     @tag("missed-timing")
@@ -43,7 +43,7 @@ class TastTests(LiteHMRCTestClient):
         mail = Mail(status=ReceptionStatusEnum.REPLY_SENT, response_data="rejected")
         mail.save()
         send_email.return_value = SmtpMock()
-        email_licences.now()
+        email_lite_licence_updates.now()
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 0)
 
     @tag("missed-timing")
@@ -52,5 +52,5 @@ class TastTests(LiteHMRCTestClient):
         mail = Mail(status=ReceptionStatusEnum.REPLY_SENT, response_data="accepted")
         mail.save()
         send_email.return_value = SmtpMock()
-        email_licences.now()
+        email_lite_licence_updates.now()
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 1)

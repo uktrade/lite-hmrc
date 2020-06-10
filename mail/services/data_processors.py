@@ -71,8 +71,6 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail:
         if serializer.is_valid():
             serializer.save()
 
-    return False
-
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto, extract_type):
     """

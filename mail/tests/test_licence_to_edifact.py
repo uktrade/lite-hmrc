@@ -8,7 +8,7 @@ from conf.test_client import LiteHMRCTestClient
 from mail.models import LicencePayload, Mail, OrganisationIdMapping, GoodIdMapping
 from mail.services.lite_to_edifact_converter import licences_to_edifact
 
-from mail.tasks import email_licences
+from mail.tasks import email_lite_licence_updates
 
 
 class SmtpMock:
@@ -42,7 +42,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
     @mock.patch("mail.tasks.send_email")
     def test_licence_is_marked_as_processed_after_sending(self, send_email):
         send_email.return_value = SmtpMock()
-        email_licences.now()
+        email_lite_licence_updates.now()
         self.assertEqual(Mail.objects.count(), 1)
         self.single_siel_licence_payload.refresh_from_db()
         self.assertEqual(self.single_siel_licence_payload.is_processed, True)
@@ -93,7 +93,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
 
         self.client.post(reverse("mail:update_licence"), data=data, content_type="application/json")
 
-        email_licences.now()
+        email_lite_licence_updates.now()
 
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
 
@@ -140,7 +140,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
 
         self.client.post(reverse("mail:update_licence"), data=data, content_type="application/json")
 
-        email_licences.now()
+        email_lite_licence_updates.now()
 
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
 

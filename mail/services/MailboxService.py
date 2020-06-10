@@ -7,9 +7,6 @@ logger = logging.getLogger(__name__)
 
 
 class MailboxService(object):
-    def __init__(self):
-        pass
-
     def send_email(self, smtp_connection: object, message: object):
         smtp_connection.send_message(message)
 
