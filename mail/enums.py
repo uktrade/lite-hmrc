@@ -1,3 +1,23 @@
+class ReplyStatusEnum:
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+    choices = [
+        (ACCEPTED, "Accepted"),
+        (REJECTED, "Rejected"),
+    ]
+
+    @classmethod
+    def get_text(cls, status):
+        for k, v in cls.choices:
+            if status == k:
+                return v
+
+    @classmethod
+    def as_list(cls):
+        return [{"status": choice[0]} for choice in cls.choices]
+
+
 class ReceptionStatusEnum:
     PENDING = "pending"
     REPLY_PENDING = "reply_pending"

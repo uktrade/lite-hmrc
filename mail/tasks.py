@@ -5,7 +5,7 @@ from background_task import background
 from django.db import transaction
 
 from mail.builders import build_mail_message_dto
-from mail.enums import ReceptionStatusEnum
+from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
 from mail.models import LicencePayload, Mail
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
@@ -19,7 +19,7 @@ TASK_QUEUE = "email_licences_queue"
 def email_licences():
     with transaction.atomic():
         last_email = Mail.objects.last()
-        if last_email.status != ReceptionStatusEnum.REPLY_SENT or "rejected" in last_email.response_data:
+        if last_email.status != ReceptionStatusEnum.REPLY_SENT or ReplyStatusEnum.REJECTED in last_email.response_data:
             logging.info("There is currently an update in progress or an email in flight")
             return
 

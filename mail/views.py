@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from conf.authentication import HawkOnlyAuthentication
 from mail.builders import build_mail_message_dto
 from mail.dtos import to_json
-from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
+from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum, ReplyStatusEnum
 from mail.models import Mail, LicenceUpdate, LicencePayload
 from mail.routing_controller import check_and_route_emails
 from mail.serializers import (
@@ -122,5 +122,20 @@ class UpdateLicence(APIView):
 
 class Status(APIView):
     def get(self, request):
+        status = None
+        response = None
+        response_date = None
+
         last_email = Mail.objects.last()
-        return JsonResponse(data={"status": last_email.status}, status=HTTP_200_OK)
+        if last_email:
+            response_date = last_email.response_date
+            status = last_email.status
+            response = (
+                ReplyStatusEnum.REJECTED
+                if ReplyStatusEnum.REJECTED in last_email.response_data
+                else ReplyStatusEnum.ACCEPTED
+            )
+
+        return JsonResponse(
+            data={"status": status, "response": response, "response_date": response_date}, status=HTTP_200_OK
+        )

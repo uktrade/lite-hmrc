@@ -1,12 +1,6 @@
 from django.urls import path
 
-from mail.views import (
-    SendMailView,
-    ReadMailView,
-    SeedMail,
-    RouteMailView,
-    UpdateLicence,
-)
+from mail.views import SendMailView, ReadMailView, SeedMail, RouteMailView, UpdateLicence, Status
 
 app_name = "mail"
 
@@ -16,5 +10,5 @@ urlpatterns = [
     path("seed/", SeedMail.as_view(), name="seed"),
     path("route/", RouteMailView.as_view(), name="route"),
     path("update-licence/", UpdateLicence.as_view(), name="update_licence"),
-    path("status", Status.as_view(), name="status"),
+    path("status/", Status.as_view(), name="status"),
 ]
