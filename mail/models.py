@@ -103,7 +103,9 @@ class OrganisationIdMapping(models.Model):
 
 
 class GoodIdMapping(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     lite_id = models.CharField(null=False, blank=False, max_length=36)
     licence_reference = models.CharField(null=False, blank=False, max_length=35)
     line_number = models.PositiveIntegerField()
+
+    class Meta:
+        unique_together = [["lite_id", "licence_reference"]]

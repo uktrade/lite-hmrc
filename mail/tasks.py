@@ -10,10 +10,7 @@ from mail.dtos import EmailMessageDto
 from mail.enums import ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
 from mail.models import LicencePayload, Mail, LicenceUpdate
 from mail.routing_controller import update_mail_status, check_and_route_emails, send
-from mail.servers import MailServer
-from mail.services.MailboxService import MailboxService
 from mail.services.data_processors import serialize_email_message
-from mail.services.helpers import build_email_message
 from mail.services.lite_to_edifact_converter import licences_to_edifact
 
 LICENCE_UPDATES_TASK_QUEUE = "licences_updates_queue"
