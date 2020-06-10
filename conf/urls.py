@@ -20,5 +20,5 @@ from conf.views import HealthCheck
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("mail/", include("mail.urls")),
-    path("health/", HealthCheck.as_view()),
+    path("healthcheck/", HealthCheck.as_view()),
 ]
