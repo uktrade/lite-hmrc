@@ -3,6 +3,7 @@ from datetime import datetime
 from django.db.models import QuerySet
 
 from mail.enums import UnitMapping
+from mail.models import OrganisationIdMapping, GoodIdMapping
 
 
 def licences_to_edifact(licences: QuerySet):
@@ -25,11 +26,14 @@ def licences_to_edifact(licences: QuerySet):
             licence_payload.get("end_date").replace("-", ""),
         )
         trader = licence_payload.get("organisation")
+        org_mapping, _ = OrganisationIdMapping.objects.get_or_create(
+            lite_id=trader["id"], defaults={"lite_id": trader["id"]}
+        )
         i += 1
         edifact_file += "\n{}\\trader\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
             i,
-            "0192301",  # trader.get("turn"),
-            "123791",  # trader.get("rpa_trader_id"),
+            "",  # trader.get("turn"),
+            org_mapping.rpa_trader_id,  # trader.get("rpa_trader_id"),
             licence_payload.get("start_date").replace("-", ""),
             licence_payload.get("end_date").replace("-", ""),
             trader.get("name"),
@@ -70,6 +74,9 @@ def licences_to_edifact(licences: QuerySet):
             for commodity in licence_payload.get("goods"):
                 i += 1
                 g += 1
+                GoodIdMapping.objects.create(
+                    lite_id=commodity["id"], licence_reference=licence.reference, line_number=g
+                )
                 edifact_file += "\n{}\\line\\{}\\\\\\\\\\{}\\Q\\{}\\{}".format(
                     i,
                     g,

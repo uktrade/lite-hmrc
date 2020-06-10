@@ -85,14 +85,6 @@ def prepare_email(licences):
             logging.warning(f"An unexpected error occurred when processing licence -> {type(exc).__name__}: {exc}")
             licences_with_errors += licence.id
 
-    # payload_file = io.StringIO(payload_string)
-    # payload = MIMEApplication(payload_file)
-
-    # payload.add_header(
-    #     "Content-Disposition", "attachment; filename= %s" % "test-filename",
-    # )
-    # multipart_msg.attach(payload)
-
     return multipart_msg, licences_with_errors
 
 

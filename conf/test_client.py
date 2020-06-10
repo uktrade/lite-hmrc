@@ -49,6 +49,7 @@ class LiteHMRCTestClient(testcases.TestCase):
                 "end_date": "2022-06-02",
                 "organisation": {
                     "name": "Organisation",
+                    "id": "10a21d56-9e9d-333d-77c5-479bb3de7ac9",
                     "address": {
                         "line_1": "might",
                         "line_2": "248 James Key Apt. 515",

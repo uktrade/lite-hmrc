@@ -97,10 +97,7 @@ class UpdateLicence(APIView):
             errors += serializer.errors
 
         if data:
-            print("application data", data)
-
             end_user = data.get("end_user")
-            print("end_user", end_user)
             serializer = ForiegnTraderSerializer(data=end_user)
             if not serializer.is_valid():
                 errors.append({"end_user_errors": serializer.errors})

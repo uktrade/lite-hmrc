@@ -5,7 +5,7 @@ from django.test import tag
 from django.urls import reverse
 
 from conf.test_client import LiteHMRCTestClient
-from mail.models import LicencePayload, Mail
+from mail.models import LicencePayload, Mail, OrganisationIdMapping, GoodIdMapping
 from mail.services.lite_to_edifact_converter import licences_to_edifact
 
 from mail.tasks import email_licences
@@ -62,6 +62,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
                 "end_date": "2022-06-02",
                 "organisation": {
                     "name": "Organisation",
+                    "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
                     "address": {
                         "line_1": "might",
                         "line_2": "248 James Key Apt. 515",
@@ -108,6 +109,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
                 "end_date": "2022-06-02",
                 "organisation": {
                     "name": "Organisation",
+                    "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
                     "address": {
                         "line_1": "might",
                         "line_2": "248 James Key Apt. 515",
@@ -141,3 +143,17 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
         email_licences.now()
 
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
+
+    @tag("mapping-ids")
+    def test_mappings(self):
+        licence = LicencePayload.objects.get()
+
+        organisation_id = licence.data["organisation"]["id"]
+        good_id = licence.data["goods"][0]["id"]
+
+        licences_to_edifact(LicencePayload.objects.filter())
+
+        self.assertEqual(OrganisationIdMapping.objects.filter(lite_id=organisation_id, rpa_trader_id=1).count(), 1)
+        self.assertEqual(
+            GoodIdMapping.objects.filter(lite_id=good_id, line_number=1, licence_reference=licence.reference).count(), 1
+        )
