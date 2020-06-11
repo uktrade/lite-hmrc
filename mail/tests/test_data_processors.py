@@ -1,5 +1,8 @@
 import logging
-from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
+
+from django.test import tag
+
+from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS, EMAIL_USER
 from conf.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
@@ -129,7 +132,6 @@ class TestDataProcessors(LiteHMRCTestClient):
     def test_usage_update_reply_is_saved(self):
         self.mail.status = ReceptionStatusEnum.REPLY_PENDING
         self.mail.save()
-        print_all_mails()
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,
             sender=SPIRE_ADDRESS,
@@ -149,3 +151,27 @@ class TestDataProcessors(LiteHMRCTestClient):
         self.assertIn(
             self.mail.response_data, self.usage_update_reply_body,
         )
+
+    @tag("serialize")
+    def test_licence_reply_does_not_throw_exception_if_mail_already_updated(self):
+        self.mail.extract_type = ExtractTypeEnum.LICENCE_UPDATE
+        self.mail.status = ReceptionStatusEnum.REPLY_SENT
+        self.mail.save()
+
+        response_date = self.mail.response_date
+
+        email_message_dto = EmailMessageDto(
+            run_number=self.hmrc_run_number,
+            sender=HMRC_ADDRESS,
+            receiver=EMAIL_USER,
+            body="body",
+            subject=self.licence_update_reply_name,
+            attachment=[self.licence_update_reply_name, self.licence_update_reply_body,],
+            raw_data="qwerty",
+        )
+
+        serialize_email_message(email_message_dto)
+
+        self.mail.refresh_from_db()
+
+        self.assertEqual(response_date, self.mail.response_date)

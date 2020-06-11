@@ -8,7 +8,7 @@ from mail.services.data_processors import (
     to_email_message_dto_from,
     lock_db_for_sending_transaction,
 )
-from mail.services.helpers import build_email_message
+from mail.services.helpers import build_email_message, select_email_for_sending
 
 
 def check_and_route_emails():
@@ -16,9 +16,11 @@ def check_and_route_emails():
     last_message_dto = _read_last_message()
     if not last_message_dto:
         logging.info("Last email considered invalid")
-    mail = serialize_email_message(last_message_dto)
+    serialize_email_message(last_message_dto)
     logging.info("Finished checking for emails")
-    return _collect_and_send(mail)
+    mail = select_email_for_sending()  # Can return None in the event of in flight or no pending or no reply_received
+    if mail:
+        return _collect_and_send(mail)
 
 
 def update_mail_status(mail):
