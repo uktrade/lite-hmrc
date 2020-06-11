@@ -11,19 +11,23 @@ class LoggingMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        correlation = None
         start = time.time()
-        request.correlation = uuid.uuid4().hex
-        data = {
-            "message": "liteolog hmrc",
-            "corrID": request.correlation,
-            "type": "http request",
-            "method": request.method,
-            "url": request.path,
-        }
+        if "HTTP_X_CORRELATION_ID" in request.META:
+            correlation = request.META["HTTP_X_CORRELATION_ID"]
+        request.correlation = correlation or uuid.uuid4().hex
         response = self.get_response(request)
-        data["type"] = "http response"
-        data["elapsed_time"] = time.time() - start
-        logging.info(data)
+        logging.info(
+            {
+                "message": "liteolog hmrc",
+                "corrID": request.correlation,
+                "type": "http response",
+                "method": request.method,
+                "url": request.path,
+                "elapsed_time": time.time() - start,
+            }
+        )
+
         return response
 
 

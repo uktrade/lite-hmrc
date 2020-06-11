@@ -10,10 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 import os
+import sys
 import uuid
 
 from environ import Env
-
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -129,25 +129,21 @@ USE_L10N = True
 
 USE_TZ = True
 
-# if "test" not in sys.argv:
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "json": {
-            "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
-            "format": "(asctime)(levelname)(message)(filename)(lineno)(threadName)(name)(thread)(created)(process)(processName)(relativeCreated)(module)(funcName)(levelno)(msecs)(pathname)",  # noqa
+if "test" not in sys.argv:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "json": {
+                "class": "pythonjsonlogger.jsonlogger.JsonFormatter",
+                "format": "(asctime)(levelname)(message)(filename)(lineno)(threadName)(name)(thread)(created)(process)(processName)(relativeCreated)(module)(funcName)(levelno)(msecs)(pathname)",  # noqa
+            }
         },
-        "simple": {"format": "%(asctime)s - %(name)s:%(lineno)s - %(funcName)s - %(message)s"},
-    },
-    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "simple"}},
-    "loggers": {
-        "": {"handlers": ["console"], "level": env("LOG_LEVEL").upper(), "propagate": True,},
-        "django.db.models.BaseManager": {"handlers": ["console"], "level": "DEBUG", "propagate": True,},
-    },
-}
-# else:
-#     LOGGING = {"version": 1, "disable_existing_loggers": True}
+        "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "json"}},
+        "loggers": {"": {"handlers": ["console"], "level": env("LOG_LEVEL").upper()}},
+    }
+else:
+    LOGGING = {"version": 1, "disable_existing_loggers": True}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
