@@ -59,7 +59,11 @@ def email_lite_licence_updates():
             )
             mail = serialize_email_message(mock_dto)
 
-            _send_email(file_string, mail)
+            message_to_send_dto = build_mail_message_dto(
+                sender=EMAIL_USER, receiver=HMRC_ADDRESS, file_string=file_string
+            )
+            send(message_to_send_dto)
+            update_mail_status(mail)
         except Exception as exc:  # noqa
             logging.error(f"An unexpected error occurred when sending email to HMRC -> {type(exc).__name__}: {exc}")
         else:
@@ -73,9 +77,3 @@ def manage_inbox_queue():
         check_and_route_emails()
     except Exception as exc:  # noqa
         logging.error(f"An unexpected error occurred when managing inbox -> {type(exc).__name__}: {exc}")
-
-
-def _send_email(file_string, mail):
-    message_to_send_dto = build_mail_message_dto(sender=EMAIL_USER, receiver=HMRC_ADDRESS, file_string=file_string)
-    send(message_to_send_dto)
-    update_mail_status(mail)

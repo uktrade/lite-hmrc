@@ -27,8 +27,8 @@ class MailboxService(object):
     @staticmethod
     def find_mail_of(extract_type: str, reception_status: str):
         try:
-            mail = Mail.objects.get(status=reception_status, extract_type=extract_type,)
-            logging.debug("Found mail in {} of extract type {} ".format(reception_status, extract_type),)
+            mail = Mail.objects.get(status=reception_status, extract_type=extract_type)
+            logging.debug("Found mail in {} of extract type {} ".format(reception_status, extract_type))
             return mail
         except Mail.DoesNotExist as ex:
             logging.warning(

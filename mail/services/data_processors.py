@@ -114,10 +114,8 @@ def get_mail_instance(extract_type, run_number) -> Mail or None:
     mail = None
 
     if extract_type == ExtractTypeEnum.LICENCE_REPLY:
-        if (
-            LicenceUpdate.objects.filter(hmrc_run_number=run_number).last().mail.status
-            == ReceptionStatusEnum.REPLY_SENT
-        ):
+        last_email = LicenceUpdate.objects.filter(hmrc_run_number=run_number).last()
+        if last_email and last_email.mail.status == ReceptionStatusEnum.REPLY_SENT:
             logging.info("Licence update reply has already been processed")
             return
         mail = MailboxService.find_mail_of(ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
