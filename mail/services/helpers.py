@@ -10,8 +10,8 @@ from email.parser import Parser
 
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS, EMAIL_USER
 from mail.dtos import EmailMessageDto
-from mail.enums import SourceEnum, ExtractTypeEnum, UnitMapping
-from mail.models import LicenceUpdate, UsageUpdate
+from mail.enums import SourceEnum, ExtractTypeEnum, UnitMapping, ReceptionStatusEnum
+from mail.models import LicenceUpdate, UsageUpdate, Mail
 from mail.serializers import LicenceUpdateMailSerializer, UsageUpdateMailSerializer
 from mail.services.logging_decorator import lite_log
 
@@ -245,3 +245,18 @@ def map_unit(data: dict, g: int):
     unit = data["goods"][g]["unit"]
     data["goods"][g]["unit"] = UnitMapping.convert(unit)
     return data
+
+
+def select_email_for_sending():
+    if not Mail.objects.filter(status=ReceptionStatusEnum.REPLY_PENDING):
+        reply_received = Mail.objects.filter(status=ReceptionStatusEnum.REPLY_RECEIVED).first()
+        if reply_received:
+            return reply_received
+
+        pending = Mail.objects.filter(status=ReceptionStatusEnum.PENDING).first()
+        if pending:
+            return pending
+
+        logging.info("No emails to send")
+        return
+    logging.info("Email currently in flight")

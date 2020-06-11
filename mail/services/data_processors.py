@@ -37,13 +37,16 @@ from mail.services.MailboxService import MailboxService
 logger = logging.getLogger(__name__)
 
 
-def serialize_email_message(dto: EmailMessageDto) -> Mail:
+def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
     extract_type = get_extract_type(dto.subject)
     lite_log(logger, logging.INFO, f"Email type identified as {extract_type}")
 
     data = convert_dto_data_for_serialization(dto, extract_type)
     serializer = get_serializer_for_dto(extract_type)
-    instance = get_mail_instance(extract_type)
+    instance = get_mail_instance(extract_type, dto.run_number)
+
+    if not instance:
+        return
 
     logger.debug(_check_and_return_msg({"data": data, "serializer": serializer, "mail": instance,}))
 
@@ -54,7 +57,6 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail:
             logger, logging.DEBUG, "{} initialized with partial [{}]".format(type(serializer).__name__, partial),
         )
     if serializer and serializer.is_valid():
-        print("\nis valid\n")
         _mail = serializer.save()
         lite_log(logger, logging.DEBUG, "{} saved".format(type(serializer).__name__))
         if data["extract_type"] in ["licence_reply", "usage_reply"]:
@@ -115,11 +117,21 @@ def get_serializer_for_dto(extract_type):
     return serializer
 
 
-def get_mail_instance(extract_type):
+def get_mail_instance(extract_type, run_number) -> Mail or None:
     mail = None
+
     if extract_type == ExtractTypeEnum.LICENCE_REPLY:
+        if (
+            LicenceUpdate.objects.filter(hmrc_run_number=run_number).last().mail.status
+            == ReceptionStatusEnum.REPLY_SENT
+        ):
+            logging.info("Licence update reply has already been processed")
+            return
         mail = MailboxService.find_mail_of(ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
+        if UsageUpdate.objects.filter(spire_run_number=run_number).last().mail.status == ReceptionStatusEnum.REPLY_SENT:
+            logging.info("Licence update reply has already been processed")
+            return
         mail = MailboxService.find_mail_of(ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
     return mail
 

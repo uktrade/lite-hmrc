@@ -29,7 +29,6 @@ def convert_data_for_licence_update(dto):
 
     data["licence_update"]["license_ids"] = get_licence_ids(data["edi_data"])
     _print_nice(data)
-    print(data["licence_update"]["source"])
     return data
 
 
