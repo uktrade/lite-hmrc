@@ -23,11 +23,7 @@ if os.path.exists(ENV_FILE):
     Env.read_env(ENV_FILE)
 
 env = Env(
-    ALLOWED_HOSTS=(str, ""),
-    DEBUG=(bool, False),
-    LOG_LEVEL=(str, "INFO"),
-    BACKGROUND_TASK_ENABLED=(bool, False),
-    HAWK_AUTHENTICATION_ENABLED=(bool, False),
+    ALLOWED_HOSTS=(str, ""), DEBUG=(bool, False), LOG_LEVEL=(str, "INFO"), HAWK_AUTHENTICATION_ENABLED=(bool, False),
 )
 
 # Quick-start development settings - unsuitable for production
@@ -172,5 +168,4 @@ HAWK_CREDENTIALS = {
 }
 
 # Background Tasks
-BACKGROUND_TASK_ENABLED = env("BACKGROUND_TASK_ENABLED")
 BACKGROUND_TASK_RUN_ASYNC = True
