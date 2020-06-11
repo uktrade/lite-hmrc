@@ -50,13 +50,13 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
     partial = True if instance else False
     if serializer:
         serializer = serializer(instance=instance, data=data, partial=partial)
-        logging.debug("{} initialized with partial [{}]".format(type(serializer).__name__, partial))
+        logging.debug("%s initialized with partial [%s]" % (type(serializer).__name__, partial))
     if serializer and serializer.is_valid():
         _mail = serializer.save()
-        logging.debug("{} saved".format(type(serializer).__name__))
+        logging.debug("%s saved" % type(serializer).__name__)
         if data["extract_type"] in ["licence_reply", "usage_reply"]:
             _mail.set_response_date_time()
-            logging.debug("mail response datetime updated. status {}".format(_mail.status))
+            logging.debug("mail response datetime updated. status %s" % _mail.status)
         return _mail
     else:
         print(serializer.errors)
@@ -129,14 +129,14 @@ def get_mail_instance(extract_type, run_number) -> Mail or None:
 
 def to_email_message_dto_from(mail):
     _check_and_raise_error(mail, "Invalid mail object received!")
-    logging.debug(f"converting mail with status {mail.status} extract_type [{mail.extract_type}] to EmailMessageDto")
+    logging.debug(f"converting mail with status [{mail.status}] extract_type [{mail.extract_type}] to EmailMessageDto")
     if mail.status == ReceptionStatusEnum.PENDING:
         logging.debug(f"building request mail message dto from [{mail.status}] mail status")
         return _build_request_mail_message_dto(mail)
     elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
         logging.debug(f"building reply mail message dto from [{mail.status}] mail status")
         return _build_reply_mail_message_dto(mail)
-    raise ValueError(f"Unexpected mail with status: {mail.status} while converting to EmailMessageDto")
+    raise ValueError(f"Unexpected mail with status [{mail.status}] while converting to EmailMessageDto")
 
 
 def lock_db_for_sending_transaction(mail):
@@ -183,6 +183,8 @@ def _build_request_mail_message_dto(mail):
 def _build_reply_mail_message_dto(mail):
     sender = HMRC_ADDRESS
     receiver = SPIRE_ADDRESS
+    run_number = None
+
     if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         licence_update = LicenceUpdate.objects.get(mail=mail)
         run_number = licence_update.source_run_number

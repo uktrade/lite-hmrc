@@ -1,4 +1,3 @@
-import base64
 import io
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
