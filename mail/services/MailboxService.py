@@ -11,6 +11,19 @@ class MailboxService(object):
         _, mails, _ = pop3_connection.list()
         return to_mail_message_dto(pop3_connection.retr(len(mails)))
 
+    def read_last_three_emails(self, pop3connection: object):
+        _, mails, _ = pop3connection.list()
+        emails = [
+            pop3connection.retr(len(mails)),
+            pop3connection.retr(len(mails) - 1),
+            pop3connection.retr(len(mails) - 2),
+        ]
+        dtos = []
+        for email in emails:
+            dtos.append(to_mail_message_dto(email))
+
+        return dtos
+
     @staticmethod
     def find_mail_of(extract_type: str, reception_status: str):
         try:

@@ -13,10 +13,11 @@ from mail.services.helpers import build_email_message, select_email_for_sending
 
 def check_and_route_emails():
     logging.info("Checking for emails")
-    last_message_dto = _read_last_message()
-    if not last_message_dto:
+    dtos = _read_last_message()
+    if not dtos:
         logging.info("Last email considered invalid")
-    serialize_email_message(last_message_dto)
+    for dto in dtos:
+        serialize_email_message(dto)
     logging.info("Finished checking for emails")
     mail = select_email_for_sending()  # Can return None in the event of in flight or no pending or no reply_received
     if mail:
@@ -55,6 +56,6 @@ def _read_last_message():
     server = MailServer()
     pop3_connection = server.connect_to_pop3()
     mail_box_service = MailboxService()
-    last_msg_dto = mail_box_service.read_last_message(pop3_connection)
+    dtos = mail_box_service.read_last_three_emails(pop3_connection)
     server.quit_pop3_connection()
-    return last_msg_dto
+    return dtos
