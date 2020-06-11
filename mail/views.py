@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from conf.authentication import HawkOnlyAuthentication
 from mail.builders import build_mail_message_dto
 from mail.dtos import to_json
-from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum, ReplyStatusEnum
+from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate, LicencePayload
 from mail.routing_controller import check_and_route_emails
 from mail.serializers import (
@@ -76,11 +76,6 @@ class MailList(APIView):
         return JsonResponse(status=HTTP_200_OK, data=to_json(last_msg_dto), safe=False)
 
 
-class TurnOnScheduler(APIView):
-    def get(self, request):
-        pass
-
-
 class UpdateLicence(APIView):
     authentication_classes = (HawkOnlyAuthentication,)
 
@@ -115,27 +110,3 @@ class UpdateLicence(APIView):
                 return JsonResponse(status=status.HTTP_201_CREATED, data={"data": data})
 
         return JsonResponse(status=status.HTTP_400_BAD_REQUEST, data={"errors": errors})
-
-
-class Status(APIView):
-    def get(self, request):
-        status = None
-        response = None
-        response_date = None
-
-        last_email = Mail.objects.last()
-        if last_email:
-            status = last_email.status
-            if status == ReceptionStatusEnum.REPLY_SENT:
-                response_date = last_email.response_date
-
-                if ReplyStatusEnum.REJECTED in last_email.response_data.lower():
-                    response = ReplyStatusEnum.REJECTED
-                else:
-                    response = ReplyStatusEnum.ACCEPTED
-            else:
-                response = "in flight"
-
-        return JsonResponse(
-            data={"status": status, "response": response, "response_date": response_date}, status=HTTP_200_OK
-        )

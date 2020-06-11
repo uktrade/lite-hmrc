@@ -1,5 +1,5 @@
-import time
 import datetime
+import time
 
 from background_task.models import Task
 from django.http import HttpResponse
@@ -7,6 +7,8 @@ from django.utils import timezone
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from rest_framework.views import APIView
 
+from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
+from mail.models import Mail
 from mail.tasks import LICENCE_UPDATES_TASK_QUEUE
 
 
@@ -15,27 +17,32 @@ class HealthCheck(APIView):
         """
         Provides a health check endpoint as per [https://man.uktrade.io/docs/howtos/healthcheck.html#pingdom]
         """
+
         start_time = time.time()
-        status = (HTTP_200_OK, "OK")
 
         task = Task.objects.get(queue=LICENCE_UPDATES_TASK_QUEUE)
         if task.run_at + datetime.timedelta(seconds=task.repeat) < timezone.now():
-            status = (HTTP_503_SERVICE_UNAVAILABLE, "not OK")
+            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
 
-        return HttpResponse(
-            status=status[0],
-            content=self._build_xml_response_content(status[1], start_time),
-            content_type="application/xml",
-        )
+        last_email = Mail.objects.last()
+        if (
+            last_email
+            and last_email.status == ReceptionStatusEnum.REPLY_SENT
+            and ReplyStatusEnum.REJECTED in last_email.response_data.lower()
+        ):
+            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
+
+        return self._build_response(HTTP_200_OK, "OK", start_time)
 
     @staticmethod
-    def _build_xml_response_content(status_message, start_time):
+    def _build_response(status, message, start_time):
         duration_ms = (time.time() - start_time) * 1000
         response_time = "{:.3f}".format(duration_ms)
-
-        return f"""
+        xml = f"""
                    <pingdom_http_custom_check>
-                     <status>{status_message}</status> 
+                     <status>{message}</status> 
                      <response_time>{response_time}</response_time>
                    </pingdom_http_custom_check>
                 """
+
+        return HttpResponse(content=xml, content_type="application/xml", status=status)

@@ -13,11 +13,8 @@ from mail.dtos import EmailMessageDto
 from mail.enums import SourceEnum, ExtractTypeEnum, UnitMapping
 from mail.models import LicenceUpdate, UsageUpdate
 from mail.serializers import LicenceUpdateMailSerializer, UsageUpdateMailSerializer
-from mail.services.logging_decorator import lite_log
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream", "text/plain"]
-
-logger = logging.getLogger(__name__)
 
 
 def guess_charset(msg: Message):
@@ -131,9 +128,7 @@ def process_attachment(attachment):
     file_name = attachment[0] if attachment and attachment[0] is not None else ""
     file_data = attachment[1] if attachment and attachment[1] is not None else ""
     file_data = file_data.decode("utf-8")
-    lite_log(
-        logger, logging.DEBUG, f"attachment filename: {file_name}, filedata:\n{file_data}",
-    )
+    logging.debug(f"attachment filename: {file_name}, filedata:\n{file_data}")
     return file_name, file_data
 
 

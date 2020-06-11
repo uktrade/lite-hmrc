@@ -10,9 +10,6 @@ from mail.services.helpers import (
     new_hmrc_run_number,
     get_runnumber,
 )
-from mail.services.logging_decorator import lite_log
-
-logger = logging.getLogger(__name__)
 
 
 class HelpersTests(LiteHMRCTestClient):
@@ -75,4 +72,4 @@ def print_all_mails():
             "status": mail.status,
             "extract_type": mail.extract_type,
         }
-        lite_log(logger, logging.DEBUG, "Mail -> {}".format(rec))
+        logging.debug("Mail -> {}".format(rec))

@@ -31,42 +31,35 @@ from mail.services.helpers import (
     get_all_serializer_errors_for_mail,
     convert_source_to_sender,
 )
-from mail.services.logging_decorator import lite_log
 from mail.services.MailboxService import MailboxService
-
-logger = logging.getLogger(__name__)
 
 
 def serialize_email_message(dto: EmailMessageDto) -> Mail:
     extract_type = get_extract_type(dto.subject)
-    lite_log(logger, logging.INFO, f"Email type identified as {extract_type}")
+    logging.info(f"Email type identified as {extract_type}")
 
     data = convert_dto_data_for_serialization(dto, extract_type)
     serializer = get_serializer_for_dto(extract_type)
     instance = get_mail_instance(extract_type)
 
-    logger.debug(_check_and_return_msg({"data": data, "serializer": serializer, "mail": instance,}))
+    logging.debug(_check_and_return_msg({"data": data, "serializer": serializer, "mail": instance}))
 
     partial = True if instance else False
     if serializer:
         serializer = serializer(instance=instance, data=data, partial=partial)
-        lite_log(
-            logger, logging.DEBUG, "{} initialized with partial [{}]".format(type(serializer).__name__, partial),
-        )
+        logging.debug("{} initialized with partial [{}]".format(type(serializer).__name__, partial))
     if serializer and serializer.is_valid():
         print("\nis valid\n")
         _mail = serializer.save()
-        lite_log(logger, logging.DEBUG, "{} saved".format(type(serializer).__name__))
+        logging.debug("{} saved".format(type(serializer).__name__))
         if data["extract_type"] in ["licence_reply", "usage_reply"]:
             _mail.set_response_date_time()
-            lite_log(
-                logger, logging.DEBUG, "mail response datetime updated. status {}".format(_mail.status),
-            )
+            logging.debug("mail response datetime updated. status {}".format(_mail.status))
         return _mail
     else:
         print(serializer.errors)
         data["serializer_errors"] = get_all_serializer_errors_for_mail(data)
-        lite_log(logger, logging.ERROR, data["serializer_errors"])
+        logging.error(data["serializer_errors"])
         serializer = InvalidEmailSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -126,16 +119,12 @@ def get_mail_instance(extract_type):
 
 def to_email_message_dto_from(mail):
     _check_and_raise_error(mail, "Invalid mail object received!")
-    lite_log(
-        logger,
-        logging.DEBUG,
-        f"converting mail with status {mail.status} extract_type [{mail.extract_type}] to EmailMessageDto",
-    )
+    logging.debug(f"converting mail with status {mail.status} extract_type [{mail.extract_type}] to EmailMessageDto")
     if mail.status == ReceptionStatusEnum.PENDING:
-        logger.debug(f"building request mail message dto from [{mail.status}] mail status")
+        logging.debug(f"building request mail message dto from [{mail.status}] mail status")
         return _build_request_mail_message_dto(mail)
     elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
-        logger.debug(f"building reply mail message dto from [{mail.status}] mail status")
+        logging.debug(f"building reply mail message dto from [{mail.status}] mail status")
         return _build_reply_mail_message_dto(mail)
     raise ValueError(f"Unexpected mail with status: {mail.status} while converting to EmailMessageDto")
 

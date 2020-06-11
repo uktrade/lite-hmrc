@@ -8,9 +8,6 @@ from mail.services.helpers import (
     get_licence_ids,
     new_spire_run_number,
 )
-from mail.services.logging_decorator import lite_log
-
-logger = logging.getLogger(__name__)
 
 
 def convert_data_for_licence_update(dto):
@@ -74,4 +71,4 @@ def _print_nice(data):
     output = ""
     for k, v in data.items():
         output += "{}->[{}] ".format(k, str(v))
-    lite_log(logger, logging.DEBUG, f"{output}")
+    logging.debug(output)

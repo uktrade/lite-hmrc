@@ -8,8 +8,6 @@ from mail.services.data_processors import (
 )
 from mail.tests.data_processors_test_base import DataProcessorsTestBase
 
-logger = logging.getLogger(__name__)
-
 
 class SerializeEmailMessageTests(DataProcessorsTestBase):
     def setUp(self):

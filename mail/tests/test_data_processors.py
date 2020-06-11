@@ -8,10 +8,7 @@ from mail.services.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
 )
-from mail.services.logging_decorator import lite_log
 from mail.tests.test_helpers import print_all_mails
-
-logger = logging.getLogger(__name__)
 
 
 class TestDataProcessors(LiteHMRCTestClient):
@@ -76,11 +73,7 @@ class TestDataProcessors(LiteHMRCTestClient):
 
         initial_issues_count = Mail.objects.invalid().count()
         initial_license_update_count = Mail.objects.valid().count()
-        lite_log(
-            logger,
-            logging.DEBUG,
-            f"ini: issue count={initial_issues_count}, license update count {initial_license_update_count}",
-        )
+        logging.debug(f"ini: issue count={initial_issues_count}, license update count {initial_license_update_count}")
         serialize_email_message(email_message_dto)
 
         self.assertEqual(Mail.objects.invalid().count(), initial_issues_count + 1)

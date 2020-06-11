@@ -5,9 +5,6 @@ from mail.models import LicencePayload
 from mail.services.helpers import read_file
 from mail.services.helpers import to_smart_text
 import logging
-from mail.services.logging_decorator import lite_log
-
-logger = logging.getLogger(__name__)
 
 
 class LiteHMRCTestClient(testcases.TestCase):
@@ -15,7 +12,7 @@ class LiteHMRCTestClient(testcases.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        lite_log(logger, logging.DEBUG, "tearDownClass() is called")
+        logging.debug("tearDownClass() is called")
         super().tearDownClass()
 
     def setUp(self):
@@ -27,9 +24,7 @@ class LiteHMRCTestClient(testcases.TestCase):
         self.licence_update_reply_body = to_smart_text(read_file("mail/tests/files/license_update_reply_file"))
         # todo need to see a real example
         self.usage_update_reply_body = to_smart_text(read_file("mail/tests/files/usage_update_reply_file"))
-        lite_log(
-            logger, logging.DEBUG, "licence_update_reply_body: \n{}".format(self.licence_update_reply_body),
-        )
+        logging.debug("licence_update_reply_body: \n{}".format(self.licence_update_reply_body))
         self.licence_update_reply_name = "ILBDOTI_live_CHIEF_licenceReply_49543_201902080025"
 
         self.usage_update_reply_name = "ILBDOTI_live_CHIEF_usageReply_49543_201902080025"
