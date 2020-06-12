@@ -3,7 +3,28 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from django.utils import timezone
+
+from mail.enums import SourceEnum
 from mail.libraries.email_message_dto import EmailMessageDto
+from mail.libraries.lite_to_edifact_converter import licences_to_edifact
+from mail.models import LicenceUpdate
+
+
+def build_licence_updates_file(licences):
+    last_lite_update = LicenceUpdate.objects.filter(source=SourceEnum.LITE).last()
+    last_lite_run_number = last_lite_update.source_run_number + 1 if last_lite_update else 1
+    now = timezone.now()
+    file_name = (
+        "ILBDOTI_live_CHIEF_licenceUpdate_"
+        + str(last_lite_run_number + 1)
+        + "_"
+        + "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
+    )
+
+    file_content = licences_to_edifact(licences)
+
+    return file_name, file_content
 
 
 def build_text_message(sender, receiver, body="Body_of_the_mail 2", file=None, file_path=None):
@@ -30,20 +51,14 @@ def build_text_message(sender, receiver, body="Body_of_the_mail 2", file=None, f
     return msg
 
 
-def _read_file(file_path):
-    _file = open(file_path, "rb")
-    return _file.read()
-
-
-def build_mail_message_dto(sender, receiver, file_string="Test file"):
-    _subject = "ILBDOTI_test_CHIEF_licenceUpdate_1010_201901130300"
-    attachment = [_subject, file_string]
+def build_mail_message_dto(sender, receiver, file_name=None, file_content=None):
+    attachment = [file_name, file_content]
     return EmailMessageDto(
         run_number=1010,
         sender=sender,
         receiver=receiver,
         body="mail body",
-        subject=_subject,
+        subject=file_name,
         attachment=attachment,
         raw_data=build_text_message(sender, receiver, "mail body ..."),
     )

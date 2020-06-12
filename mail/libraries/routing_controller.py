@@ -6,6 +6,7 @@ from mail.libraries.data_processors import (
     to_email_message_dto_from,
     lock_db_for_sending_transaction,
 )
+from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import build_email_message, select_email_for_sending
 from mail.libraries.mailbox_service import read_last_three_emails, send_email
 from mail.servers import MailServer
@@ -25,6 +26,7 @@ def check_and_route_emails():
 
 
 def update_mail_status(mail):
+    logging.info("Updating mail status")
     if mail.status == ReceptionStatusEnum.PENDING:
         mail.status = ReceptionStatusEnum.REPLY_PENDING
     else:
@@ -32,19 +34,20 @@ def update_mail_status(mail):
     mail.save()
 
 
-def send(message_to_send_dto):
+def send(email_message_dto: EmailMessageDto):
+    logging.info("Sending email")
     server = MailServer()
     smtp_connection = server.connect_to_smtp()
-    send_email(smtp_connection, build_email_message(message_to_send_dto))
+    send_email(smtp_connection, build_email_message(email_message_dto))
     server.quit_smtp_connection()
 
 
 def _collect_and_send(mail):
-    logging.info("mail id being sent")
+    logging.info(f"Mail '{id}' being sent")
     message_to_send_dto = to_email_message_dto_from(mail)
     is_locked_by_me = lock_db_for_sending_transaction(mail)
     if not is_locked_by_me:
-        logging.info("email being sent by another thread")
+        logging.info("Email being sent by another thread")
     if message_to_send_dto.receiver != "LITE":
         send(message_to_send_dto)
     update_mail_status(mail)

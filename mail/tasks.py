@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from conf.settings import HMRC_ADDRESS, EMAIL_USER
-from mail.libraries.builders import build_mail_message_dto
+from mail.libraries.builders import build_mail_message_dto, build_licence_updates_file
 from mail.enums import ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
 from mail.libraries.data_processors import serialize_email_message
 from mail.libraries.email_message_dto import EmailMessageDto
@@ -19,47 +19,33 @@ MANAGE_INBOX_TASK_QUEUE = "manage_inbox_queue"
 
 @background(queue=LICENCE_UPDATES_TASK_QUEUE, schedule=0)
 def email_lite_licence_updates():
+    if not _is_email_slot_free:
+        logging.info("There is currently an update in progress or an email in flight")
+        return
+
     with transaction.atomic():
         try:
-            if not _is_email_slot_free:
-                logging.info("There is currently an update in progress or an email in flight")
-                return
-
             licences = LicencePayload.objects.filter(is_processed=False).select_for_update(nowait=True)
 
             if not licences.exists():
                 logging.info("There are currently no licences to send")
                 return
 
-            file_string = licences_to_edifact(licences)
-
-            last_lite_update = LicenceUpdate.objects.filter(source=SourceEnum.LITE).last()
-            last_lite_run_number = last_lite_update.source_run_number + 1 if last_lite_update else 1
-
-            now = timezone.now()
-            file_name = (
-                "ILBDOTI_live_CHIEF_licenceUpdate_"
-                + str(last_lite_run_number + 1)
-                + "_"
-                + "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
+            file_name, file_content = build_licence_updates_file(licences)
+            email_message_dto = build_mail_message_dto(
+                sender=EMAIL_USER, receiver=HMRC_ADDRESS, file_name=file_name, file_content=file_content
             )
-            mock_dto = EmailMessageDto(
-                subject="licenceUpdate",
-                raw_data="See licence payloads",
-                sender="LITE",
-                run_number=last_lite_run_number + 1,
-                attachment=[file_name, file_string],
-                receiver=HMRC_ADDRESS,
-                body=None,
-            )
-            mail = serialize_email_message(mock_dto)
+            mail = serialize_email_message(email_message_dto)
 
-            send_email(file_name, mail)
+            if mail:
+                send(email_message_dto)
+                update_mail_status(mail)
+                licences.update(is_processed=True)
+                logging.info("Email successfully sent to HMRC")
+            else:
+                logging.error("Failed to send email to HMRC")
         except Exception as exc:  # noqa
             logging.error(f"An unexpected error occurred when sending email to HMRC -> {type(exc).__name__}: {exc}")
-        else:
-            licences.update(is_processed=True)
-            logging.info("Email successfully sent to HMRC")
 
 
 @background(queue=MANAGE_INBOX_TASK_QUEUE, schedule=0)
@@ -68,12 +54,6 @@ def manage_inbox_queue():
         check_and_route_emails()
     except Exception as exc:  # noqa
         logging.error(f"An unexpected error occurred when managing inbox -> {type(exc).__name__}: {exc}")
-
-
-def send_email(file_string, mail):
-    message_to_send_dto = build_mail_message_dto(sender=EMAIL_USER, receiver=HMRC_ADDRESS, file_string=file_string)
-    send(message_to_send_dto)
-    update_mail_status(mail)
 
 
 def _is_email_slot_free():
