@@ -1,7 +1,7 @@
 from parameterized import parameterized
 import logging
 from conf.settings import SPIRE_ADDRESS
-from mail.tests.test_client import LiteHMRCTestClient
+from mail.tests.client import LiteHMRCTestClient
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import LicenceUpdate, Mail
 from mail.services.helpers import (

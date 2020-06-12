@@ -3,7 +3,7 @@ from django.urls import reverse
 from parameterized import parameterized
 from rest_framework import status
 
-from mail.tests.test_client import LiteHMRCTestClient
+from mail.tests.client import LiteHMRCTestClient
 from mail.enums import UnitMapping
 from mail.models import LicencePayload
 from mail.services.helpers import map_unit

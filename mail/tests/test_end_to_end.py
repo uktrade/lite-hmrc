@@ -6,7 +6,6 @@ from django.test import tag
 from django.urls import reverse
 
 from conf.settings import SPIRE_ADDRESS
-from mail.tests.test_client import LiteHMRCTestClient
 from mail.builders import build_text_message
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate, LicencePayload
@@ -16,6 +15,7 @@ from mail.services.MailboxService import MailboxService
 from mail.services.data_processors import serialize_email_message
 from mail.services.helpers import get_extract_type
 from mail.tasks import email_lite_licence_updates
+from mail.tests.client import LiteHMRCTestClient
 
 
 class SmtpMock:
