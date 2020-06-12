@@ -3,7 +3,7 @@ import logging
 from django.test import tag
 
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS, EMAIL_USER
-from conf.test_client import LiteHMRCTestClient
+from mail.tests.test_client import LiteHMRCTestClient
 from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate, UsageUpdate

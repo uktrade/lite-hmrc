@@ -3,7 +3,7 @@ from unittest import mock
 
 from django.test import tag
 
-from conf.test_client import LiteHMRCTestClient
+from mail.tests.test_client import LiteHMRCTestClient
 from mail.models import LicencePayload, Mail, OrganisationIdMapping, GoodIdMapping
 from mail.services.lite_to_edifact_converter import licences_to_edifact
 

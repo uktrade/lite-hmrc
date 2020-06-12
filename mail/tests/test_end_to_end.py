@@ -6,7 +6,7 @@ from django.test import tag
 from django.urls import reverse
 
 from conf.settings import SPIRE_ADDRESS
-from conf.test_client import LiteHMRCTestClient
+from mail.tests.test_client import LiteHMRCTestClient
 from mail.builders import build_text_message
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate, LicencePayload

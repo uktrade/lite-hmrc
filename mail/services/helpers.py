@@ -71,7 +71,7 @@ def get_attachment(msg: Message):
     return None, None
 
 
-def to_mail_message_dto(mail_data: object):
+def to_mail_message_dto(mail_data):
     mail_contents = mail_data[1]
     contents = b"\r\n".join(mail_contents).decode("utf-8")
     msg_obj = Parser().parsestr(contents)

@@ -2,7 +2,7 @@ from unittest import mock
 
 from django.test import tag
 
-from conf.test_client import LiteHMRCTestClient
+from mail.tests.test_client import LiteHMRCTestClient
 from mail.enums import ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
 from mail.tasks import email_lite_licence_updates

@@ -14,7 +14,7 @@ from mail.services.data_processors import serialize_email_message
 from mail.services.lite_to_edifact_converter import licences_to_edifact
 
 LICENCE_UPDATES_TASK_QUEUE = "licences_updates_queue"
-MANAGE_TASK_QUEUE = "manage_inbox_queue"
+MANAGE_INBOX_TASK_QUEUE = "manage_inbox_queue"
 
 
 @background(queue=LICENCE_UPDATES_TASK_QUEUE, schedule=0)
@@ -62,7 +62,7 @@ def email_lite_licence_updates():
             logging.info("Email successfully sent to HMRC")
 
 
-@background(queue=MANAGE_TASK_QUEUE, schedule=0)
+@background(queue=MANAGE_INBOX_TASK_QUEUE, schedule=0)
 def manage_inbox_queue():
     try:
         check_and_route_emails()

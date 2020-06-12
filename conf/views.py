@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
 from mail.models import Mail
-from mail.tasks import LICENCE_UPDATES_TASK_QUEUE
+from mail.tasks import LICENCE_UPDATES_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
 
 
 class HealthCheck(APIView):
@@ -20,8 +20,12 @@ class HealthCheck(APIView):
 
         start_time = time.time()
 
-        task = Task.objects.get(queue=LICENCE_UPDATES_TASK_QUEUE)
-        if task.run_at + datetime.timedelta(seconds=task.repeat) < timezone.now():
+        licence_update_task = Task.objects.get(queue=LICENCE_UPDATES_TASK_QUEUE)
+        if licence_update_task.run_at + datetime.timedelta(seconds=licence_update_task.repeat) < timezone.now():
+            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
+
+        manage_inbox_task = Task.objects.get(queue=MANAGE_INBOX_TASK_QUEUE)
+        if manage_inbox_task.run_at + datetime.timedelta(seconds=manage_inbox_task.repeat) < timezone.now():
             return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
 
         last_email = Mail.objects.last()
