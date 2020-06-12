@@ -6,7 +6,11 @@ from conf.test_client import LiteHMRCTestClient
 from mail.enums import ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
 from mail.tasks import email_lite_licence_updates
-from mail.tests.test_licence_to_edifact import SmtpMock
+
+
+class SmtpMock:
+    def quit(self):
+        pass
 
 
 class TastTests(LiteHMRCTestClient):

@@ -1,18 +1,26 @@
 from random import randint
 from time import sleep
+from unittest import mock
 
 from django.test import tag
+from django.urls import reverse
 
 from conf.settings import SPIRE_ADDRESS
 from conf.test_client import LiteHMRCTestClient
 from mail.builders import build_text_message
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
-from mail.models import Mail, LicenceUpdate
+from mail.models import Mail, LicenceUpdate, LicencePayload
 from mail.routing_controller import check_and_route_emails, _collect_and_send
 from mail.servers import MailServer
 from mail.services.MailboxService import MailboxService
-from mail.services.data_processors import serialize_email_message, to_email_message_dto_from
+from mail.services.data_processors import serialize_email_message
 from mail.services.helpers import get_extract_type
+from mail.tasks import email_lite_licence_updates
+
+
+class SmtpMock:
+    def quit(self):
+        pass
 
 
 class EndToEndTest(LiteHMRCTestClient):
@@ -138,3 +146,28 @@ class EndToEndTests(LiteHMRCTestClient):
 
         mail = Mail.objects.get()
         self.print_mail(mail)
+
+    @tag("end-to-end")
+    @tag("mocked")
+    @mock.patch("mail.tasks.send_email")
+    def test_send_email_to_hmrc_e2e_mocked(self, send_email):
+        send_email.return_value = SmtpMock()
+        self.single_siel_licence_payload.is_processed = True
+
+        self.client.post(
+            reverse("mail:update_licence"), data=self.licence_payload_json, content_type="application/json"
+        )
+
+        email_lite_licence_updates.now()  # Manually calling background task logic
+
+        self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
+
+    @tag("end-to-end")
+    def test_send_email_to_hmrc_e2e_non_mocked(self):
+        self.client.post(
+            reverse("mail:update_licence"), data=self.licence_payload_json, content_type="application/json"
+        )
+
+        email_lite_licence_updates.now()
+
+        self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)

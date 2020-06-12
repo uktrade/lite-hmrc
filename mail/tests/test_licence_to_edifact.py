@@ -2,7 +2,6 @@ from datetime import datetime
 from unittest import mock
 
 from django.test import tag
-from django.urls import reverse
 
 from conf.test_client import LiteHMRCTestClient
 from mail.models import LicencePayload, Mail, OrganisationIdMapping, GoodIdMapping
@@ -61,28 +60,3 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
         self.assertEqual(Mail.objects.count(), 1)
         self.single_siel_licence_payload.refresh_from_db()
         self.assertEqual(self.single_siel_licence_payload.is_processed, True)
-
-    @tag("end-to-end")
-    @tag("mocked")
-    @mock.patch("mail.tasks.send_email")
-    def test_send_email_to_hmrc_e2e_mocked(self, send_email):
-        send_email.return_value = SmtpMock()
-        self.single_siel_licence_payload.is_processed = True
-
-        self.client.post(
-            reverse("mail:update_licence"), data=self.licence_payload_json, content_type="application/json"
-        )
-
-        email_lite_licence_updates.now()  # Manually calling background task logic
-
-        self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
-
-    @tag("end-to-end")
-    def test_send_email_to_hmrc_e2e_non_mocked(self):
-        self.client.post(
-            reverse("mail:update_licence"), data=self.licence_payload_json, content_type="application/json"
-        )
-
-        email_lite_licence_updates.now()
-
-        self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
