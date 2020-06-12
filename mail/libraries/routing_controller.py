@@ -30,12 +30,14 @@ def update_mail(mail: Mail, mail_dto: EmailMessageDto):
     logging.info("Updating mail")
     if mail.status == ReceptionStatusEnum.PENDING:
         mail.status = ReceptionStatusEnum.REPLY_PENDING
+        # Update the mail object to record what we sent to destination
+        mail.sent_filename = mail_dto.attachment[0]
+        mail.sent_data = mail_dto.attachment[1]
     else:
         mail.status = ReceptionStatusEnum.REPLY_SENT
-
-    # Update the mail object to record what we sent to HMRC
-    mail.sent_filename = mail_dto.attachment[0]
-    mail.sent_data = mail_dto.attachment[1]
+        # Update the mail object to record what we sent to source
+        mail.sent_response_filename = mail_dto.attachment[0]
+        mail.sent_response_data = mail_dto.attachment[1]
 
     mail.save()
 
@@ -56,7 +58,7 @@ def _collect_and_send(mail: Mail):
         logging.info("Email being sent by another thread")
     if message_to_send_dto.receiver != "LITE":
         send(message_to_send_dto)
-    update_mail(mail)
+    update_mail(mail, message_to_send_dto)
     logging.info(f"Email routed from {message_to_send_dto.sender} to {message_to_send_dto.receiver}")
 
 

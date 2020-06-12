@@ -26,7 +26,7 @@ def convert_data_for_licence_update(dto: EmailMessageDto):
         data["edi_filename"] = dto.attachment[0]
         data["edi_data"] = dto.attachment[1]
 
-    data["licence_update"]["license_ids"] = get_licence_ids(data["edi_data"])
+    data["licence_update"]["licence_ids"] = get_licence_ids(data["edi_data"])
     _print_nice(data)
     return data
 
@@ -53,7 +53,7 @@ def convert_data_for_usage_update(dto: EmailMessageDto):
         new_spire_run_number(int(dto.run_number)) if convert_sender_to_source(dto.sender) in VALID_SENDERS else None
     )
     data["usage_update"]["hmrc_run_number"] = dto.run_number
-    data["usage_update"]["license_ids"] = get_licence_ids(data["edi_data"])
+    data["usage_update"]["licence_ids"] = get_licence_ids(data["edi_data"])
     return data
 
 

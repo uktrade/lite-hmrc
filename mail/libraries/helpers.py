@@ -170,6 +170,7 @@ def get_extract_type(subject: str):
 
 
 def get_licence_ids(file_body):
+    print(f"\n\n\n\n{file_body}\n\n\n\n")
     ids = []
     lines = file_body.split("\n")
     for line in lines:

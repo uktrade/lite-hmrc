@@ -44,17 +44,10 @@ class EndToEndTest(LiteHMRCTestClient):
         last_msg_dto = read_last_message(pop3_conn)
         pop3_conn.quit()
 
-        print("\n\n\n")
-        print(last_msg_dto)
-
         in_mail = Mail.objects.get(edi_filename=file_name)
         self.assertEqual(
             in_mail.edi_filename, file_name,
         )
-
-        print("\n\n\n")
-        print(in_mail.__dict__)
-        print("\n\n\n")
 
     @tag("data manipulation")
     def test_true_e2e(self):
@@ -125,7 +118,7 @@ class EndToEndTests(LiteHMRCTestClient):
                 source=SourceEnum.SPIRE,
                 source_run_number=last_msg_dto.run_number,
                 hmrc_run_number=last_msg_dto.run_number,
-                license_ids="['GBSIEL/2020/0000001/P', 'GBSIEL/2020/0000001/P']",
+                licence_ids="['GBSIEL/2020/0000001/P', 'GBSIEL/2020/0000001/P']",
                 mail=mail,
             )
             lu.save()

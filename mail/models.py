@@ -25,7 +25,7 @@ class Mail(models.Model):
     last_submitted_on = models.DateTimeField(blank=True, null=True)
     edi_filename = models.TextField(null=True, blank=True)
     edi_data = models.TextField(null=True, blank=True)
-    status = models.CharField(choices=ReceptionStatusEnum.choices, default=ReceptionStatusEnum.PENDING, max_length=20,)
+    status = models.CharField(choices=ReceptionStatusEnum.choices, default=ReceptionStatusEnum.PENDING, max_length=20)
     extract_type = models.CharField(choices=ExtractTypeEnum.choices, max_length=20, null=True)
 
     sent_filename = models.TextField(blank=True, null=True)
@@ -35,6 +35,9 @@ class Mail(models.Model):
     response_data = models.TextField(blank=True, null=True)
     response_date = models.DateTimeField(blank=True, null=True)
     response_subject = models.TextField(null=True, blank=True)
+
+    sent_response_filename = models.TextField(blank=True, null=True)
+    sent_response_data = models.TextField(blank=True, null=True)
 
     raw_data = models.TextField()
 
@@ -68,23 +71,23 @@ class LicenceUpdate(models.Model):
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING)
 
     def set_licence_ids(self, data: List):
-        self.license_ids = json.dumps(data)
+        self.licence_ids = json.dumps(data)
 
     def get_licence_ids(self):
-        return json.loads(self.license_ids)
+        return json.loads(self.licence_ids)
 
 
 class UsageUpdate(models.Model):
-    license_ids = models.TextField()
+    licence_ids = models.TextField()
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING)
     spire_run_number = models.IntegerField()
     hmrc_run_number = models.IntegerField()
 
     def set_licence_ids(self, data: List):
-        self.license_ids = json.dumps(data)
+        self.licence_ids = json.dumps(data)
 
     def get_licence_ids(self):
-        return json.loads(self.license_ids)
+        return json.loads(self.licence_ids)
 
 
 class LicencePayload(models.Model):

@@ -146,25 +146,21 @@ def build_request_mail_message_dto(mail: Mail):
     receiver = None
     run_number = 0
 
-    if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
+    if mail.extract_type in [ExtractTypeEnum.LICENCE_UPDATE, ExtractTypeEnum.USAGE_REPLY]:
         sender = EMAIL_USER
         receiver = HMRC_ADDRESS
         licence_update = LicenceUpdate.objects.get(mail=mail)
         run_number = licence_update.hmrc_run_number
-    elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
+    elif mail.extract_type in [ExtractTypeEnum.USAGE_UPDATE, ExtractTypeEnum.LICENCE_REPLY]:
         sender = HMRC_ADDRESS
         receiver = SPIRE_ADDRESS
         update = UsageUpdate.objects.get(mail=mail)
         run_number = update.spire_run_number
 
-    print("\n\n\n", mail.edi_filename, "\n\n\n")
-
     attachment = [
         build_sent_filename(mail.edi_filename, run_number),
         build_sent_file_data(mail.edi_data, run_number),
     ]
-
-    print("\n\n\n", attachment[0], "\n\n\n")
 
     return EmailMessageDto(
         run_number=run_number,
@@ -209,13 +205,18 @@ def _build_reply_mail_message_dto(mail):
         sender = SPIRE_ADDRESS
         receiver = HMRC_ADDRESS
 
+    attachment = [
+        build_sent_filename(mail.response_filename, run_number),
+        build_sent_file_data(mail.response_data, run_number),
+    ]
+
     return EmailMessageDto(
         run_number=run_number,
         sender=sender,
         receiver=receiver,
-        subject=mail.response_subject,
+        subject=attachment[0],
         body=None,
-        attachment=[mail.response_filename, mail.response_data],
+        attachment=attachment,
         raw_data=None,
     )
 
