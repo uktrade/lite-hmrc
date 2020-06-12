@@ -6,16 +6,16 @@ from django.test import tag
 from django.urls import reverse
 
 from conf.settings import SPIRE_ADDRESS
-from mail.builders import build_text_message
+from mail.libraries.builders import build_text_message
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
+from mail.libraries.data_processors import serialize_email_message
+from mail.libraries.helpers import get_extract_type
+from mail.libraries.mailbox_service import read_last_message, send_email
+from mail.libraries.routing_controller import check_and_route_emails, _collect_and_send
 from mail.models import Mail, LicenceUpdate, LicencePayload
-from mail.routing_controller import check_and_route_emails, _collect_and_send
 from mail.servers import MailServer
-from mail.services.mailbox_service import MailboxService
-from mail.services.data_processors import serialize_email_message
-from mail.services.helpers import get_extract_type
 from mail.tasks import email_lite_licence_updates
-from mail.tests.client import LiteHMRCTestClient
+from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class SmtpMock:
@@ -32,17 +32,16 @@ class EndToEndTest(LiteHMRCTestClient):
         file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902" + str(randint(1, 99999))  # nosec
 
         # send email to lite from spire
-        service = MailboxService()
-        service.send_email(
+        send_email(
             MailServer().connect_to_smtp(),
-            build_text_message(SPIRE_ADDRESS, "username@example.com", [file_name, self.licence_usage_file_body],),
+            build_text_message(SPIRE_ADDRESS, "username@example.com", [file_name, self.licence_usage_file_body]),
         )
         sleep(5)
         check_and_route_emails()
         sleep(5)
         server = MailServer()
         pop3_conn = server.connect_to_pop3()
-        last_msg_dto = MailboxService().read_last_message(pop3_conn)
+        last_msg_dto = read_last_message(pop3_conn)
         pop3_conn.quit()
 
         print("\n\n\n")
@@ -112,7 +111,7 @@ class EndToEndTests(LiteHMRCTestClient):
         server = MailServer()
         pop3_conn = server.connect_to_pop3()
 
-        last_msg_dto = MailboxService().read_last_message(pop3_conn)
+        last_msg_dto = read_last_message(pop3_conn)
 
         print("\nMessage retrieved:\n----------------")
         print("run number\t", last_msg_dto.run_number)

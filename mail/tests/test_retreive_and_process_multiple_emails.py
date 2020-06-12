@@ -3,12 +3,12 @@ import base64
 from django.test import tag
 
 from conf.settings import HMRC_ADDRESS, SPIRE_ADDRESS, EMAIL_USER
-from mail.tests.client import LiteHMRCTestClient
-from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
+from mail.libraries.data_processors import serialize_email_message
+from mail.libraries.email_message_dto import EmailMessageDto
+from mail.libraries.helpers import select_email_for_sending
 from mail.models import Mail, LicenceUpdate
-from mail.services.data_processors import serialize_email_message
-from mail.services.helpers import select_email_for_sending
+from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class MultipleEmailRetrievalTests(LiteHMRCTestClient):

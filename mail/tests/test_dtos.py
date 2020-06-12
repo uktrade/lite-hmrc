@@ -1,5 +1,5 @@
-from mail.tests.client import LiteHMRCTestClient
-from mail.dtos import *
+from mail.libraries.email_message_dto import *
+from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class TestDtos(LiteHMRCTestClient):

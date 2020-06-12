@@ -10,8 +10,21 @@ from conf.settings import (
     HMRC_ADDRESS,
     SPIRE_ADDRESS,
 )
-from mail.dtos import EmailMessageDto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
+from mail.libraries.data_converters import (
+    convert_data_for_licence_update,
+    convert_data_for_licence_update_reply,
+    convert_data_for_usage_update,
+    convert_data_for_usage_update_reply,
+)
+from mail.libraries.email_message_dto import EmailMessageDto
+from mail.libraries.helpers import (
+    process_attachment,
+    get_extract_type,
+    get_all_serializer_errors_for_mail,
+    convert_source_to_sender,
+)
+from mail.libraries.mailbox_service import find_mail_of
 from mail.models import LicenceUpdate, Mail, UsageUpdate
 from mail.serializers import (
     InvalidEmailSerializer,
@@ -19,19 +32,6 @@ from mail.serializers import (
     UpdateResponseSerializer,
     UsageUpdateMailSerializer,
 )
-from mail.services.data_converters import (
-    convert_data_for_licence_update,
-    convert_data_for_licence_update_reply,
-    convert_data_for_usage_update,
-    convert_data_for_usage_update_reply,
-)
-from mail.services.helpers import (
-    process_attachment,
-    get_extract_type,
-    get_all_serializer_errors_for_mail,
-    convert_source_to_sender,
-)
-from mail.services.mailbox_service import MailboxService
 
 
 def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
@@ -117,12 +117,12 @@ def get_mail_instance(extract_type, run_number) -> Mail or None:
         if last_email and last_email.mail.status == ReceptionStatusEnum.REPLY_SENT:
             logging.info("Licence update reply has already been processed")
             return
-        mail = MailboxService.find_mail_of(ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
+        mail = find_mail_of(ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
         if UsageUpdate.objects.filter(spire_run_number=run_number).last().mail.status == ReceptionStatusEnum.REPLY_SENT:
             logging.info("Licence update reply has already been processed")
             return
-        mail = MailboxService.find_mail_of(ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
+        mail = find_mail_of(ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
     return mail
 
 

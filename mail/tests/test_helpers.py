@@ -1,15 +1,17 @@
-from parameterized import parameterized
 import logging
+
+from parameterized import parameterized
+
 from conf.settings import SPIRE_ADDRESS
-from mail.tests.client import LiteHMRCTestClient
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
-from mail.models import LicenceUpdate, Mail
-from mail.services.helpers import (
+from mail.libraries.helpers import (
     convert_sender_to_source,
     convert_source_to_sender,
     new_hmrc_run_number,
     get_runnumber,
 )
+from mail.models import LicenceUpdate, Mail
+from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class HelpersTests(LiteHMRCTestClient):

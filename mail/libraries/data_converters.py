@@ -1,7 +1,9 @@
 import logging
-from conf.constants import VALID_SENDERS
+
+from mail.constants import VALID_SENDERS
 from mail.enums import ReceptionStatusEnum, SourceEnum
-from mail.services.helpers import (
+from mail.libraries.email_message_dto import EmailMessageDto
+from mail.libraries.helpers import (
     convert_sender_to_source,
     new_hmrc_run_number,
     process_attachment,
@@ -10,7 +12,7 @@ from mail.services.helpers import (
 )
 
 
-def convert_data_for_licence_update(dto):
+def convert_data_for_licence_update(dto: EmailMessageDto):
     source = convert_sender_to_source(dto.sender)
     data = {"licence_update": {}}
     data["licence_update"]["source"] = source
@@ -29,7 +31,7 @@ def convert_data_for_licence_update(dto):
     return data
 
 
-def convert_data_for_licence_update_reply(dto):
+def convert_data_for_licence_update_reply(dto: EmailMessageDto):
     file_name, file_data = process_attachment(dto.attachment)
     data = {
         "response_filename": file_name,
@@ -41,7 +43,7 @@ def convert_data_for_licence_update_reply(dto):
     return data
 
 
-def convert_data_for_usage_update(dto):
+def convert_data_for_usage_update(dto: EmailMessageDto):
     data = {
         "usage_update": {},
         "edi_filename": process_attachment(dto.attachment)[0],
@@ -55,7 +57,7 @@ def convert_data_for_usage_update(dto):
     return data
 
 
-def convert_data_for_usage_update_reply(dto):
+def convert_data_for_usage_update_reply(dto: EmailMessageDto):
     file_name, file_data = process_attachment(dto.attachment)
     data = {
         "response_filename": file_name,

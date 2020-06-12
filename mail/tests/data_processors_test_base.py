@@ -1,6 +1,6 @@
-from mail.tests.client import LiteHMRCTestClient
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate, UsageUpdate
+from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class DataProcessorsTestBase(LiteHMRCTestClient):

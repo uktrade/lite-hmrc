@@ -2,15 +2,16 @@ import base64
 import json
 import logging
 import string
-from django.utils.encoding import smart_text
 from email.message import Message
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.parser import Parser
 
+from django.utils.encoding import smart_text
+
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS, EMAIL_USER
-from mail.dtos import EmailMessageDto
 from mail.enums import SourceEnum, ExtractTypeEnum, UnitMapping, ReceptionStatusEnum
+from mail.libraries.email_message_dto import EmailMessageDto
 from mail.models import LicenceUpdate, UsageUpdate, Mail
 from mail.serializers import LicenceUpdateMailSerializer, UsageUpdateMailSerializer
 

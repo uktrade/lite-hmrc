@@ -1,6 +1,8 @@
-from rest_framework import serializers
-from mail.models import Mail, LicenceUpdate, UsageUpdate
 import logging
+
+from rest_framework import serializers
+
+from mail.models import Mail, LicenceUpdate, UsageUpdate
 
 
 class LicenceUpdateSerializer(serializers.ModelSerializer):

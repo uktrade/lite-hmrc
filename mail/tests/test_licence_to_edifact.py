@@ -3,11 +3,10 @@ from unittest import mock
 
 from django.test import tag
 
-from mail.tests.client import LiteHMRCTestClient
+from mail.libraries.lite_to_edifact_converter import licences_to_edifact
 from mail.models import LicencePayload, Mail, OrganisationIdMapping, GoodIdMapping
-from mail.services.lite_to_edifact_converter import licences_to_edifact
-
 from mail.tasks import email_lite_licence_updates
+from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class SmtpMock:

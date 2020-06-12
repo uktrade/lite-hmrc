@@ -4,27 +4,26 @@ from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
 from conf.authentication import HawkOnlyAuthentication
-from mail.builders import build_mail_message_dto
-from mail.dtos import to_json
+from mail.libraries.builders import build_mail_message_dto
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
+from mail.libraries.email_message_dto import to_json
+from mail.libraries.helpers import build_email_message
+from mail.libraries.mailbox_service import send_email, read_last_message
+from mail.libraries.routing_controller import check_and_route_emails
 from mail.models import Mail, LicenceUpdate, LicencePayload
-from mail.routing_controller import check_and_route_emails
 from mail.serializers import (
     LiteLicenceUpdateSerializer,
     ForiegnTraderSerializer,
     GoodSerializer,
 )
 from mail.servers import MailServer
-from mail.services.mailbox_service import MailboxService
-from mail.services.helpers import build_email_message
 
 
 class SendMailView(APIView):
     def get(self, request):
         server = MailServer()
         smtp_conn = server.connect_to_smtp()
-        mailbox_service = MailboxService()
-        mailbox_service.send_email(
+        send_email(
             smtp_conn,
             build_email_message(
                 build_mail_message_dto(sender="icmshmrc@mailgate.trade.gov.uk", receiver="hmrc@mailgate.trade.gov.uk",)
@@ -38,7 +37,7 @@ class ReadMailView(APIView):
     def get(self, request):
         server = MailServer()
         pop3_conn = server.connect_to_pop3()
-        last_msg_dto = MailboxService().read_last_message(pop3_conn)
+        last_msg_dto = read_last_message(pop3_conn)
         pop3_conn.quit()
         print(last_msg_dto)
         return JsonResponse(status=HTTP_200_OK, data=last_msg_dto, safe=False)
@@ -71,7 +70,7 @@ class MailList(APIView):
     def get(self):
         server = MailServer()
         pop3_conn = server.connect_to_pop3()
-        last_msg_dto = MailboxService().read_last_message(pop3_conn)
+        last_msg_dto = read_last_message(pop3_conn)
         pop3_conn.quit()
         return JsonResponse(status=HTTP_200_OK, data=to_json(last_msg_dto), safe=False)
 

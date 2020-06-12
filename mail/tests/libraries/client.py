@@ -1,11 +1,14 @@
 import json
-from datetime import datetime
-from django.test import testcases
-from conf import colours, settings
-from mail.models import LicencePayload
-from mail.services.helpers import read_file
-from mail.services.helpers import to_smart_text
 import logging
+from datetime import datetime
+
+from django.test import testcases
+
+from conf import settings
+from mail.libraries.helpers import read_file
+from mail.libraries.helpers import to_smart_text
+from mail.models import LicencePayload
+from mail.tests.libraries import colours
 
 
 class LiteHMRCTestClient(testcases.TestCase):

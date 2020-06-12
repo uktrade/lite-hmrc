@@ -1,9 +1,9 @@
 from django.test import tag
 
-from mail.tests.client import LiteHMRCTestClient
 from mail.enums import ReceptionStatusEnum
+from mail.libraries.helpers import select_email_for_sending
 from mail.models import Mail
-from mail.services.helpers import select_email_for_sending
+from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class EmailSelectTests(LiteHMRCTestClient):

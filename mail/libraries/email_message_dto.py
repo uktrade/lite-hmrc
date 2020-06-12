@@ -1,7 +1,7 @@
-from collections import namedtuple
 import json
+from collections import namedtuple
 
-EmailMessageDto = namedtuple("EmailMessageDto", "run_number, sender, receiver, subject, body, attachment, raw_data",)
+EmailMessageDto = namedtuple("EmailMessageDto", "run_number, sender, receiver, subject, body, attachment, raw_data")
 
 
 def to_json(email_message_dto: EmailMessageDto):
@@ -27,7 +27,7 @@ def to_json(email_message_dto: EmailMessageDto):
     return json.dumps(_dict)
 
 
-def dto_to_logs(email_message_dto: EmailMessageDto):
+def to_logs(email_message_dto: EmailMessageDto):
     return {
         "dto": {
             "run_number": email_message_dto.run_number,
@@ -35,7 +35,7 @@ def dto_to_logs(email_message_dto: EmailMessageDto):
             "subject": email_message_dto.subject,
             "receiver": email_message_dto.receiver,
             "body": email_message_dto.body,
-            "attachment": {"name": email_message_dto.attachment[0], "data": email_message_dto.attachment[1][0:50],},
+            "attachment": {"name": email_message_dto.attachment[0], "data": email_message_dto.attachment[1][0:50]},
             "raw_data": str(email_message_dto.raw_data[0:50]),
         }
     }

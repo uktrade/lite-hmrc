@@ -1,11 +1,9 @@
-import logging
-from django.test import tag
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
-from mail.dtos import EmailMessageDto
-from mail.services.data_processors import (
+from mail.libraries.data_processors import (
     to_email_message_dto_from,
     serialize_email_message,
 )
+from mail.libraries.email_message_dto import EmailMessageDto
 from mail.tests.data_processors_test_base import DataProcessorsTestBase
 
 
