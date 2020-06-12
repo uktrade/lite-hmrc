@@ -122,7 +122,7 @@ class TestDataProcessors(LiteHMRCTestClient):
 
         serialize_email_message(email_message_dto)
         self.mail.refresh_from_db()
-        logger.debug("resp data: {}".format(self.mail.response_data))
+        logging.debug("resp data: {}".format(self.mail.response_data))
         self.assertIn(
             self.mail.response_data, self.licence_update_reply_body,
         )

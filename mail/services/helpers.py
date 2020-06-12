@@ -125,9 +125,14 @@ def convert_source_to_sender(source):
 
 
 def process_attachment(attachment):
-    file_name = attachment[0] if attachment and attachment[0] is not None else ""
-    file_data = attachment[1] if attachment and attachment[1] is not None else ""
-    file_data = file_data.decode("utf-8")
+    file_name = ""
+    file_data = ""
+
+    if len(attachment) == 2:
+        file_name = attachment[0]
+        file_data = attachment[1]
+        file_data = file_data.decode("utf-8")
+
     logging.debug(f"attachment filename: {file_name}, filedata:\n{file_data}")
     return file_name, file_data
 
@@ -215,8 +220,8 @@ def get_all_serializer_errors_for_mail(data):
     return errors
 
 
-def read_file(file_path: str):
-    _file = open(file_path, "rb")
+def read_file(file_path: str, mode: str = "r", encoding: str = None):
+    _file = open(file_path, mode=mode, encoding=encoding)
     return _file.read()
 
 

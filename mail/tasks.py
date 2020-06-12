@@ -21,15 +21,10 @@ MANAGE_TASK_QUEUE = "manage_inbox_queue"
 def email_lite_licence_updates():
     with transaction.atomic():
         try:
-            last_email = Mail.objects.last()
-            if last_email and (
-                last_email.status != ReceptionStatusEnum.REPLY_SENT
-                or ReplyStatusEnum.REJECTED in last_email.response_data
-            ):
+            if not _is_email_slot_free:
                 logging.info("There is currently an update in progress or an email in flight")
                 return
 
-            logging.info("Fetching licences to send to HRMC")
             licences = LicencePayload.objects.filter(is_processed=False).select_for_update(nowait=True)
 
             if not licences.exists():
@@ -59,11 +54,7 @@ def email_lite_licence_updates():
             )
             mail = serialize_email_message(mock_dto)
 
-            message_to_send_dto = build_mail_message_dto(
-                sender=EMAIL_USER, receiver=HMRC_ADDRESS, file_string=file_string
-            )
-            send(message_to_send_dto)
-            update_mail_status(mail)
+            send_email(file_name, mail)
         except Exception as exc:  # noqa
             logging.error(f"An unexpected error occurred when sending email to HMRC -> {type(exc).__name__}: {exc}")
         else:
@@ -77,3 +68,18 @@ def manage_inbox_queue():
         check_and_route_emails()
     except Exception as exc:  # noqa
         logging.error(f"An unexpected error occurred when managing inbox -> {type(exc).__name__}: {exc}")
+
+
+def send_email(file_string, mail):
+    message_to_send_dto = build_mail_message_dto(sender=EMAIL_USER, receiver=HMRC_ADDRESS, file_string=file_string)
+    send(message_to_send_dto)
+    update_mail_status(mail)
+
+
+def _is_email_slot_free():
+    last_email = Mail.objects.last()
+    if last_email and (
+        last_email.status != ReceptionStatusEnum.REPLY_SENT or ReplyStatusEnum.REJECTED in last_email.response_data
+    ):
+        return False
+    return True

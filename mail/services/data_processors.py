@@ -59,7 +59,6 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
             logging.debug("mail response datetime updated. status %s" % _mail.status)
         return _mail
     else:
-        print(serializer.errors)
         data["serializer_errors"] = get_all_serializer_errors_for_mail(data)
         logging.error(data["serializer_errors"])
         serializer = InvalidEmailSerializer(data=data)
