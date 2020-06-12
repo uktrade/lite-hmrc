@@ -2,16 +2,13 @@ import logging
 
 from background_task import background
 from django.db import transaction
-from django.utils import timezone
 
 from conf.settings import HMRC_ADDRESS, EMAIL_USER
+from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
 from mail.libraries.builders import build_mail_message_dto, build_licence_updates_file
-from mail.enums import ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
 from mail.libraries.data_processors import serialize_email_message
-from mail.libraries.email_message_dto import EmailMessageDto
-from mail.libraries.lite_to_edifact_converter import licences_to_edifact
 from mail.libraries.routing_controller import update_mail_status, check_and_route_emails, send
-from mail.models import LicencePayload, Mail, LicenceUpdate
+from mail.models import LicencePayload, Mail
 
 LICENCE_UPDATES_TASK_QUEUE = "licences_updates_queue"
 MANAGE_INBOX_TASK_QUEUE = "manage_inbox_queue"
