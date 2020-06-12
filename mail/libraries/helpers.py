@@ -84,15 +84,17 @@ def to_mail_message_dto(mail_data):
         receiver=msg_obj.get("To"),
         body=msg,
         attachment=[file_name, file_data],
-        run_number=get_runnumber(msg_obj.get("Subject")),
+        run_number=get_run_number(msg_obj.get("Subject")),
         raw_data=str(mail_data),
     )
 
 
-def get_runnumber(patterned_text: str):
-    """Gets run-number from a patterned text: abc_xyz_nnn_yyy_1234_datetime.
+def get_run_number(patterned_text: str):
+    """
+    Gets run-number from a patterned text: abc_xyz_nnn_yyy_1234_datetime.
     :returns found number; ValueError if it not found or is not a number
     """
+
     if patterned_text is None:
         raise ValueError("None received")
 
@@ -167,7 +169,7 @@ def get_extract_type(subject: str):
     return None
 
 
-def get_licence_ids(file_body, b64_encoded=False):
+def get_licence_ids(file_body):
     ids = []
     lines = file_body.split("\n")
     for line in lines:
@@ -196,7 +198,6 @@ def build_email_message(email_message_dto: EmailMessageDto):
         "Content-Disposition", "attachment; filename= %s" % email_message_dto.attachment[0],
     )
     multipart_msg.attach(payload)
-    print(multipart_msg)
     return multipart_msg
 
 

@@ -8,7 +8,7 @@ from mail.libraries.helpers import (
     convert_sender_to_source,
     convert_source_to_sender,
     new_hmrc_run_number,
-    get_runnumber,
+    get_run_number,
 )
 from mail.models import LicenceUpdate, Mail
 from mail.tests.libraries.client import LiteHMRCTestClient
@@ -40,19 +40,19 @@ class HelpersTests(LiteHMRCTestClient):
 
     def test_get_runnumber_from_subject(self):
         subject = "ILBDOTI_live_CHIEF_usageData_9876_201901130300"
-        run_number = get_runnumber(subject)
+        run_number = get_run_number(subject)
         self.assertEqual(run_number, "9876")
 
     def test_value_error_thrown_cannot_find_runnumber(self):
         subject = "usageData_9876_201901130300"
         with self.assertRaises(ValueError) as context:
-            get_runnumber(subject)
+            get_run_number(subject)
         self.assertEqual("Can not find valid run-number", str(context.exception))
 
     def test_value_error_thrown_runnumber_wrong_format(self):
         subject = "abc_xyz_nnn_yyy_a1b34_datetime"
         with self.assertRaises(ValueError) as context:
-            get_runnumber(subject)
+            get_run_number(subject)
         self.assertEqual("Can not find valid run-number", str(context.exception))
 
     @staticmethod

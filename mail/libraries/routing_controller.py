@@ -9,6 +9,7 @@ from mail.libraries.data_processors import (
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import build_email_message, select_email_for_sending
 from mail.libraries.mailbox_service import read_last_three_emails, send_email
+from mail.models import Mail
 from mail.servers import MailServer
 
 
@@ -25,12 +26,17 @@ def check_and_route_emails():
         return _collect_and_send(mail)
 
 
-def update_mail_status(mail):
-    logging.info("Updating mail status")
+def update_mail(mail: Mail, mail_dto: EmailMessageDto):
+    logging.info("Updating mail")
     if mail.status == ReceptionStatusEnum.PENDING:
         mail.status = ReceptionStatusEnum.REPLY_PENDING
     else:
         mail.status = ReceptionStatusEnum.REPLY_SENT
+
+    # Update the mail object to record what we sent to HMRC
+    mail.sent_filename = mail_dto.attachment[0]
+    mail.sent_data = mail_dto.attachment[1]
+
     mail.save()
 
 
@@ -42,7 +48,7 @@ def send(email_message_dto: EmailMessageDto):
     server.quit_smtp_connection()
 
 
-def _collect_and_send(mail):
+def _collect_and_send(mail: Mail):
     logging.info(f"Mail '{id}' being sent")
     message_to_send_dto = to_email_message_dto_from(mail)
     is_locked_by_me = lock_db_for_sending_transaction(mail)
@@ -50,7 +56,7 @@ def _collect_and_send(mail):
         logging.info("Email being sent by another thread")
     if message_to_send_dto.receiver != "LITE":
         send(message_to_send_dto)
-    update_mail_status(mail)
+    update_mail(mail)
     logging.info(f"Email routed from {message_to_send_dto.sender} to {message_to_send_dto.receiver}")
 
 

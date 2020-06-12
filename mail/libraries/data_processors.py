@@ -4,12 +4,7 @@ import threading
 from django.db import transaction
 from django.utils import timezone
 
-from conf.settings import (
-    SYSTEM_INSTANCE_UUID,
-    LOCK_INTERVAL,
-    HMRC_ADDRESS,
-    SPIRE_ADDRESS,
-)
+from conf.settings import SYSTEM_INSTANCE_UUID, LOCK_INTERVAL, HMRC_ADDRESS, SPIRE_ADDRESS, EMAIL_USER
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.libraries.data_converters import (
     convert_data_for_licence_update,
@@ -147,26 +142,56 @@ def lock_db_for_sending_transaction(mail: Mail):
 
 
 def build_request_mail_message_dto(mail: Mail):
-    sender = SPIRE_ADDRESS
-    receiver = HMRC_ADDRESS
+    sender = None
+    receiver = None
+    run_number = 0
+
     if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
+        sender = EMAIL_USER
+        receiver = HMRC_ADDRESS
         licence_update = LicenceUpdate.objects.get(mail=mail)
         run_number = licence_update.hmrc_run_number
     elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
-        update = UsageUpdate.objects.get(mail=mail)
-        run_number = update.spire_run_number
         sender = HMRC_ADDRESS
         receiver = SPIRE_ADDRESS
+        update = UsageUpdate.objects.get(mail=mail)
+        run_number = update.spire_run_number
+
+    print("\n\n\n", mail.edi_filename, "\n\n\n")
+
+    attachment = [
+        build_sent_filename(mail.edi_filename, run_number),
+        build_sent_file_data(mail.edi_data, run_number),
+    ]
+
+    print("\n\n\n", attachment[0], "\n\n\n")
 
     return EmailMessageDto(
         run_number=run_number,
         sender=sender,
         receiver=receiver,
-        subject=mail.edi_filename,
+        subject=attachment[0],
         body=None,
-        attachment=[mail.edi_filename, mail.edi_data],
+        attachment=attachment,
         raw_data=None,
     )
+
+
+def build_sent_filename(filename: str, run_number):
+    filename = filename.split("_")
+    filename[4] = str(run_number)
+    return "_".join(filename)
+
+
+def build_sent_file_data(file_data: str, run_number):
+    file_data_lines = file_data.split("\n", 1)
+
+    file_data_line_1 = file_data_lines[0]
+    file_data_line_1 = file_data_line_1.split("\\")
+    file_data_line_1[6] = str(run_number)
+    file_data_line_1 = "\\".join(file_data_line_1)
+
+    return file_data_line_1 + "\n" + file_data_lines[1]
 
 
 def _build_reply_mail_message_dto(mail):
@@ -198,13 +223,3 @@ def _build_reply_mail_message_dto(mail):
 def _check_and_raise_error(obj, error_msg: str):
     if obj is None:
         raise ValueError(error_msg)
-
-
-def _check_and_return_msg(dict_obj):
-    output = ""
-    for obj_name, obj in dict_obj.items():
-        if obj:
-            output += "{} is set. ".format(obj_name)
-        else:
-            output += "{} is None. ".format(obj_name)
-    return output

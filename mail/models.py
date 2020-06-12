@@ -27,6 +27,10 @@ class Mail(models.Model):
     edi_data = models.TextField(null=True, blank=True)
     status = models.CharField(choices=ReceptionStatusEnum.choices, default=ReceptionStatusEnum.PENDING, max_length=20,)
     extract_type = models.CharField(choices=ExtractTypeEnum.choices, max_length=20, null=True)
+
+    sent_filename = models.TextField(blank=True, null=True)
+    sent_data = models.TextField(blank=True, null=True)
+
     response_filename = models.TextField(blank=True, null=True)
     response_data = models.TextField(blank=True, null=True)
     response_date = models.DateTimeField(blank=True, null=True)
@@ -57,7 +61,7 @@ class Mail(models.Model):
 
 
 class LicenceUpdate(models.Model):
-    license_ids = models.TextField()
+    licence_ids = models.TextField()
     hmrc_run_number = models.IntegerField()
     source_run_number = models.IntegerField(null=True)
     source = models.CharField(choices=SourceEnum.choices, max_length=10)

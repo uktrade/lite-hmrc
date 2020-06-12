@@ -7,6 +7,8 @@ from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.libraries.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
+    build_sent_filename,
+    build_sent_file_data,
 )
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.models import Mail, LicenceUpdate, UsageUpdate
@@ -174,3 +176,23 @@ class TestDataProcessors(LiteHMRCTestClient):
         self.mail.refresh_from_db()
 
         self.assertEqual(response_date, self.mail.response_date)
+
+    def test_build_sent_filename(self):
+        run_number = 4321
+        filename = "abc_xyz_nnn_yyy_<runnumber>_datetime"
+
+        self.assertEqual(build_sent_filename(filename, run_number), f"abc_xyz_nnn_yyy_{run_number}_datetime")
+
+    def test_build_sent_file_data(self):
+        run_number = 4321
+        file_data = (
+            "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\{:04d}{:02d}{:02d}{:02d}{:02d}\\1234"
+            + "\n2\\licence\\1234\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\1234\\1234"
+            + "\n3\\trader\\0192301\\123791\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
+        )
+        expected_file_data = (
+            "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\{:04d}{:02d}{:02d}{:02d}{:02d}\\4321"
+            + "\n2\\licence\\1234\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\1234\\1234"
+            + "\n3\\trader\\0192301\\123791\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
+        )
+        self.assertEqual(build_sent_file_data(file_data, run_number), expected_file_data)
