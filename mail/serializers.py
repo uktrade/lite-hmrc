@@ -104,17 +104,6 @@ class UsageUpdateMailSerializer(serializers.ModelSerializer):
         return mail
 
 
-class InvalidEmailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Mail
-        fields = "__all__"
-
-    def create(self, validated_data):
-        mail, _ = Mail.objects.get_or_create(**validated_data)
-
-        return mail
-
-
 class GoodSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=2000, allow_blank=False)
     quantity = serializers.DecimalField(decimal_places=3, max_digits=13)

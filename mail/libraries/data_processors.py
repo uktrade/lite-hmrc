@@ -21,13 +21,11 @@ from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import (
     process_attachment,
     get_extract_type,
-    get_all_serializer_errors_for_mail,
     convert_source_to_sender,
 )
 from mail.libraries.mailbox_service import find_mail_of
 from mail.models import LicenceUpdate, Mail, UsageUpdate
 from mail.serializers import (
-    InvalidEmailSerializer,
     LicenceUpdateMailSerializer,
     UpdateResponseSerializer,
     UsageUpdateMailSerializer,
@@ -36,35 +34,27 @@ from mail.serializers import (
 
 def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
     extract_type = get_extract_type(dto.subject)
-    logging.info(f"Email type identified as {extract_type}")
-
-    data = convert_dto_data_for_serialization(dto, extract_type)
-    serializer = get_serializer_for_dto(extract_type)
-    instance = get_mail_instance(extract_type, dto.run_number)
-
-    if not instance:
+    if not extract_type:
         return
 
-    logging.debug(_check_and_return_msg({"data": data, "serializer": serializer, "mail": instance}))
+    instance = get_mail_instance(extract_type, dto.run_number)
+    if not instance and extract_type in [ExtractTypeEnum.LICENCE_REPLY, ExtractTypeEnum.USAGE_REPLY]:
+        return
 
     partial = True if instance else False
-    if serializer:
-        serializer = serializer(instance=instance, data=data, partial=partial)
-        logging.debug("%s initialized with partial [%s]" % (type(serializer).__name__, partial))
-    if serializer and serializer.is_valid():
+    data = convert_dto_data_for_serialization(dto, extract_type)
+    serializer = get_serializer_for_dto(extract_type)
+    serializer = serializer(instance=instance, data=data, partial=partial)
+
+    if serializer.is_valid():
         _mail = serializer.save()
-        logging.debug("%s saved" % type(serializer).__name__)
         if data["extract_type"] in ["licence_reply", "usage_reply"]:
             _mail.set_response_date_time()
-            logging.debug("mail response datetime updated. status %s" % _mail.status)
+
+        logging.info("Successfully serialized email")
         return _mail
     else:
-        logging.error("Failed to serialize email")
-        data["serializer_errors"] = get_all_serializer_errors_for_mail(data)
-        logging.error(data["serializer_errors"])
-        serializer = InvalidEmailSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
+        logging.error(f"Failed to serialize email -> {serializer.errors}")
 
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto, extract_type):
@@ -111,35 +101,34 @@ def get_serializer_for_dto(extract_type):
 
 
 def get_mail_instance(extract_type, run_number) -> Mail or None:
-    mail = None
-
     if extract_type == ExtractTypeEnum.LICENCE_REPLY:
+
         last_email = LicenceUpdate.objects.filter(hmrc_run_number=run_number).last()
+
         if last_email and last_email.mail.status == ReceptionStatusEnum.REPLY_SENT:
             logging.info("Licence update reply has already been processed")
             return
-        mail = find_mail_of(ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
+        return find_mail_of(ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
         if UsageUpdate.objects.filter(spire_run_number=run_number).last().mail.status == ReceptionStatusEnum.REPLY_SENT:
-            logging.info("Licence update reply has already been processed")
+            logging.info("Usage update reply has already been processed")
             return
-        mail = find_mail_of(ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
-    return mail
+        return find_mail_of(ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
 
 
-def to_email_message_dto_from(mail):
+def to_email_message_dto_from(mail: Mail):
     _check_and_raise_error(mail, "Invalid mail object received!")
     logging.debug(f"converting mail with status [{mail.status}] extract_type [{mail.extract_type}] to EmailMessageDto")
     if mail.status == ReceptionStatusEnum.PENDING:
         logging.debug(f"building request mail message dto from [{mail.status}] mail status")
-        return _build_request_mail_message_dto(mail)
+        return build_request_mail_message_dto(mail)
     elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
         logging.debug(f"building reply mail message dto from [{mail.status}] mail status")
         return _build_reply_mail_message_dto(mail)
     raise ValueError(f"Unexpected mail with status [{mail.status}] while converting to EmailMessageDto")
 
 
-def lock_db_for_sending_transaction(mail):
+def lock_db_for_sending_transaction(mail: Mail):
     mail.refresh_from_db()
     previous_locking_process_id = mail.currently_processed_by
     if (
@@ -157,7 +146,7 @@ def lock_db_for_sending_transaction(mail):
             return True
 
 
-def _build_request_mail_message_dto(mail):
+def build_request_mail_message_dto(mail: Mail):
     sender = SPIRE_ADDRESS
     receiver = HMRC_ADDRESS
     if mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:

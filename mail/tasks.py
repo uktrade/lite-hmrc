@@ -4,11 +4,12 @@ from background_task import background
 from django.db import transaction
 
 from conf.settings import HMRC_ADDRESS, EMAIL_USER
-from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
-from mail.libraries.builders import build_mail_message_dto, build_licence_updates_file
-from mail.libraries.data_processors import serialize_email_message
+from mail.enums import ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
+from mail.libraries.builders import build_licence_updates_file
+from mail.libraries.data_processors import serialize_email_message, build_request_mail_message_dto
+from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.routing_controller import update_mail_status, check_and_route_emails, send
-from mail.models import LicencePayload, Mail
+from mail.models import LicencePayload, Mail, LicenceUpdate
 
 LICENCE_UPDATES_TASK_QUEUE = "licences_updates_queue"
 MANAGE_INBOX_TASK_QUEUE = "manage_inbox_queue"
@@ -28,10 +29,21 @@ def email_lite_licence_updates():
                 logging.info("There are currently no licences to send")
                 return
 
-            file_name, file_content = build_licence_updates_file(licences)
-            email_message_dto = build_mail_message_dto(
-                sender=EMAIL_USER, receiver=HMRC_ADDRESS, file_name=file_name, file_content=file_content
+            last_lite_update = LicenceUpdate.objects.filter(source=SourceEnum.LITE).last()
+            run_number = last_lite_update.source_run_number + 1 if last_lite_update else 1
+
+            file_name, file_content = build_licence_updates_file(licences, run_number)
+
+            email_message_dto = EmailMessageDto(
+                run_number=run_number,
+                sender=SourceEnum.LITE,
+                receiver=HMRC_ADDRESS,
+                subject=file_name,
+                body="",
+                attachment=[file_name, file_content],
+                raw_data="See licence payload",
             )
+
             mail = serialize_email_message(email_message_dto)
 
             if mail:

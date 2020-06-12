@@ -208,19 +208,6 @@ def _validate_dto(email_message_dto):
         raise TypeError("None file attachment received!")
 
 
-def get_all_serializer_errors_for_mail(data):
-    errors = ""
-    if not hasattr(data, "licence_update"):
-        data["licence_update"] = {}
-    if not hasattr(data, "usage_update"):
-        data["usage_update"] = {}
-    for serializer in [LicenceUpdateMailSerializer, UsageUpdateMailSerializer]:
-        serializer = serializer(data=data)
-        if not serializer.is_valid():
-            errors += str(serializer.errors)
-    return errors
-
-
 def read_file(file_path: str, mode: str = "r", encoding: str = None):
     _file = open(file_path, mode=mode, encoding=encoding)
     return _file.read()

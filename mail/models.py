@@ -34,10 +34,6 @@ class Mail(models.Model):
 
     raw_data = models.TextField()
 
-    # To assist debugging invalid emails
-    serializer_errors = models.TextField(blank=True, null=True)
-    errors = models.TextField(blank=True, null=True)
-
     currently_processing_at = models.DateTimeField(null=True)
     currently_processed_by = models.CharField(null=True, max_length=100)
 
