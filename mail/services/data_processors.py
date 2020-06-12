@@ -31,7 +31,7 @@ from mail.services.helpers import (
     get_all_serializer_errors_for_mail,
     convert_source_to_sender,
 )
-from mail.services.MailboxService import MailboxService
+from mail.services.mailbox_service import MailboxService
 
 
 def serialize_email_message(dto: EmailMessageDto) -> Mail or None:

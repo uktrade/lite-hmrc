@@ -2,7 +2,7 @@ import logging
 
 from mail.enums import ReceptionStatusEnum
 from mail.servers import MailServer
-from mail.services.MailboxService import MailboxService
+from mail.services.mailbox_service import MailboxService
 from mail.services.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,

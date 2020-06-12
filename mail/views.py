@@ -15,7 +15,7 @@ from mail.serializers import (
     GoodSerializer,
 )
 from mail.servers import MailServer
-from mail.services.MailboxService import MailboxService
+from mail.services.mailbox_service import MailboxService
 from mail.services.helpers import build_email_message
 
 

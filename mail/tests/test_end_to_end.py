@@ -11,7 +11,7 @@ from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.models import Mail, LicenceUpdate, LicencePayload
 from mail.routing_controller import check_and_route_emails, _collect_and_send
 from mail.servers import MailServer
-from mail.services.MailboxService import MailboxService
+from mail.services.mailbox_service import MailboxService
 from mail.services.data_processors import serialize_email_message
 from mail.services.helpers import get_extract_type
 from mail.tasks import email_lite_licence_updates
