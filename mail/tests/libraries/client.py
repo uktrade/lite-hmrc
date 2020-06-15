@@ -44,7 +44,9 @@ class LiteHMRCTestClient(testcases.TestCase):
         self.licence_payload_json = json.loads(read_file("mail/tests/files/licence_payload_file", encoding="utf-8"))
 
         self.single_siel_licence_payload = LicencePayload.objects.create(
-            reference="GBSIEL2020/50001", data=self.licence_payload_json["licence"]
+            lite_id=self.licence_payload_json["licence"]["id"],
+            reference=self.licence_payload_json["licence"]["reference"],
+            data=self.licence_payload_json["licence"],
         )
 
     def tearDown(self):

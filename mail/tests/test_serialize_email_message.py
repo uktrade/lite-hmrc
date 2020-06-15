@@ -8,9 +8,6 @@ from mail.tests.data_processors_test_base import DataProcessorsTestBase
 
 
 class SerializeEmailMessageTests(DataProcessorsTestBase):
-    def setUp(self):
-        super().setUp()
-
     def test_successful_usage_update_inbound_dto_converts_to_outbound_dto(self):
         email_message_dto = EmailMessageDto(
             run_number=self.source_run_number + 1,

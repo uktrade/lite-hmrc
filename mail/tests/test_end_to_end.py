@@ -6,7 +6,6 @@ from django.test import tag
 from django.urls import reverse
 
 from conf.settings import SPIRE_ADDRESS
-from mail.libraries.builders import build_text_message
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.libraries.data_processors import serialize_email_message
 from mail.libraries.helpers import get_extract_type
@@ -21,55 +20,6 @@ from mail.tests.libraries.client import LiteHMRCTestClient
 class SmtpMock:
     def quit(self):
         pass
-
-
-class EndToEndTest(LiteHMRCTestClient):
-    def setUp(self):
-        super().setUp()
-
-    @tag("end-to-end")
-    def test_end_to_end_success_licence_update(self):
-        file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902" + str(randint(1, 99999))  # nosec
-
-        # send email to lite from spire
-        send_email(
-            MailServer().connect_to_smtp(),
-            build_text_message(SPIRE_ADDRESS, "username@example.com", [file_name, self.licence_usage_file_body]),
-        )
-        sleep(5)
-        check_and_route_emails()
-        sleep(5)
-        server = MailServer()
-        pop3_conn = server.connect_to_pop3()
-        last_msg_dto = read_last_message(pop3_conn)
-        pop3_conn.quit()
-
-        in_mail = Mail.objects.get(edi_filename=file_name)
-        self.assertEqual(
-            in_mail.edi_filename, file_name,
-        )
-
-    @tag("data manipulation")
-    def test_true_e2e(self):
-        data = (
-            b"1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\202006051240\\1234"
-            b"\n2\\licence\\34567\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\20200602\\20220602"
-            b"\n3\\trader\\0192301\\123791\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
-            b"\n4\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB\n5\\restrictions\\Provisos may apply please see licence"
-            b"\n6\\line\\1\\\\\\\\\\finally\\Q\\30\\10"
-            b"\n7\\end\\licence\\6\n8\\licence\\34567\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\20200602\\20220602"
-            b"\n9\\trader\\0192301\\123791\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
-            b"\n10\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB"
-            b"\n11\\restrictions\\Provisos may apply please see licence"
-            b"\n12\\line\\1\\\\\\\\\\finally\\Q\\30\\10\n13\\end\\licence\\6"
-            b"\n14\\fileTrailer\\2"
-        )
-
-        print(data)
-
-        data = data.decode("utf-8")
-
-        print(data)
 
 
 class EndToEndTests(LiteHMRCTestClient):
@@ -94,6 +44,7 @@ class EndToEndTests(LiteHMRCTestClient):
         print("currently_processed_by", mail.currently_processed_by)
 
     @tag("system-start")
+    @tag("end-to-end")
     def test_system_start(self):
         print("\nThis is the system start\n------------------\n")
         count = Mail.objects.count()
@@ -163,3 +114,47 @@ class EndToEndTests(LiteHMRCTestClient):
         email_lite_licence_updates.now()
 
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
+
+    @tag("end-to-end")
+    def test_end_to_end_success_licence_update(self):
+        file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902" + str(randint(1, 99999))  # nosec
+
+        # send email to lite from spire
+        send_email(
+            MailServer().connect_to_smtp(),
+            build_text_message(SPIRE_ADDRESS, "username@example.com", [file_name, self.licence_usage_file_body]),
+        )
+        sleep(5)
+        check_and_route_emails()
+        sleep(5)
+        server = MailServer()
+        pop3_conn = server.connect_to_pop3()
+        last_msg_dto = read_last_message(pop3_conn)
+        pop3_conn.quit()
+
+        in_mail = Mail.objects.get(edi_filename=file_name)
+        self.assertEqual(
+            in_mail.edi_filename, file_name,
+        )
+
+    @tag("data manipulation")
+    def test_true_e2e(self):
+        data = (
+            b"1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\202006051240\\1234"
+            b"\n2\\licence\\34567\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\20200602\\20220602"
+            b"\n3\\trader\\0192301\\123791\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
+            b"\n4\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB\n5\\restrictions\\Provisos may apply please see licence"
+            b"\n6\\line\\1\\\\\\\\\\finally\\Q\\30\\10"
+            b"\n7\\end\\licence\\6\n8\\licence\\34567\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\20200602\\20220602"
+            b"\n9\\trader\\0192301\\123791\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
+            b"\n10\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB"
+            b"\n11\\restrictions\\Provisos may apply please see licence"
+            b"\n12\\line\\1\\\\\\\\\\finally\\Q\\30\\10\n13\\end\\licence\\6"
+            b"\n14\\fileTrailer\\2"
+        )
+
+        print(data)
+
+        data = data.decode("utf-8")
+
+        print(data)

@@ -64,34 +64,6 @@ class TestDataProcessors(LiteHMRCTestClient):
         self.assertEqual(usage_update.spire_run_number, email_message_dto.run_number)
         self.assertEqual(email.raw_data, email_message_dto.raw_data)
 
-    def test_bad_mail_data_serialized_successfully(self):
-        email_message_dto = EmailMessageDto(
-            run_number=self.source_run_number + 1,
-            sender="test@example.com",
-            receiver="receiver@example.com",
-            body="body",
-            subject="subject",
-            attachment=[],
-            raw_data="qwerty",
-        )
-
-        initial_issues_count = Mail.objects.invalid().count()
-        initial_license_update_count = Mail.objects.valid().count()
-        logging.debug(f"ini: issue count={initial_issues_count}, license update count {initial_license_update_count}")
-        serialize_email_message(email_message_dto)
-
-        self.assertEqual(Mail.objects.invalid().count(), initial_issues_count + 1)
-        self.assertEqual(Mail.objects.valid().count(), initial_license_update_count)
-
-        email = Mail.objects.invalid().last()
-
-        self.assertEqual(email.edi_data, "")
-        self.assertEqual(email.extract_type, None)
-        self.assertEqual(email.response_filename, None)
-        self.assertEqual(email.response_data, None)
-        self.assertEqual(email.edi_filename, "")
-        self.assertEqual(email.raw_data, email_message_dto.raw_data)
-
     def test_successful_email_db_record_converted_to_dto(self):
         self.mail.status = ReceptionStatusEnum.PENDING
 
@@ -167,7 +139,7 @@ class TestDataProcessors(LiteHMRCTestClient):
             receiver=EMAIL_USER,
             body="body",
             subject=self.licence_update_reply_name,
-            attachment=[self.licence_update_reply_name, self.licence_update_reply_body,],
+            attachment=[self.licence_update_reply_name, self.licence_update_reply_body],
             raw_data="qwerty",
         )
 

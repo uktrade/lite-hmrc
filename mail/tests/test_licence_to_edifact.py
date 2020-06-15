@@ -9,11 +9,6 @@ from mail.tasks import email_lite_licence_updates
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
-class SmtpMock:
-    def quit(self):
-        pass
-
-
 class LicenceToEdifactTests(LiteHMRCTestClient):
     @tag("mapping-ids")
     def test_mappings(self):
@@ -51,9 +46,9 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
         self.assertEqual(result, expected)
 
     @tag("sending")
-    @mock.patch("mail.tasks.send_email")
-    def test_licence_is_marked_as_processed_after_sending(self, send_email):
-        send_email.return_value = SmtpMock()
+    @mock.patch("mail.tasks.send")
+    def test_licence_is_marked_as_processed_after_sending(self, send):
+        send.return_value = None
         email_lite_licence_updates.now()
 
         self.assertEqual(Mail.objects.count(), 1)
