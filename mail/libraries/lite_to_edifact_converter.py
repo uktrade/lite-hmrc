@@ -16,8 +16,8 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
         i += 1
         edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
             i,
-            34567,
-            "insert",  # licence_payload.get("action"),  # We figure this out
+            licence_payload.get("reference"),  # transaction_reference
+            "insert",  # licence_payload.get("action"),
             licence_payload.get("reference"),
             licence_payload.get("type"),
             "E",
@@ -31,7 +31,7 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
         i += 1
         edifact_file += "\n{}\\trader\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
             i,
-            "",  # trader.get("turn"),
+            "",  # turn
             org_mapping.rpa_trader_id,
             licence_payload.get("start_date").replace("-", ""),
             licence_payload.get("end_date").replace("-", ""),
@@ -83,8 +83,6 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
                     UnitMapping.convert(commodity.get("unit")),
                     int(commodity.get("quantity")) if commodity.get("unit") == "NAR" else commodity.get("quantity"),
                 )
-                # convert from something
-            # map this to line number in licence id: <licence_id>
         if licence_payload.get("type") == "oiel":
             i += 1
             edifact_file += "\n{}\\line\\1\\\\\\\\\\Open Licence goods - see actual licence for information\\".format(i)
