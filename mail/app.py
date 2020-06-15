@@ -18,4 +18,5 @@ class MailConfig(AppConfig):
         manage_inbox_queue(repeat=INBOX_POLL_INTERVAL, repeat_until=None)  # noqa
 
     def ready(self):
+        # Note: If migrations wont compile if making them from scratch, this will need to be commented out
         self.initialize_background_tasks()
