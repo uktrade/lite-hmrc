@@ -4,11 +4,10 @@ from django.test import tag
 
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS, EMAIL_USER
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
+from mail.libraries.builders import build_sent_filename, build_sent_file_data
 from mail.libraries.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
-    build_sent_filename,
-    build_sent_file_data,
 )
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.models import Mail, LicenceUpdate, UsageUpdate

@@ -33,7 +33,7 @@ def licences_to_edifact(licences: QuerySet):
         edifact_file += "\n{}\\trader\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
             i,
             "",  # trader.get("turn"),
-            org_mapping.rpa_trader_id,  # trader.get("rpa_trader_id"),
+            org_mapping.rpa_trader_id,
             licence_payload.get("start_date").replace("-", ""),
             licence_payload.get("end_date").replace("-", ""),
             trader.get("name"),

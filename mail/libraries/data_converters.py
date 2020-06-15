@@ -27,7 +27,7 @@ def convert_data_for_licence_update(dto: EmailMessageDto):
         data["edi_data"] = dto.attachment[1]
 
     data["licence_update"]["licence_ids"] = get_licence_ids(data["edi_data"])
-    _print_nice(data)
+    _log_result(data)
     return data
 
 
@@ -39,7 +39,7 @@ def convert_data_for_licence_update_reply(dto: EmailMessageDto):
         "status": ReceptionStatusEnum.REPLY_RECEIVED,
         "response_subject": file_name,
     }
-    _print_nice(data)
+    _log_result(data)
     return data
 
 
@@ -68,7 +68,7 @@ def convert_data_for_usage_update_reply(dto: EmailMessageDto):
     return data
 
 
-def _print_nice(data):
+def _log_result(data):
     output = ""
     for k, v in data.items():
         output += "{}->[{}] ".format(k, str(v))

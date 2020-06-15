@@ -13,7 +13,6 @@ from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS, EMAIL_USER
 from mail.enums import SourceEnum, ExtractTypeEnum, UnitMapping, ReceptionStatusEnum
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.models import LicenceUpdate, UsageUpdate, Mail
-from mail.serializers import LicenceUpdateMailSerializer, UsageUpdateMailSerializer
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream", "text/plain"]
 
