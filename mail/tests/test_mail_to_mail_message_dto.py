@@ -5,7 +5,7 @@ from mail.libraries.data_processors import (
     serialize_email_message,
 )
 from mail.libraries.email_message_dto import EmailMessageDto
-from mail.tests.data_processors_test_base import DataProcessorsTestBase
+from mail.tests.libraries.data_processors_test_base import DataProcessorsTestBase
 from mail.tests.test_helpers import print_all_mails
 
 

@@ -1,5 +1,7 @@
 from django.apps import AppConfig
 
+from conf.settings import INBOX_POLL_INTERVAL, LITE_LICENCE_UPDATE_POLL_INTERVAL
+
 
 class MailConfig(AppConfig):
     name = "mail"
@@ -10,10 +12,10 @@ class MailConfig(AppConfig):
         from mail.tasks import email_lite_licence_updates, manage_inbox_queue
 
         Task.objects.filter(task_name="mail.tasks.email_lite_licence_updates").delete()
-        email_lite_licence_updates(repeat=Task.HOURLY // 3, repeat_until=None)  # noqa
+        email_lite_licence_updates(repeat=LITE_LICENCE_UPDATE_POLL_INTERVAL, repeat_until=None)  # noqa
 
         Task.objects.filter(task_name="mail.tasks.manage_inbox_queue").delete()
-        manage_inbox_queue(repeat=Task.HOURLY // 120, repeat_until=None)  # noqa
+        manage_inbox_queue(repeat=INBOX_POLL_INTERVAL, repeat_until=None)  # noqa
 
     def ready(self):
         self.initialize_background_tasks()

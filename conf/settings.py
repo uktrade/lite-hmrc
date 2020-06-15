@@ -23,7 +23,12 @@ if os.path.exists(ENV_FILE):
     Env.read_env(ENV_FILE)
 
 env = Env(
-    ALLOWED_HOSTS=(str, ""), DEBUG=(bool, False), LOG_LEVEL=(str, "INFO"), HAWK_AUTHENTICATION_ENABLED=(bool, False),
+    ALLOWED_HOSTS=(str, ""),
+    DEBUG=(bool, False),
+    LOG_LEVEL=(str, "INFO"),
+    HAWK_AUTHENTICATION_ENABLED=(bool, False),
+    INBOX_POLL_INTERVAL=(int, 60),
+    LITE_LICENCE_UPDATE_POLL_INTERVAL=(int, 1200),
 )
 
 # Quick-start development settings - unsuitable for production
@@ -102,7 +107,8 @@ TIME_TESTS = env("TIME_TESTS")
 
 LOCK_INTERVAL = float(env("LOCK_INTERVAL"))
 
-POLL_INTERVAL = env("POLL_INTERVAL")
+INBOX_POLL_INTERVAL = env("INBOX_POLL_INTERVAL")
+LITE_LICENCE_UPDATE_POLL_INTERVAL = env("LITE_LICENCE_UPDATE_POLL_INTERVAL")
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
