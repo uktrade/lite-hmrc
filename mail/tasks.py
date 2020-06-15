@@ -15,7 +15,7 @@ MANAGE_INBOX_TASK_QUEUE = "manage_inbox_queue"
 
 @background(queue=LICENCE_UPDATES_TASK_QUEUE, schedule=0)
 def email_lite_licence_updates():
-    if not _is_email_slot_free:
+    if not _is_email_slot_free():
         logging.info("There is currently an update in progress or an email in flight")
         return
 

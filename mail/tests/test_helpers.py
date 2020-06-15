@@ -38,18 +38,18 @@ class HelpersTests(LiteHMRCTestClient):
         # todo
         pass
 
-    def test_get_runnumber_from_subject(self):
+    def test_get_run_number_from_subject(self):
         subject = "ILBDOTI_live_CHIEF_usageData_9876_201901130300"
         run_number = get_run_number(subject)
         self.assertEqual(run_number, "9876")
 
-    def test_value_error_thrown_cannot_find_runnumber(self):
+    def test_value_error_thrown_cannot_find_run_number(self):
         subject = "usageData_9876_201901130300"
         with self.assertRaises(ValueError) as context:
             get_run_number(subject)
         self.assertEqual("Can not find valid run-number", str(context.exception))
 
-    def test_value_error_thrown_runnumber_wrong_format(self):
+    def test_value_error_thrown_run_number_wrong_format(self):
         subject = "abc_xyz_nnn_yyy_a1b34_datetime"
         with self.assertRaises(ValueError) as context:
             get_run_number(subject)
