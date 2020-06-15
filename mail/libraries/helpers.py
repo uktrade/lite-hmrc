@@ -59,7 +59,7 @@ def get_attachment(msg: Message):
     """
     Get file attachment from given mail message object.
     :param msg: a message object of email.message.Message
-    :return: a tuplet of file name and file data; none if there is no file attachment
+    :return: a tuple of file name and file data; none if there is no file attachment
     """
     for part in msg.walk():
         if part.get_content_type() in ALLOWED_FILE_MIMETYPES:
@@ -71,7 +71,7 @@ def get_attachment(msg: Message):
     return None, None
 
 
-def to_mail_message_dto(mail_data):
+def to_mail_message_dto(mail_data) -> EmailMessageDto:
     mail_contents = mail_data[1]
     contents = b"\r\n".join(mail_contents).decode("utf-8")
     msg_obj = Parser().parsestr(contents)
@@ -88,7 +88,7 @@ def to_mail_message_dto(mail_data):
     )
 
 
-def get_run_number(patterned_text: str):
+def get_run_number(patterned_text: str) -> int:
     """
     Gets run-number from a patterned text: abc_xyz_nnn_yyy_1234_datetime.
     :returns found number; ValueError if it not found or is not a number
@@ -101,12 +101,12 @@ def get_run_number(patterned_text: str):
         split_str = patterned_text.split("_", 6)
         if len(split_str) != 6 or not split_str[4].isdigit():
             raise ValueError("Can not find valid run-number")
-        return patterned_text.split("_", 6)[4]
+        return int(patterned_text.split("_", 6)[4])
     except Exception:  # noqa
         return 10000
 
 
-def convert_sender_to_source(sender: string):
+def convert_sender_to_source(sender: str) -> str:
     if "<" in sender and ">" in sender:
         sender = sender.split("<")[1].split(">")[0]
     if sender == SPIRE_ADDRESS:
@@ -118,7 +118,7 @@ def convert_sender_to_source(sender: string):
     return sender
 
 
-def convert_source_to_sender(source):
+def convert_source_to_sender(source) -> str:
     if source == SourceEnum.SPIRE:
         return SPIRE_ADDRESS
     elif source == SourceEnum.LITE:
@@ -161,14 +161,14 @@ def new_spire_run_number(dto_run_number: int):
     return dto_run_number
 
 
-def get_extract_type(subject: str):
+def get_extract_type(subject: str) -> str or None:
     for key, value in ExtractTypeEnum.email_keys:
         if key in str(subject):
             return value
     return None
 
 
-def get_licence_ids(file_body):
+def get_licence_ids(file_body) -> dict:
     print(f"\n\n\n\n{file_body}\n\n\n\n")
     ids = []
     lines = file_body.split("\n")
@@ -179,7 +179,7 @@ def get_licence_ids(file_body):
     return json.dumps(ids)
 
 
-def build_email_message(email_message_dto: EmailMessageDto):
+def build_email_message(email_message_dto: EmailMessageDto) -> MIMEMultipart:
     """Build mail message from EmailMessageDto.
     :param email_message_dto: the DTO object this mail message is built upon
     :return: a multipart message
@@ -230,13 +230,13 @@ def b64decode(b64encoded_text: str):
     return base64.b64decode(b64encoded_text)
 
 
-def map_unit(data: dict, g: int):
+def map_unit(data: dict, g: int) -> dict:
     unit = data["goods"][g]["unit"]
     data["goods"][g]["unit"] = UnitMapping.convert(unit)
     return data
 
 
-def select_email_for_sending():
+def select_email_for_sending() -> Mail or None:
     if not Mail.objects.filter(status=ReceptionStatusEnum.REPLY_PENDING):
         reply_received = Mail.objects.filter(status=ReceptionStatusEnum.REPLY_RECEIVED).first()
         if reply_received:

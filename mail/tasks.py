@@ -46,7 +46,7 @@ def manage_inbox_queue():
         logging.error(f"An unexpected error occurred when managing inbox -> {type(exc).__name__}: {exc}")
 
 
-def _is_email_slot_free():
+def _is_email_slot_free() -> bool:
     last_email = Mail.objects.last()
     if last_email and (
         last_email.status != ReceptionStatusEnum.REPLY_SENT or ReplyStatusEnum.REJECTED in last_email.response_data

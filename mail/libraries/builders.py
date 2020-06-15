@@ -10,7 +10,7 @@ from mail.libraries.lite_to_edifact_converter import licences_to_edifact
 from mail.models import LicenceUpdate, Mail, UsageUpdate
 
 
-def build_request_mail_message_dto(mail: Mail):
+def build_request_mail_message_dto(mail: Mail) -> EmailMessageDto:
     sender = None
     receiver = None
     run_number = 0
@@ -42,13 +42,13 @@ def build_request_mail_message_dto(mail: Mail):
     )
 
 
-def build_sent_filename(filename: str, run_number):
+def build_sent_filename(filename: str, run_number) -> str:
     filename = filename.split("_")
     filename[4] = str(run_number)
     return "_".join(filename)
 
 
-def build_sent_file_data(file_data: str, run_number):
+def build_sent_file_data(file_data: str, run_number) -> str:
     file_data_lines = file_data.split("\n", 1)
 
     file_data_line_1 = file_data_lines[0]
@@ -59,7 +59,7 @@ def build_sent_file_data(file_data: str, run_number):
     return file_data_line_1 + "\n" + file_data_lines[1]
 
 
-def build_reply_mail_message_dto(mail):
+def build_reply_mail_message_dto(mail) -> EmailMessageDto:
     sender = HMRC_ADDRESS
     receiver = SPIRE_ADDRESS
     run_number = None
@@ -106,7 +106,7 @@ def build_update_mail(licences) -> Mail:
     return mail
 
 
-def build_licence_updates_file(licences, run_number):
+def build_licence_updates_file(licences, run_number) -> (str, str):
     now = timezone.now()
     file_name = (
         "ILBDOTI_live_CHIEF_licenceUpdate_"

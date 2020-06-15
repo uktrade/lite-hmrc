@@ -23,7 +23,7 @@ def check_and_route_emails():
     logging.info("Finished checking for emails")
     mail = select_email_for_sending()  # Can return None in the event of in flight or no pending or no reply_received
     if mail:
-        return _collect_and_send(mail)
+        _collect_and_send(mail)
 
 
 def update_mail(mail: Mail, mail_dto: EmailMessageDto):
@@ -62,7 +62,7 @@ def _collect_and_send(mail: Mail):
     logging.info(f"Email routed from {message_to_send_dto.sender} to {message_to_send_dto.receiver}")
 
 
-def _read_last_message():
+def _read_last_message() -> list:
     server = MailServer()
     pop3_connection = server.connect_to_pop3()
     dtos = read_last_three_emails(pop3_connection)

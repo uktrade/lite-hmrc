@@ -4,7 +4,7 @@ from collections import namedtuple
 EmailMessageDto = namedtuple("EmailMessageDto", "run_number, sender, receiver, subject, body, attachment, raw_data")
 
 
-def to_json(email_message_dto: EmailMessageDto):
+def to_json(email_message_dto: EmailMessageDto) -> dict:
     """Converts EmailMessageDto to JSON str
     :param email_message_dto: an object of type EmailMessageDto
     :return: str in JSON format

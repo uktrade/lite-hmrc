@@ -52,7 +52,7 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
         logging.error(f"Failed to serialize email -> {serializer.errors}")
 
 
-def convert_dto_data_for_serialization(dto: EmailMessageDto, extract_type):
+def convert_dto_data_for_serialization(dto: EmailMessageDto, extract_type) -> dict:
     """
     Based on given mail message dto, prepare data for mail serialization.
     :param dto: the dto to be used
@@ -111,7 +111,7 @@ def get_mail_instance(extract_type, run_number) -> Mail or None:
         return find_mail_of(ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
 
 
-def to_email_message_dto_from(mail: Mail):
+def to_email_message_dto_from(mail: Mail) -> EmailMessageDto:
     _check_and_raise_error(mail, "Invalid mail object received!")
     logging.debug(f"converting mail with status [{mail.status}] extract_type [{mail.extract_type}] to EmailMessageDto")
     if mail.status == ReceptionStatusEnum.PENDING:
@@ -123,7 +123,7 @@ def to_email_message_dto_from(mail: Mail):
     raise ValueError(f"Unexpected mail with status [{mail.status}] while converting to EmailMessageDto")
 
 
-def lock_db_for_sending_transaction(mail: Mail):
+def lock_db_for_sending_transaction(mail: Mail) -> bool:
     mail.refresh_from_db()
     previous_locking_process_id = mail.currently_processed_by
     if (
@@ -133,7 +133,7 @@ def lock_db_for_sending_transaction(mail: Mail):
         with transaction.atomic():
             _mail = Mail.objects.select_for_update().get(id=mail.id)
             if _mail.currently_processed_by != previous_locking_process_id:
-                return
+                return False
             _mail.currently_processed_by = str(SYSTEM_INSTANCE_UUID) + "-" + str(threading.currentThread().ident)
             _mail.set_locking_time()
             _mail.save()

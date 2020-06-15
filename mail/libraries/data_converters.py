@@ -12,7 +12,7 @@ from mail.libraries.helpers import (
 )
 
 
-def convert_data_for_licence_update(dto: EmailMessageDto):
+def convert_data_for_licence_update(dto: EmailMessageDto) -> dict:
     source = convert_sender_to_source(dto.sender)
     data = {"licence_update": {}}
     data["licence_update"]["source"] = source
@@ -31,7 +31,7 @@ def convert_data_for_licence_update(dto: EmailMessageDto):
     return data
 
 
-def convert_data_for_licence_update_reply(dto: EmailMessageDto):
+def convert_data_for_licence_update_reply(dto: EmailMessageDto) -> dict:
     file_name, file_data = process_attachment(dto.attachment)
     data = {
         "response_filename": file_name,
@@ -43,7 +43,7 @@ def convert_data_for_licence_update_reply(dto: EmailMessageDto):
     return data
 
 
-def convert_data_for_usage_update(dto: EmailMessageDto):
+def convert_data_for_usage_update(dto: EmailMessageDto) -> dict:
     data = {
         "usage_update": {},
         "edi_filename": process_attachment(dto.attachment)[0],
@@ -57,7 +57,7 @@ def convert_data_for_usage_update(dto: EmailMessageDto):
     return data
 
 
-def convert_data_for_usage_update_reply(dto: EmailMessageDto):
+def convert_data_for_usage_update_reply(dto: EmailMessageDto) -> dict:
     file_name, file_data = process_attachment(dto.attachment)
     data = {
         "response_filename": file_name,

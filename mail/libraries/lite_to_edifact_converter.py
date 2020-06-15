@@ -6,7 +6,7 @@ from mail.enums import UnitMapping
 from mail.models import OrganisationIdMapping, GoodIdMapping
 
 
-def licences_to_edifact(licences: QuerySet):
+def licences_to_edifact(licences: QuerySet) -> str:
     now = datetime.now()
     time_stamp = "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
     edifact_file = "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\{}\\{}".format(time_stamp, 1234)

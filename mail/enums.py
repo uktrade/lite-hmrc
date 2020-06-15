@@ -1,20 +1,22 @@
 class ReplyStatusEnum:
     ACCEPTED = "accepted"
     REJECTED = "rejected"
+    PENDING = "pending"
 
     choices = [
         (ACCEPTED, "Accepted"),
         (REJECTED, "Rejected"),
+        (PENDING, "Pending"),
     ]
 
     @classmethod
-    def get_text(cls, status):
+    def get_text(cls, status) -> str:
         for k, v in cls.choices:
             if status == k:
                 return v
 
     @classmethod
-    def as_list(cls):
+    def as_list(cls) -> list:
         return [{"status": choice[0]} for choice in cls.choices]
 
 
@@ -38,7 +40,7 @@ class ReceptionStatusEnum:
                 return v
 
     @classmethod
-    def as_list(cls):
+    def as_list(cls) -> list:
         return [{"status": choice[0]} for choice in cls.choices]
 
 
@@ -63,13 +65,13 @@ class ExtractTypeEnum:
     ]
 
     @classmethod
-    def get_text(cls, _type):
+    def get_text(cls, _type) -> str:
         for k, v in cls.choices:
             if _type == k:
                 return v
 
     @classmethod
-    def as_list(cls):
+    def as_list(cls) -> list:
         return [{"extract_type": choice[0]} for choice in cls.choices]
 
 
@@ -85,7 +87,7 @@ class SourceEnum:
     ]
 
     @classmethod
-    def as_list(cls):
+    def as_list(cls) -> list:
         return [{"status": choice[0]} for choice in cls.choices]
 
 
@@ -111,7 +113,7 @@ class UnitMapping:
     ]
 
     @classmethod
-    def convert(cls, unit):
+    def convert(cls, unit) -> int:
         for k, v in cls.choices:
             if unit == v:
                 return k
