@@ -6,7 +6,6 @@ from conf.settings import INBOX_POLL_INTERVAL, LITE_LICENCE_UPDATE_POLL_INTERVAL
 
 class MailConfig(AppConfig):
     name = "mail"
-    initialized_background_tasks = False
 
     @classmethod
     def initialize_background_tasks(cls, **kwargs):
@@ -18,7 +17,6 @@ class MailConfig(AppConfig):
 
         Task.objects.filter(task_name="mail.tasks.manage_inbox_queue").delete()
         manage_inbox_queue(repeat=INBOX_POLL_INTERVAL, repeat_until=None)  # noqa
-        cls.initialized_background_tasks = True
 
     def ready(self):
         post_migrate.connect(self.initialize_background_tasks, sender=self)
