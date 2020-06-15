@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-import string
 from email.message import Message
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
