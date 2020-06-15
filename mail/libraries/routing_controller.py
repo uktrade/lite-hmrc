@@ -1,6 +1,6 @@
 import logging
 
-from mail.enums import ReceptionStatusEnum
+from mail.enums import ReceptionStatusEnum, SourceEnum
 from mail.libraries.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
@@ -56,7 +56,7 @@ def _collect_and_send(mail: Mail):
     is_locked_by_me = lock_db_for_sending_transaction(mail)
     if not is_locked_by_me:
         logging.info("Email being sent by another thread")
-    if message_to_send_dto.receiver != "LITE":
+    if message_to_send_dto.receiver != SourceEnum.LITE:
         send(message_to_send_dto)
     update_mail(mail, message_to_send_dto)
     logging.info(f"Email routed from {message_to_send_dto.sender} to {message_to_send_dto.receiver}")

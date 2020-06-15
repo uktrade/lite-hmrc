@@ -15,11 +15,11 @@ from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class HelpersTests(LiteHMRCTestClient):
-    @parameterized.expand([[SPIRE_ADDRESS, "SPIRE"], ["test@lite.com", "LITE"]])
+    @parameterized.expand([[SPIRE_ADDRESS, SourceEnum.SPIRE], ["test@lite.com", "LITE"]])
     def test_convert_sender_to_source(self, sender, source):
         self.assertEqual(convert_sender_to_source(sender), source)
 
-    @parameterized.expand([[SPIRE_ADDRESS, "SPIRE"], ["test@lite.com", "LITE"]])
+    @parameterized.expand([[SPIRE_ADDRESS, SourceEnum.SPIRE], ["test@lite.com", "LITE"]])
     def test_convert_source_to_sender(self, sender, source):
         self.assertEqual(convert_source_to_sender(source), sender)
 

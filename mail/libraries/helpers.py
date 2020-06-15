@@ -110,11 +110,11 @@ def convert_sender_to_source(sender: str) -> str:
     if "<" in sender and ">" in sender:
         sender = sender.split("<")[1].split(">")[0]
     if sender == SPIRE_ADDRESS:
-        return "SPIRE"
-    elif sender == "LITE":
-        return "LITE"
+        return SourceEnum.SPIRE
+    elif sender == SourceEnum.LITE:
+        return SourceEnum.LITE
     elif sender == HMRC_ADDRESS:
-        return "HMRC"
+        return SourceEnum.HMRC
     return sender
 
 
@@ -122,7 +122,7 @@ def convert_source_to_sender(source) -> str:
     if source == SourceEnum.SPIRE:
         return SPIRE_ADDRESS
     elif source == SourceEnum.LITE:
-        return "LITE"
+        return SourceEnum.LITE
     return source
 
 
