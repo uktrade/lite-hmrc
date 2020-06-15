@@ -42,13 +42,13 @@ def build_request_mail_message_dto(mail: Mail) -> EmailMessageDto:
     )
 
 
-def build_sent_filename(filename: str, run_number) -> str:
+def build_sent_filename(filename: str, run_number: int) -> str:
     filename = filename.split("_")
     filename[4] = str(run_number)
     return "_".join(filename)
 
 
-def build_sent_file_data(file_data: str, run_number) -> str:
+def build_sent_file_data(file_data: str, run_number: int) -> str:
     file_data_lines = file_data.split("\n", 1)
 
     file_data_line_1 = file_data_lines[0]
@@ -108,13 +108,10 @@ def build_update_mail(licences) -> Mail:
 
 def build_licence_updates_file(licences, run_number) -> (str, str):
     now = timezone.now()
-    file_name = (
-        "ILBDOTI_live_CHIEF_licenceUpdate_"
-        + str(run_number)
-        + "_"
-        + "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
+    file_name = "ILBDOTI_live_CHIEF_licenceUpdate_{}_{:04d}{:02d}{:02d}{:02d}{:02d}".format(
+        run_number, now.year, now.month, now.day, now.hour, now.minute
     )
 
-    file_content = licences_to_edifact(licences)
+    file_content = licences_to_edifact(licences, run_number)
 
     return file_name, file_content

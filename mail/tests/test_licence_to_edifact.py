@@ -1,7 +1,7 @@
-from datetime import datetime
 from unittest import mock
 
 from django.test import tag
+from django.utils import timezone
 
 from mail.libraries.lite_to_edifact_converter import licences_to_edifact
 from mail.models import LicencePayload, Mail, OrganisationIdMapping, GoodIdMapping
@@ -17,7 +17,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
         organisation_id = licence.data["organisation"]["id"]
         good_id = licence.data["goods"][0]["id"]
 
-        licences_to_edifact(LicencePayload.objects.filter())
+        licences_to_edifact(LicencePayload.objects.filter(), 1234)
 
         self.assertEqual(OrganisationIdMapping.objects.filter(lite_id=organisation_id, rpa_trader_id=1).count(), 1)
         self.assertEqual(
@@ -28,8 +28,8 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
     def test_single_siel(self):
         licences = LicencePayload.objects.filter(is_processed=False)
 
-        result = licences_to_edifact(licences)
-        now = datetime.now()
+        result = licences_to_edifact(licences, 1234)
+        now = timezone.now()
         expected = (
             "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\"
             + "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)

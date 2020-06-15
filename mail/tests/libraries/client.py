@@ -1,8 +1,8 @@
 import json
 import logging
-from datetime import datetime
 
 from django.test import testcases
+from django.utils import timezone
 
 from conf import settings
 from mail.libraries.helpers import read_file
@@ -21,7 +21,7 @@ class LiteHMRCTestClient(testcases.TestCase):
 
     def setUp(self):
         if settings.TIME_TESTS:
-            self.tick = datetime.now()
+            self.tick = timezone.now()
 
         self.licence_usage_file_name = "ILBDOTI_live_CHIEF_usageData_49543_201901130300"
         self.licence_usage_file_body = to_smart_text(read_file("mail/tests/files/license_usage_file", mode="rb"))
@@ -54,7 +54,7 @@ class LiteHMRCTestClient(testcases.TestCase):
         Print output time for tests if settings.TIME_TESTS is set to True
         """
         if settings.TIME_TESTS:
-            self.tock = datetime.now()
+            self.tock = timezone.now()
 
             diff = self.tock - self.tick
             time = round(diff.microseconds / 1000, 2)
