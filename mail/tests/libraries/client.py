@@ -39,7 +39,7 @@ class LiteHMRCTestClient(testcases.TestCase):
 
         self.licence_update_file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902080025"
 
-        self.licence_update_file_body = to_smart_text(read_file("mail/tests/files/license_update_file", mode="rb"))
+        self.licence_update_file_body = read_file("mail/tests/files/license_update_file", mode="rb")
 
         self.licence_payload_json = json.loads(read_file("mail/tests/files/licence_payload_file", encoding="utf-8"))
 

@@ -167,12 +167,12 @@ def get_extract_type(subject: str) -> str or None:
     return None
 
 
-def get_licence_ids(file_body) -> dict:
-    print(f"\n\n\n\n{file_body}\n\n\n\n")
+def get_licence_ids(file_body) -> str:
     ids = []
+    file_body = file_body.strip(" ")
     lines = file_body.split("\n")
     for line in lines:
-        if "licence" in line.split("\\")[1]:
+        if line and "licence" in line.split("\\")[1]:
             ids.append(line.split("\\")[4])
     logging.debug(f"license ids in the file: {ids}")
     return json.dumps(ids)

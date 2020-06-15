@@ -97,7 +97,6 @@ def get_serializer_for_dto(extract_type):
 
 def get_mail_instance(extract_type, run_number) -> Mail or None:
     if extract_type == ExtractTypeEnum.LICENCE_REPLY:
-
         last_email = LicenceUpdate.objects.filter(hmrc_run_number=run_number).last()
 
         if last_email and last_email.mail.status == ReceptionStatusEnum.REPLY_SENT:
