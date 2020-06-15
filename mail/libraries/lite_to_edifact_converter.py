@@ -16,7 +16,7 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
         i += 1
         edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
             i,
-            licence_payload.get("reference"),  # transaction_reference
+            get_transaction_reference(licence_payload.get("reference")),  # transaction_reference
             "insert",  # licence_payload.get("action"),
             licence_payload.get("reference"),
             licence_payload.get("type"),
@@ -91,3 +91,7 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
     i += 1
     edifact_file += "\n{}\\fileTrailer\\{}".format(i, licences.count())
     return edifact_file
+
+
+def get_transaction_reference(licence_reference: str):
+    return licence_reference[2:-1].replace("/", "")

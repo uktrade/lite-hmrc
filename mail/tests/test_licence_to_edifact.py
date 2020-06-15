@@ -3,7 +3,7 @@ from unittest import mock
 from django.test import tag
 from django.utils import timezone
 
-from mail.libraries.lite_to_edifact_converter import licences_to_edifact
+from mail.libraries.lite_to_edifact_converter import licences_to_edifact, get_transaction_reference
 from mail.models import LicencePayload, Mail, OrganisationIdMapping, GoodIdMapping
 from mail.tasks import email_lite_licence_updates
 from mail.tests.libraries.client import LiteHMRCTestClient
@@ -34,8 +34,8 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
             "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\"
             + "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
             + "\\1234"
-            + "\n2\\licence\\34567\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\20200602\\20220602"
-            + "\n3\\trader\\0192301\\123791\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
+            + "\n2\\licence\\SIEL20200000001\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\20200602\\20220602"
+            + "\n3\\trader\\\\1\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
             + "\n4\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB"
             + "\n5\\restrictions\\Provisos may apply please see licence"
             + "\n6\\line\\1\\\\\\\\\\finally\\Q\\30\\10"
@@ -54,3 +54,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
         self.assertEqual(Mail.objects.count(), 1)
         self.single_siel_licence_payload.refresh_from_db()
         self.assertEqual(self.single_siel_licence_payload.is_processed, True)
+
+    @tag("ref")
+    def test_ref(self):
+        self.assertEqual(get_transaction_reference("GBSIEL/2020/0000001/P"), "SIEL20200000001")
