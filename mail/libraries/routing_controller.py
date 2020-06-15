@@ -1,5 +1,7 @@
 import logging
 
+from django.utils import timezone
+
 from mail.enums import ReceptionStatusEnum, SourceEnum
 from mail.libraries.data_processors import (
     serialize_email_message,
@@ -33,6 +35,7 @@ def update_mail(mail: Mail, mail_dto: EmailMessageDto):
         # Update the mail object to record what we sent to destination
         mail.sent_filename = mail_dto.attachment[0]
         mail.sent_data = mail_dto.attachment[1]
+        mail.sent_at = timezone.now()
     else:
         mail.status = ReceptionStatusEnum.REPLY_SENT
         # Update the mail object to record what we sent to source

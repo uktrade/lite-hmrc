@@ -7,7 +7,8 @@ from django.utils import timezone
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from rest_framework.views import APIView
 
-from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
+from conf.settings import LITE_LICENCE_UPDATE_POLL_INTERVAL, INBOX_POLL_INTERVAL, EMAIL_AWAITING_REPLY_TIME
+from mail.enums import ReceptionStatusEnum
 from mail.models import Mail
 from mail.tasks import LICENCE_UPDATES_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
 
@@ -20,20 +21,27 @@ class HealthCheck(APIView):
 
         start_time = time.time()
 
-        licence_update_task = Task.objects.get(queue=LICENCE_UPDATES_TASK_QUEUE)
-        if licence_update_task.run_at + datetime.timedelta(seconds=licence_update_task.repeat) < timezone.now():
+        # If no licence update task is scheduled to run in the next LITE_LICENCE_UPDATE_POLL_INTERVAL seconds
+        licence_update_task = Task.objects.filter(
+            queue=LICENCE_UPDATES_TASK_QUEUE,
+            run_at__lte=timezone.now() + datetime.timedelta(seconds=LITE_LICENCE_UPDATE_POLL_INTERVAL),
+        )
+        if not licence_update_task.exists():
             return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
 
-        manage_inbox_task = Task.objects.get(queue=MANAGE_INBOX_TASK_QUEUE)
-        if manage_inbox_task.run_at + datetime.timedelta(seconds=manage_inbox_task.repeat) < timezone.now():
+        # If no inbox task is scheduled to run in the next INBOX_POLL_INTERVAL seconds
+        manage_inbox_task = Task.objects.get(
+            queue=MANAGE_INBOX_TASK_QUEUE, run_at__lte=timezone.now() + datetime.timedelta(seconds=INBOX_POLL_INTERVAL)
+        )
+        if not manage_inbox_task.exists():
             return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
 
-        last_email = Mail.objects.last()
-        if (
-            last_email
-            and last_email.status == ReceptionStatusEnum.REPLY_SENT
-            and ReplyStatusEnum.REJECTED in last_email.response_data.lower()
-        ):
+        # If an email has been awaiting for a reply for longer than EMAIL_AWAITING_REPLY_TIME seconds
+        email_awaiting_response_for_prolonged_period_of_time = Mail.objects.filter(
+            status=ReceptionStatusEnum.REPLY_PENDING,
+            sent_at__lte=timezone.now() - datetime.timedelta(seconds=EMAIL_AWAITING_REPLY_TIME),
+        )
+        if email_awaiting_response_for_prolonged_period_of_time.exists():
             return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
 
         return self._build_response(HTTP_200_OK, "OK", start_time)

@@ -22,7 +22,6 @@ class MailManager(models.Manager):
 class Mail(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
-    last_submitted_on = models.DateTimeField(blank=True, null=True)
     edi_filename = models.TextField(null=True, blank=True)
     edi_data = models.TextField(null=True, blank=True)
     status = models.CharField(choices=ReceptionStatusEnum.choices, default=ReceptionStatusEnum.PENDING, max_length=20)
@@ -30,6 +29,7 @@ class Mail(models.Model):
 
     sent_filename = models.TextField(blank=True, null=True)
     sent_data = models.TextField(blank=True, null=True)
+    sent_at = models.DateTimeField(blank=True, null=True)
 
     response_filename = models.TextField(blank=True, null=True)
     response_data = models.TextField(blank=True, null=True)

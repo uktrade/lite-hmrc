@@ -27,8 +27,9 @@ env = Env(
     DEBUG=(bool, False),
     LOG_LEVEL=(str, "INFO"),
     HAWK_AUTHENTICATION_ENABLED=(bool, False),
-    INBOX_POLL_INTERVAL=(int, 60),
+    INBOX_POLL_INTERVAL=(int, 300),
     LITE_LICENCE_UPDATE_POLL_INTERVAL=(int, 1200),
+    EMAIL_AWAITING_REPLY_TIME=(int, 3600),
 )
 
 # Quick-start development settings - unsuitable for production
@@ -109,6 +110,7 @@ LOCK_INTERVAL = float(env("LOCK_INTERVAL"))
 
 INBOX_POLL_INTERVAL = env("INBOX_POLL_INTERVAL")
 LITE_LICENCE_UPDATE_POLL_INTERVAL = env("LITE_LICENCE_UPDATE_POLL_INTERVAL")
+EMAIL_AWAITING_REPLY_TIME = env("EMAIL_AWAITING_REPLY_TIME")
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
