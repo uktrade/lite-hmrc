@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.utils import timezone
 from jsonfield import JSONField
 
-from mail.enums import ReceptionStatusEnum, ExtractTypeEnum, SourceEnum
+from mail.enums import ReceptionStatusEnum, ExtractTypeEnum, SourceEnum, LicenceActionEnum
 
 
 class MailManager(models.Manager):
@@ -95,6 +95,7 @@ class LicencePayload(models.Model):
     # Convenience field for cross-referencing LITE services
     lite_id = models.CharField(null=False, blank=False, max_length=36)
     reference = models.CharField(null=False, blank=False, max_length=35)
+    action = models.CharField(choices=LicenceActionEnum.choices, null=False, blank=False, max_length=6)
     data = JSONField()
     received_at = models.DateTimeField(default=timezone.now)
     is_processed = models.BooleanField(default=False)

@@ -1,3 +1,58 @@
+class LicenceActionEnum:
+    INSERT = "insert"
+    CANCEL = "cancel"
+
+    choices = [
+        (INSERT, "Insert"),
+        (CANCEL, "Cancel"),
+    ]
+
+    @classmethod
+    def get_text(cls, status) -> str:
+        for k, v in cls.choices:
+            if status == k:
+                return v
+
+    @classmethod
+    def as_list(cls) -> list:
+        return [{"status": choice[0]} for choice in cls.choices]
+
+
+class LicenceTypeEnum:
+    SIEL = "siel"
+    SICL = "sicl"
+    SITL = "sitl"
+    OIEL = "oiel"
+    OICL = "oicl"
+    OGEL = "ogel"
+    OGCL = "ogcl"
+    OGTL = "ogtl"
+
+    choices = [
+        (SIEL, "Standard Individual Export Licence"),
+        (SICL, "Standard Individual Trade Control Licence"),
+        (SITL, "Standard Individual Transhipment Licence"),
+        (OIEL, "Open Individual Export Licence"),
+        (OICL, "Open Individual Trade Control Licence"),
+        (OGEL, "Open General Export Licence"),
+        (OGCL, "Open General Trade Control Licence"),
+        (OGTL, "Open General Transhipment Licence"),
+    ]
+
+    @classmethod
+    def get_text(cls, status) -> str:
+        for k, v in cls.choices:
+            if status == k:
+                return v
+
+    @classmethod
+    def as_list(cls) -> list:
+        return [{"status": choice[0]} for choice in cls.choices]
+
+    STANDARD_LICENCES = [SIEL, SICL, SITL]
+    OPEN_LICENCES = [OIEL, OICL, OGEL, OGCL, OGTL]
+
+
 class ReplyStatusEnum:
     ACCEPTED = "accepted"
     REJECTED = "rejected"

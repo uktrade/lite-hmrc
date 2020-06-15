@@ -28,6 +28,14 @@ class UpdateLicenceEndpointTests(LiteHMRCTestClient):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(LicencePayload.objects.count(), initial_licence_count + 1)
 
+    @tag("2448", "success")
+    def test_post_data_idempotent(self):
+        initial_licence_count = LicencePayload.objects.count()
+        self.client.post(self.url, data=self.licence_payload_json, content_type="application/json")
+        response = self.client.post(self.url, data=self.licence_payload_json, content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_304_NOT_MODIFIED)
+        self.assertEqual(LicencePayload.objects.count(), initial_licence_count + 1)
+
     @parameterized.expand(
         [("NAR", 30), ("GRM", 21), ("KGM", 23), ("MTK", 45), ("MTR", 57), ("LTR", 94), ("MTQ", 2), ("ITG", 30),]
     )

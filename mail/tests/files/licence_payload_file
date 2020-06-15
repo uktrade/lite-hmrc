@@ -3,7 +3,7 @@
       "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
       "reference": "GBSIEL/2020/0000001/P",
       "type": "siel",
-      "status": "Submitted",
+      "action": "insert",
       "start_date": "2020-06-02",
       "end_date": "2022-06-02",
       "organisation": {

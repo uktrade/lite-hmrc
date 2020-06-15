@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 
 from conf.authentication import HawkOnlyAuthentication
+from mail.enums import LicenceTypeEnum
 from mail.models import LicencePayload
 from mail.serializers import (
     LiteLicenceUpdateSerializer,
@@ -15,31 +16,46 @@ class UpdateLicence(APIView):
     authentication_classes = (HawkOnlyAuthentication,)
 
     def post(self, request):
-        data = request.data.get("licence")
-
         errors = []
 
-        serializer = LiteLicenceUpdateSerializer(data=data)
-
-        if not serializer.is_valid():
-            errors += serializer.errors
-
-        if data:
-            end_user = data.get("end_user")
-            serializer = ForiegnTraderSerializer(data=end_user)
+        licence = request.data.get("licence")
+        if not licence:
+            errors.append({"licence": "This field is required."})
+        else:
+            serializer = LiteLicenceUpdateSerializer(data=licence)
             if not serializer.is_valid():
-                errors.append({"end_user_errors": serializer.errors})
+                errors.append({"licence": serializer.errors})
 
-            if data.get("goods") and data.get("type") == "siel":
-                goods = data.get("goods")
-                for good in goods:
-                    serializer = GoodSerializer(data=good)
-                    if not serializer.is_valid():
-                        errors.append({"good_errors": serializer.errors})
+            end_user = licence.get("end_user")
+            if not end_user:
+                errors.append({"end_user": "This field is required."})
+            else:
+                serializer = ForiegnTraderSerializer(data=end_user)
+                if not serializer.is_valid():
+                    errors.append({"end_user": serializer.errors})
 
-            if not errors:
-                LicencePayload.objects.create(lite_id=data["id"], reference=data["reference"], data=data)
+            if licence.get("type") in LicenceTypeEnum.STANDARD_LICENCES:
+                goods = licence.get("goods")
 
-                return JsonResponse(status=status.HTTP_201_CREATED, data={"data": data})
+                if not goods:
+                    errors.append({"goods": "This field is required."})
+                else:
+                    for good in licence.get("goods"):
+                        serializer = GoodSerializer(data=good)
+                        if not serializer.is_valid():
+                            errors.append({"goods": serializer.errors})
 
-        return JsonResponse(status=status.HTTP_400_BAD_REQUEST, data={"errors": errors})
+        if errors:
+            return JsonResponse(status=status.HTTP_400_BAD_REQUEST, data={"errors": errors})
+        else:
+            licence, created = LicencePayload.objects.get_or_create(
+                lite_id=licence["id"],
+                reference=licence["reference"],
+                action=licence["action"],
+                defaults=dict(lite_id=licence["id"], reference=licence["reference"], data=licence),
+            )
+
+            return JsonResponse(
+                status=status.HTTP_201_CREATED if created else status.HTTP_304_NOT_MODIFIED,
+                data={"licence": licence.data},
+            )

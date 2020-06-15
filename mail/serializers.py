@@ -2,6 +2,7 @@ import logging
 
 from rest_framework import serializers
 
+from mail.enums import LicenceActionEnum
 from mail.models import Mail, LicenceUpdate, UsageUpdate
 
 
@@ -138,5 +139,7 @@ class ForiegnTraderSerializer(serializers.Serializer):
 class LiteLicenceUpdateSerializer(serializers.Serializer):
     id = serializers.CharField()
     reference = serializers.CharField(max_length=35)
+    type = serializers.CharField()
     start_date = serializers.DateField()
     end_date = serializers.DateField()
+    action = serializers.CharField()
