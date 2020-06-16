@@ -100,7 +100,7 @@ def build_update_mail(licences) -> Mail:
         extract_type=ExtractTypeEnum.LICENCE_UPDATE,
         raw_data="See Licence Payload",
     )
-    licence_ids = json.dumps([str(licence.reference) for licence in licences])
+    licence_ids = json.dumps([licence.reference for licence in licences])
     LicenceUpdate.objects.create(hmrc_run_number=run_number, source=SourceEnum.LITE, mail=mail, licence_ids=licence_ids)
 
     return mail

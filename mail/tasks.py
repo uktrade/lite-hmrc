@@ -15,6 +15,8 @@ MANAGE_INBOX_TASK_QUEUE = "manage_inbox_queue"
 
 @background(queue=LICENCE_UPDATES_TASK_QUEUE, schedule=0)
 def email_lite_licence_updates():
+    logging.info("Sending sent LITE licence updates to HMRC")
+
     if not _is_email_slot_free():
         logging.info("There is currently an update in progress or an email in flight")
         return
@@ -24,26 +26,37 @@ def email_lite_licence_updates():
             licences = LicencePayload.objects.filter(is_processed=False).select_for_update(nowait=True)
 
             if not licences.exists():
-                logging.info("There are currently no licences to send")
+                logging.info("There are currently no licence updates to send")
                 return
 
+            logging.info("Creating Mail instance for licence updates")
             mail = build_update_mail(licences)
-            mail_dto = build_request_mail_message_dto(mail)
-            send(mail_dto)
-            update_mail(mail, mail_dto)
 
+            logging.info(f"Creating EmailMessageDto from Mail [{id}] instance for licence updates")
+            mail_dto = build_request_mail_message_dto(mail)
+
+            logging.info(f"Sending Mail [{id}] to HMRC")
+            send(mail_dto)
+
+            logging.info(f"Updating Mail [{id}] and licence instances")
+            update_mail(mail, mail_dto)
             licences.update(is_processed=True)
-            logging.info("Email successfully sent to HMRC")
+
+            logging.info("Successfully sent LITE licence updates to HMRC")
         except Exception as exc:  # noqa
-            logging.error(f"An unexpected error occurred when sending email to HMRC -> {type(exc).__name__}: {exc}")
+            logging.error(
+                f"An unexpected error occurred when sending LITE licence updates to HMRC -> {type(exc).__name__}: {exc}"
+            )
 
 
 @background(queue=MANAGE_INBOX_TASK_QUEUE, schedule=0)
 def manage_inbox_queue():
+    logging.info("Polling inbox for updates")
+
     try:
         check_and_route_emails()
     except Exception as exc:  # noqa
-        logging.error(f"An unexpected error occurred when managing inbox -> {type(exc).__name__}: {exc}")
+        logging.error(f"An unexpected error occurred when polling inbox for updates -> {type(exc).__name__}: {exc}")
 
 
 def _is_email_slot_free() -> bool:

@@ -46,7 +46,6 @@ def update_mail(mail: Mail, mail_dto: EmailMessageDto):
 
 
 def send(email_message_dto: EmailMessageDto):
-    logging.info("Sending email")
     server = MailServer()
     smtp_connection = server.connect_to_smtp()
     send_email(smtp_connection, build_email_message(email_message_dto))
@@ -54,7 +53,7 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
-    logging.info(f"Mail '{id}' being sent")
+    logging.info(f"Mail [{id}] being sent")
     message_to_send_dto = to_email_message_dto_from(mail)
     is_locked_by_me = lock_db_for_sending_transaction(mail)
     if not is_locked_by_me:
@@ -62,7 +61,7 @@ def _collect_and_send(mail: Mail):
     if message_to_send_dto.receiver != SourceEnum.LITE:
         send(message_to_send_dto)
     update_mail(mail, message_to_send_dto)
-    logging.info(f"Email routed from {message_to_send_dto.sender} to {message_to_send_dto.receiver}")
+    logging.info(f"Email routed from [{message_to_send_dto.sender}] to [{message_to_send_dto.receiver}]")
 
 
 def _read_last_message() -> list:
