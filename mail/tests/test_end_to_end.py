@@ -115,28 +115,6 @@ class EndToEndTests(LiteHMRCTestClient):
 
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
 
-    @tag("end-to-end")
-    def test_end_to_end_success_licence_update(self):
-        file_name = "ILBDOTI_live_CHIEF_licenceUpdate_49543_201902" + str(randint(1, 99999))  # nosec
-
-        # send email to lite from spire
-        send_email(
-            MailServer().connect_to_smtp(),
-            build_text_message(SPIRE_ADDRESS, "username@example.com", [file_name, self.licence_usage_file_body]),
-        )
-        sleep(5)
-        check_and_route_emails()
-        sleep(5)
-        server = MailServer()
-        pop3_conn = server.connect_to_pop3()
-        last_msg_dto = read_last_message(pop3_conn)
-        pop3_conn.quit()
-
-        in_mail = Mail.objects.get(edi_filename=file_name)
-        self.assertEqual(
-            in_mail.edi_filename, file_name,
-        )
-
     @tag("data manipulation")
     def test_true_e2e(self):
         data = (

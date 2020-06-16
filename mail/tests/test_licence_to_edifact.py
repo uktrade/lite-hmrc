@@ -19,7 +19,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
 
         licences_to_edifact(LicencePayload.objects.filter(), 1234)
 
-        self.assertEqual(OrganisationIdMapping.objects.filter(lite_id=organisation_id, rpa_trader_id=1).count(), 1)
+        self.assertEqual(OrganisationIdMapping.objects.filter(lite_id=organisation_id).count(), 1)
         self.assertEqual(
             GoodIdMapping.objects.filter(lite_id=good_id, line_number=1, licence_reference=licence.reference).count(), 1
         )
@@ -29,13 +29,17 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
         licences = LicencePayload.objects.filter(is_processed=False)
 
         result = licences_to_edifact(licences, 1234)
+        trader = licences[0].data["organisation"]
+        org_mapping, _ = OrganisationIdMapping.objects.get_or_create(
+            lite_id=trader["id"], defaults={"lite_id": trader["id"]}
+        )
         now = timezone.now()
         expected = (
             "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\"
             + "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
             + "\\1234"
             + "\n2\\licence\\SIEL20200000001\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\20200602\\20220602"
-            + "\n3\\trader\\\\1\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
+            + f"\n3\\trader\\\\{org_mapping.rpa_trader_id}\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
             + "\n4\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB"
             + "\n5\\restrictions\\Provisos may apply please see licence"
             + "\n6\\line\\1\\\\\\\\\\finally\\Q\\30\\10"
