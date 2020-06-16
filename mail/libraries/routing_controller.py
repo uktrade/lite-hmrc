@@ -66,7 +66,7 @@ def _collect_and_send(mail: Mail):
         send(message_to_send_dto)
     update_mail(mail, message_to_send_dto)
     if message_to_send_dto.receiver == SPIRE_ADDRESS:
-        email_lite_licence_updates(schedule=0)
+        email_lite_licence_updates(schedule=0)  # noqa
     logging.info(f"Email routed from [{message_to_send_dto.sender}] to [{message_to_send_dto.receiver}]")
 
 

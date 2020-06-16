@@ -2,7 +2,6 @@ import logging
 
 from rest_framework import serializers
 
-from mail.enums import LicenceActionEnum
 from mail.models import Mail, LicenceUpdate, UsageUpdate
 
 

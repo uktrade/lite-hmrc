@@ -6,7 +6,6 @@ from email.mime.text import MIMEText
 from typing import List
 
 from django.db import models
-from django.db.models import Q
 from django.utils import timezone
 from jsonfield import JSONField
 
