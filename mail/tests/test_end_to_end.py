@@ -114,25 +114,3 @@ class EndToEndTests(LiteHMRCTestClient):
         email_lite_licence_updates.now()
 
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
-
-    @tag("data manipulation")
-    def test_true_e2e(self):
-        data = (
-            b"1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\202006051240\\1234"
-            b"\n2\\licence\\34567\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\20200602\\20220602"
-            b"\n3\\trader\\0192301\\123791\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
-            b"\n4\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB\n5\\restrictions\\Provisos may apply please see licence"
-            b"\n6\\line\\1\\\\\\\\\\finally\\Q\\30\\10"
-            b"\n7\\end\\licence\\6\n8\\licence\\34567\\insert\\GBSIEL/2020/0000001/P\\siel\\E\\20200602\\20220602"
-            b"\n9\\trader\\0192301\\123791\\20200602\\20220602\\Organisation\\might\\248 James Key Apt. 515\\Apt. 942\\West Ashleyton\\Tennessee\\99580"
-            b"\n10\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB"
-            b"\n11\\restrictions\\Provisos may apply please see licence"
-            b"\n12\\line\\1\\\\\\\\\\finally\\Q\\30\\10\n13\\end\\licence\\6"
-            b"\n14\\fileTrailer\\2"
-        )
-
-        print(data)
-
-        data = data.decode("utf-8")
-
-        print(data)
