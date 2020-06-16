@@ -36,7 +36,7 @@ class TaskTests(LiteHMRCTestClient):
         email_lite_licence_updates.now()
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 0)
 
-    @tag("missed-timing")
+    @tag("missed-timing", "end-to-end")
     @mock.patch("mail.tasks.send")
     def test_reply_sent_rejected(self, send):
         mail = Mail(status=ReceptionStatusEnum.REPLY_SENT, response_data="rejected")
