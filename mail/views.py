@@ -56,6 +56,5 @@ class UpdateLicence(APIView):
             )
 
             return JsonResponse(
-                status=status.HTTP_201_CREATED if created else status.HTTP_304_NOT_MODIFIED,
-                data={"licence": licence.data},
+                status=status.HTTP_201_CREATED if created else status.HTTP_200_OK, data={"licence": licence.data},
             )
