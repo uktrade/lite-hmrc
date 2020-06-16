@@ -1,6 +1,9 @@
 import json
+import base64
 
 from django.utils import timezone
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
 
 from conf.settings import HMRC_ADDRESS, SPIRE_ADDRESS, EMAIL_USER
 from mail.enums import SourceEnum, ExtractTypeEnum
@@ -115,3 +118,33 @@ def build_licence_updates_file(licences, run_number) -> (str, str):
     file_content = licences_to_edifact(licences, run_number)
 
     return file_name, file_content
+
+
+def build_email_message(email_message_dto: EmailMessageDto) -> MIMEMultipart:
+    """Build mail message from EmailMessageDto.
+    :param email_message_dto: the DTO object this mail message is built upon
+    :return: a multipart message
+    """
+    _validate_dto(email_message_dto)
+
+    file = base64.b64encode(bytes(email_message_dto.attachment[1], "ASCII"))
+
+    multipart_msg = MIMEMultipart()
+    multipart_msg["From"] = EMAIL_USER
+    multipart_msg["To"] = email_message_dto.receiver
+    multipart_msg["Subject"] = email_message_dto.subject
+    payload = MIMEApplication(file)
+    payload.set_payload(file)
+    payload.add_header(
+        "Content-Disposition", "attachment; filename= %s" % email_message_dto.attachment[0],
+    )
+    multipart_msg.attach(payload)
+    return multipart_msg
+
+
+def _validate_dto(email_message_dto):
+    if email_message_dto is None:
+        raise TypeError("None email_message_dto received!")
+
+    if email_message_dto.attachment is None:
+        raise TypeError("None file attachment received!")

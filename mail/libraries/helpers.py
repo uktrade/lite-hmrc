@@ -2,13 +2,11 @@ import base64
 import json
 import logging
 from email.message import Message
-from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
 from email.parser import Parser
 
 from django.utils.encoding import smart_text
 
-from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS, EMAIL_USER
+from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
 from mail.enums import SourceEnum, ExtractTypeEnum, UnitMapping, ReceptionStatusEnum
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.models import LicenceUpdate, UsageUpdate, Mail
@@ -176,36 +174,6 @@ def get_licence_ids(file_body) -> str:
             ids.append(line.split("\\")[4])
     logging.debug(f"license ids in the file: {ids}")
     return json.dumps(ids)
-
-
-def build_email_message(email_message_dto: EmailMessageDto) -> MIMEMultipart:
-    """Build mail message from EmailMessageDto.
-    :param email_message_dto: the DTO object this mail message is built upon
-    :return: a multipart message
-    """
-    _validate_dto(email_message_dto)
-
-    file = base64.b64encode(bytes(email_message_dto.attachment[1], "ASCII"))
-
-    multipart_msg = MIMEMultipart()
-    multipart_msg["From"] = EMAIL_USER
-    multipart_msg["To"] = email_message_dto.receiver
-    multipart_msg["Subject"] = email_message_dto.subject
-    payload = MIMEApplication(file)
-    payload.set_payload(file)
-    payload.add_header(
-        "Content-Disposition", "attachment; filename= %s" % email_message_dto.attachment[0],
-    )
-    multipart_msg.attach(payload)
-    return multipart_msg
-
-
-def _validate_dto(email_message_dto):
-    if email_message_dto is None:
-        raise TypeError("None email_message_dto received!")
-
-    if email_message_dto.attachment is None:
-        raise TypeError("None file attachment received!")
 
 
 def read_file(file_path: str, mode: str = "r", encoding: str = None):

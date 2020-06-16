@@ -2,6 +2,7 @@ import logging
 
 from django.utils import timezone
 
+from conf.settings import SPIRE_ADDRESS
 from mail.enums import ReceptionStatusEnum, SourceEnum
 from mail.libraries.data_processors import (
     serialize_email_message,
@@ -9,7 +10,8 @@ from mail.libraries.data_processors import (
     lock_db_for_sending_transaction,
 )
 from mail.libraries.email_message_dto import EmailMessageDto
-from mail.libraries.helpers import build_email_message, select_email_for_sending
+from mail.libraries.builders import build_email_message
+from mail.libraries.helpers import select_email_for_sending
 from mail.libraries.mailbox_service import read_last_three_emails, send_email
 from mail.models import Mail
 from mail.servers import MailServer
@@ -53,6 +55,8 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
+    from mail.tasks import email_lite_licence_updates
+
     logging.info(f"Mail [{id}] being sent")
     message_to_send_dto = to_email_message_dto_from(mail)
     is_locked_by_me = lock_db_for_sending_transaction(mail)
@@ -61,6 +65,8 @@ def _collect_and_send(mail: Mail):
     if message_to_send_dto.receiver != SourceEnum.LITE:
         send(message_to_send_dto)
     update_mail(mail, message_to_send_dto)
+    if message_to_send_dto.receiver == SPIRE_ADDRESS:
+        email_lite_licence_updates(schedule=0)
     logging.info(f"Email routed from [{message_to_send_dto.sender}] to [{message_to_send_dto.receiver}]")
 
 

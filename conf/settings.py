@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
+import json
 import os
 import sys
 import uuid
@@ -30,6 +31,7 @@ env = Env(
     INBOX_POLL_INTERVAL=(int, 300),
     LITE_LICENCE_UPDATE_POLL_INTERVAL=(int, 1200),
     EMAIL_AWAITING_REPLY_TIME=(int, 3600),
+    NOTIFY_USERS=(str, "[]"),
 )
 
 # Quick-start development settings - unsuitable for production
@@ -111,6 +113,7 @@ LOCK_INTERVAL = float(env("LOCK_INTERVAL"))
 INBOX_POLL_INTERVAL = env("INBOX_POLL_INTERVAL")
 LITE_LICENCE_UPDATE_POLL_INTERVAL = env("LITE_LICENCE_UPDATE_POLL_INTERVAL")
 EMAIL_AWAITING_REPLY_TIME = env("EMAIL_AWAITING_REPLY_TIME")
+NOTIFY_USERS = json.loads(env("NOTIFY_USERS"))
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators

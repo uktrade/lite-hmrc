@@ -1,14 +1,14 @@
 import json
 import uuid
 from datetime import timedelta
+from email.mime.text import MIMEText
 from typing import List
 
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from jsonfield import JSONField
-
-from mail.enums import ReceptionStatusEnum, ExtractTypeEnum, SourceEnum, LicenceActionEnum
+from mail.enums import ReceptionStatusEnum, ExtractTypeEnum, SourceEnum, LicenceActionEnum, ReplyStatusEnum
 
 
 class MailManager(models.Manager):
@@ -50,6 +50,12 @@ class Mail(models.Model):
         db_table = "mail"
         ordering = ["created_at"]
 
+    def save(self, *args, **kwargs):
+        super(Mail, self).save(*args, **kwargs)
+
+        if self.response_data and ReplyStatusEnum.REJECTED in self.response_data:
+            self.send_rejection_notification_email()
+
     def set_locking_time(self, offset: int = 0):
         self.currently_processing_at = timezone.now() + timedelta(seconds=offset)
         self.save()
@@ -61,6 +67,25 @@ class Mail(models.Model):
     def set_response_date_time(self, offset: int = 0):
         self.response_date = timezone.now() + timedelta(seconds=offset)
         self.save()
+
+    @staticmethod
+    def send_rejection_notification_email():
+        from conf.settings import EMAIL_USER, NOTIFY_USERS
+        from email.mime.multipart import MIMEMultipart
+        from mail.libraries.mailbox_service import send_email
+        from mail.servers import MailServer
+
+        multipart_msg = MIMEMultipart()
+        multipart_msg["From"] = EMAIL_USER
+        multipart_msg["To"] = ",".join(NOTIFY_USERS)
+        multipart_msg["Subject"] = "FAIIIIL lol"
+        body = MIMEText("FAIIIIIL")
+        multipart_msg.attach(body)
+
+        server = MailServer()
+        smtp_connection = server.connect_to_smtp()
+        send_email(smtp_connection, multipart_msg)
+        server.quit_smtp_connection()
 
 
 class LicenceUpdate(models.Model):
