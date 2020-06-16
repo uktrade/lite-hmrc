@@ -11,14 +11,6 @@ from jsonfield import JSONField
 from mail.enums import ReceptionStatusEnum, ExtractTypeEnum, SourceEnum, LicenceActionEnum, ReplyStatusEnum
 
 
-class MailManager(models.Manager):
-    def invalid(self):
-        return self.filter(Q(errors__isnull=False) | Q(serializer_errors__isnull=False))
-
-    def valid(self):
-        return self.filter(Q(errors__isnull=True) & Q(serializer_errors__isnull=True))
-
-
 class Mail(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, blank=True)
@@ -43,8 +35,6 @@ class Mail(models.Model):
 
     currently_processing_at = models.DateTimeField(null=True)
     currently_processed_by = models.CharField(null=True, max_length=100)
-
-    objects = MailManager()
 
     class Meta:
         db_table = "mail"

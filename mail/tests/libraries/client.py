@@ -24,14 +24,14 @@ class LiteHMRCTestClient(testcases.TestCase):
             self.tick = timezone.now()
 
         self.licence_usage_file_name = "ILBDOTI_live_CHIEF_usageData_49543_201901130300"
-        self.licence_usage_file_body = to_smart_text(read_file("mail/tests/files/license_usage_file", mode="rb"))
+        self.licence_usage_file_body = read_file("mail/tests/files/license_usage_file", mode="rb")
         self.licence_update_reply_body = (
             b"MVxmaWxlSGVhZGVyXENISUVGXFNQSVJFXGxpY2VuY2VSZXBseVwyMDE5MDIwODAwMjVcMTAxMAo"
             b"yXGFjY2VwdGVkXEdCU0lFTC8yMDIwLzAwMDAwMDEvUAozXGFjY2VwdGVkXEdCU0lFTC8yMDIwLz"
             b"AwMDAwMDEvUAo0XGZpbGVUcmFpbGVyXDJcMFww"
         )
         # todo need to see a real example
-        self.usage_update_reply_body = to_smart_text(read_file("mail/tests/files/usage_update_reply_file", mode="rb"))
+        self.usage_update_reply_body = read_file("mail/tests/files/usage_update_reply_file", mode="rb")
         logging.debug("licence_update_reply_body: \n{}".format(self.licence_update_reply_body))
         self.licence_update_reply_name = "ILBDOTI_live_CHIEF_licenceReply_49543_201902080025"
 
