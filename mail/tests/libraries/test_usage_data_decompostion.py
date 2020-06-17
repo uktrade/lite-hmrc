@@ -211,7 +211,7 @@ class FileDeconstruction(LiteHMRCTestClient):
         [consignee-name] = 13
         """
 
-    @tag("1882", "id-ident")
+    @tag("1022", "id-ident")
     def test_determine_spire_licence_id_and_lite_licence_ids(self):
         spire_id_1 = "GBSIE2018/45678"
         spire_id_2 = "GBOIE2017/12345B"
@@ -220,7 +220,7 @@ class FileDeconstruction(LiteHMRCTestClient):
         self.assertEqual(id_owner(spire_id_2), SourceEnum.SPIRE)
         self.assertEqual(id_owner(lite_id), SourceEnum.LITE)
 
-    @tag("1882", "splitting-file")
+    @tag("1022", "splitting-file")
     def test_usage_data_split_according_to_licence_ids(self):
         usage_data = self.licence_usage_file_body
         spire_data, lite_data = split_edi_data_by_id(usage_data)
@@ -228,13 +228,13 @@ class FileDeconstruction(LiteHMRCTestClient):
         self.assertEqual(spire_data, self.spire_data_expected)
         self.assertEqual(lite_data, self.lite_data_expected)
 
-    @tag("1882", "rebuilding-file-spire")
+    @tag("1022", "rebuilding-file-spire")
     def test_spire_file_rebuild(self):
         spire_file = build_edifact_file_from_data_blocks(self.spire_data_expected)
 
         self.assertEqual(spire_file, self.expected_file_for_spire)
 
-    @tag("1882", "build-json-lite")
+    @tag("1022", "build-json-lite")
     def test_lite_json_payload_create(self):
         lite_payload = build_json_payload_from_data_blocks(self.lite_data_expected)
 
