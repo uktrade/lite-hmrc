@@ -1,3 +1,5 @@
+import json
+
 from django.test import tag
 
 from mail.enums import SourceEnum
