@@ -31,7 +31,6 @@ def check_and_route_emails():
 
 
 def update_mail(mail: Mail, mail_dto: EmailMessageDto):
-    logging.info(f"Updating Mail [{mail.id}]")
     if mail.status == ReceptionStatusEnum.PENDING:
         mail.status = ReceptionStatusEnum.REPLY_PENDING
         # Update the mail object to record what we sent to destination

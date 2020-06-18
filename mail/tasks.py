@@ -21,14 +21,14 @@ NOTIFY_USERS_TASK_QUEUE = "notify_users_queue"
 
 @background(queue=LICENCE_UPDATES_TASK_QUEUE, schedule=0)
 def email_lite_licence_updates():
-    logging.info("Sending sent LITE licence updates to HMRC")
+    logging.info("Sending sent LITE licence updates as Mail to HMRC")
 
     if not _is_email_slot_free():
         logging.info("There is currently an update in progress or an email is in flight")
         return
 
-    with transaction.atomic():
-        try:
+    try:
+        with transaction.atomic():
             licences = LicencePayload.objects.filter(is_processed=False).select_for_update(nowait=True)
 
             if not licences.exists():
@@ -37,19 +37,17 @@ def email_lite_licence_updates():
 
             mail = build_update_mail(licences)
             mail_dto = build_request_mail_message_dto(mail)
-            licence_references = {licences.values_list("reference", flat=True)}
-            logging.info(f"Created Mail [{id}] from licences [{licence_references}]")
+            licence_references = list(licences.values_list("reference", flat=True))
+            logging.info(f"Created Mail [{mail.id}] from licences [{licence_references}]")
 
             send(mail_dto)
             update_mail(mail, mail_dto)
-            logging.info(f"Sent Mail [{id}] to HMRC")
-
             licences.update(is_processed=True)
-            logging.info("Successfully sent LITE licence updates to HMRC")
-        except Exception as exc:  # noqa
-            logging.error(
-                f"An unexpected error occurred when sending LITE licence updates to HMRC -> {type(exc).__name__}: {exc}"
-            )
+            logging.info(f"Successfully sent LITE licence updates in Mail [{mail.id}] to HMRC")
+    except Exception as exc:  # noqa
+        logging.error(
+            f"An unexpected error occurred when sending LITE licence updates to HMRC -> {type(exc).__name__}: {exc}"
+        )
 
 
 @background(queue=MANAGE_INBOX_TASK_QUEUE, schedule=0)
@@ -80,14 +78,14 @@ def notify_users_of_rejected_mail(mail_id, mail_response_date):
         server.quit_smtp_connection()
         logging.info(f"Successfully notified users of rejected Mail [{mail_id}, {mail_response_date}]")
     except Exception as exc:  # noqa
-        logging.error(
+        error_message = (
             f"An unexpected error occurred when notifying users of rejected Mail "
             f"[{mail_id}, {mail_response_date}] -> {type(exc).__name__}: {exc}"
         )
 
         # Raise an exception
         # this will cause the task to be marked as 'Failed' and retried if there are retry attempts left
-        raise Exception(f"Failed to notify users of rejected Mail [{mail_id}, {mail_response_date}]")
+        raise Exception(error_message)
 
 
 def _is_email_slot_free() -> bool:
@@ -105,10 +103,12 @@ def _is_email_slot_free() -> bool:
 
 
 def _get_pending_mail() -> []:
-    return Mail.objects.exclude(status=ReceptionStatusEnum.REPLY_SENT).values_list("id", flat=True)
+    return list(Mail.objects.exclude(status=ReceptionStatusEnum.REPLY_SENT).values_list("id", flat=True))
 
 
 def _get_rejected_mail() -> []:
-    return Mail.objects.filter(
-        status=ReceptionStatusEnum.REPLY_SENT, response_data__icontains=ReplyStatusEnum.REJECTED,
-    ).values_list("id", flat=True)
+    return list(
+        Mail.objects.filter(
+            status=ReceptionStatusEnum.REPLY_SENT, response_data__icontains=ReplyStatusEnum.REJECTED,
+        ).values_list("id", flat=True)
+    )
