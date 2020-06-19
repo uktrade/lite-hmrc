@@ -170,8 +170,6 @@ def _handle_lite_usage_figures_exception(message, lite_usage_update_id):
                 f"[{schedule_datetime}]"
             )
             send_licence_usage_figures_to_lite_api(lite_usage_update_id, schedule=TASK_BACK_OFF)  # noqa
-        else:
-            error_message += f"; attempt number [{current_attempt}]"
 
     # Raise an exception
     # this will cause the task to be marked as 'Failed' and retried if there are retry attempts left
