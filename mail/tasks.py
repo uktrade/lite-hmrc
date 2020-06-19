@@ -4,8 +4,15 @@ from email.mime.text import MIMEText
 
 from background_task import background
 from django.db import transaction
+from mail.requests import put
 
-from conf.settings import EMAIL_USER, NOTIFY_USERS
+from conf.settings import (
+    EMAIL_USER,
+    NOTIFY_USERS,
+    LITE_API_URL,
+    HAWK_LITE_HMRC_INTEGRATION_CREDENTIALS,
+    LITE_API_REQUEST_TIMEOUT,
+)
 from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
 from mail.libraries.builders import build_update_mail
 from mail.libraries.data_processors import build_request_mail_message_dto
@@ -93,7 +100,12 @@ def send_licence_usage_figures_to_lite_api(mail_id, mail_response_date):
     logging.info(f"Sending licence usage figures in Mail [{mail_id}, {mail_response_date}] to LITE API")
 
     try:
-        pass
+        put(
+            f"{LITE_API_URL}/licences/",
+            {},
+            hawk_credentials=HAWK_LITE_HMRC_INTEGRATION_CREDENTIALS,
+            timeout=LITE_API_REQUEST_TIMEOUT,
+        )
     except Exception as exc:  # noqa
         logging.error(
             f"Sending licence usage figures in Mail [{mail_id}, {mail_response_date}] to LITE API "
