@@ -85,11 +85,23 @@ class UsageUpdate(models.Model):
     hmrc_run_number = models.IntegerField()
     lite_payload = JSONField()
 
+    def save(self, *args, **kwargs):
+        super(UsageUpdate, self).save(*args, **kwargs)
+
+        if self.lite_payload:
+            self.send_usage_updates_to_lite(self.id)
+
     def set_licence_ids(self, data: List):
         self.licence_ids = json.dumps(data)
 
     def get_licence_ids(self):
         return json.loads(self.licence_ids)
+
+    @staticmethod
+    def send_usage_updates_to_lite(id):
+        from mail.tasks import send_licence_usage_figures_to_lite_api
+
+        send_licence_usage_figures_to_lite_api(str(id))
 
 
 class LicencePayload(models.Model):
