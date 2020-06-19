@@ -83,6 +83,7 @@ class UsageUpdate(models.Model):
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING)
     spire_run_number = models.IntegerField()
     hmrc_run_number = models.IntegerField()
+    lite_payload = JSONField()
 
     def set_licence_ids(self, data: List):
         self.licence_ids = json.dumps(data)
