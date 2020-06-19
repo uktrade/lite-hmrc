@@ -10,14 +10,14 @@ class MailConfig(AppConfig):
     @classmethod
     def initialize_background_tasks(cls, **kwargs):
         from background_task.models import Task
-        from mail.tasks import email_lite_licence_updates, manage_inbox_queue
+        from mail.tasks import send_lite_licence_updates_to_hmrc, manage_inbox_queue
 
-        Task.objects.filter(task_name="mail.tasks.manage_inbox_queue").delete()
-        Task.objects.filter(task_name="mail.tasks.email_lite_licence_updates").delete()
+        Task.objects.filter(queue="mail.tasks.manage_inbox_queue").delete()
+        Task.objects.filter(queue="mail.tasks.send_lite_licence_updates_to_hmrc").delete()
 
         if BACKGROUND_TASK_ENABLED:
             manage_inbox_queue(repeat=INBOX_POLL_INTERVAL, repeat_until=None)  # noqa
-            email_lite_licence_updates(repeat=LITE_LICENCE_UPDATE_POLL_INTERVAL, repeat_until=None)  # noqa
+            send_lite_licence_updates_to_hmrc(repeat=LITE_LICENCE_UPDATE_POLL_INTERVAL, repeat_until=None)  # noqa
 
     def ready(self):
         post_migrate.connect(self.initialize_background_tasks, sender=self)

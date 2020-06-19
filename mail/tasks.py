@@ -20,8 +20,8 @@ NOTIFY_USERS_TASK_QUEUE = "notify_users_queue"
 
 
 @background(queue=LICENCE_UPDATES_TASK_QUEUE, schedule=0)
-def email_lite_licence_updates():
-    logging.info("Sending sent LITE licence updates as Mail to HMRC")
+def send_lite_licence_updates_to_hmrc():
+    logging.info("Sending LITE licence updates to HMRC")
 
     if not _is_email_slot_free():
         logging.info("There is currently an update in progress or an email is in flight")
@@ -32,7 +32,7 @@ def email_lite_licence_updates():
             licences = LicencePayload.objects.filter(is_processed=False).select_for_update(nowait=True)
 
             if not licences.exists():
-                logging.info("There are currently no licence updates to send")
+                logging.info("There are currently no licences to send")
                 return
 
             mail = build_update_mail(licences)
@@ -43,7 +43,7 @@ def email_lite_licence_updates():
             send(mail_dto)
             update_mail(mail, mail_dto)
             licences.update(is_processed=True)
-            logging.info(f"Successfully sent LITE licence updates in Mail [{mail.id}] to HMRC")
+            logging.info(f"Successfully sent LITE licences updates in Mail [{mail.id}] to HMRC")
     except Exception as exc:  # noqa
         logging.error(
             f"An unexpected error occurred when sending LITE licence updates to HMRC -> {type(exc).__name__}: {exc}"
@@ -86,6 +86,19 @@ def notify_users_of_rejected_mail(mail_id, mail_response_date):
         # Raise an exception
         # this will cause the task to be marked as 'Failed' and retried if there are retry attempts left
         raise Exception(error_message)
+
+
+@background(queue=NOTIFY_USERS_TASK_QUEUE, schedule=0)
+def send_licence_usage_figures_to_lite_api(mail_id, mail_response_date):
+    logging.info(f"Sending licence usage figures in Mail [{mail_id}, {mail_response_date}] to LITE API")
+
+    try:
+        pass
+    except Exception as exc:  # noqa
+        logging.error(
+            f"Sending licence usage figures in Mail [{mail_id}, {mail_response_date}] to LITE API "
+            f"-> {type(exc).__name__}: {exc}"
+        )
 
 
 def _is_email_slot_free() -> bool:
