@@ -84,6 +84,7 @@ class UsageUpdate(models.Model):
     spire_run_number = models.IntegerField()
     hmrc_run_number = models.IntegerField()
     lite_payload = JSONField()
+    lite_sent_at = models.DateTimeField(blank=True, null=True)  # When update was sent to LITE API
 
     def save(self, *args, **kwargs):
         super(UsageUpdate, self).save(*args, **kwargs)

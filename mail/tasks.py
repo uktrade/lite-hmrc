@@ -140,6 +140,8 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
                     lite_usage_update_id,
                 )
 
+            lite_usage_update.lite_sent_at = timezone.now()
+            lite_usage_update.save()
             logging.info(f"Successfully sent LITE UsageUpdate [{lite_usage_update_id}] to LITE API")
 
 
