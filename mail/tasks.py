@@ -144,6 +144,23 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
             logging.info(f"Successfully sent LITE UsageUpdate [{lite_usage_update_id}] to LITE API")
 
 
+def schedule_max_tried_task_as_new_task(lite_usage_update_id):
+    """
+    Used to schedule a max-tried task as a new task (starting from attempts=0);
+    Abstracted from 'send_licence_usage_figures_to_lite_api' to enable unit testing of a recursive operation
+    """
+
+    logging.warning(
+        f"Maximum attempts of {MAX_ATTEMPTS} for LITE UsageUpdate [{lite_usage_update_id}] has been reached"
+    )
+
+    schedule_datetime = timezone.now() + timedelta(seconds=TASK_BACK_OFF)
+    logging.info(
+        f"Scheduling new task for LITE UsageUpdate [{lite_usage_update_id}] to commence at [{schedule_datetime}]"
+    )
+    send_licence_usage_figures_to_lite_api(lite_usage_update_id, schedule=TASK_BACK_OFF)  # noqa
+
+
 def _handle_lite_usage_figures_exception(message, lite_usage_update_id):
     logging.warning(message)
     error_message = f"Failed to send LITE UsageUpdate [{lite_usage_update_id}] to LITE API"
@@ -161,16 +178,7 @@ def _handle_lite_usage_figures_exception(message, lite_usage_update_id):
         # This logic will make MAX_ATTEMPTS attempts to send licence changes according to the Django Background Task
         # Runner scheduling, then wait TASK_BACK_OFF seconds before starting the process again.
         if current_attempt >= MAX_ATTEMPTS:
-            logging.warning(
-                f"Maximum attempts of {MAX_ATTEMPTS} for LITE UsageUpdate [{lite_usage_update_id}] has been reached"
-            )
-
-            schedule_datetime = timezone.now() + timedelta(seconds=TASK_BACK_OFF)
-            logging.info(
-                f"Scheduling new task for LITE UsageUpdate [{lite_usage_update_id}] to commence at "
-                f"[{schedule_datetime}]"
-            )
-            send_licence_usage_figures_to_lite_api(lite_usage_update_id, schedule=TASK_BACK_OFF)  # noqa
+            schedule_max_tried_task_as_new_task(lite_usage_update_id)
 
     # Raise an exception
     # this will cause the task to be marked as 'Failed' and retried if there are retry attempts left
