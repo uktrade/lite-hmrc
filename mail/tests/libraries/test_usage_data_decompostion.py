@@ -3,13 +3,14 @@ import json
 from django.test import tag
 
 from mail.enums import SourceEnum
+from mail.libraries.helpers import get_good_id
 from mail.libraries.usage_data_decomposition import (
     build_edifact_file_from_data_blocks,
     split_edi_data_by_id,
     build_json_payload_from_data_blocks,
     id_owner,
 )
-from mail.models import LicencePayload
+from mail.models import LicencePayload, GoodIdMapping
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
@@ -104,100 +105,11 @@ class FileDeconstruction(LiteHMRCTestClient):
         )
         expected_lite_payload = {
             "licences": [
+                {"id": "1234567890", "goods": [{"id": "good_id_1", "quantity": "17", "value": "0", "currency": "",},],},
+                {"id": "0987654321", "goods": [{"id": None, "quantity": "0", "value": "0", "currency": "",},],},
                 {
-                    "id": "GBOGE2011/56789",
-                    "goods": [
-                        {
-                            "usage_type": "O",
-                            "declaration_ucr": "9GB000004988000-4750437112345",
-                            "declaration_part_number": "G",
-                            "id": "good_1_id",
-                            "control_date": "20190111",
-                            "quantity_used": "0",
-                            "value_used": "0",
-                            "currency": "",
-                            "trader_id": "",
-                            "claim_ref": "000104",
-                            "origin_country": "",
-                            "customs_mic": "",
-                            "customs_message": "",
-                            "consignee_name": "",
-                        },
-                        {
-                            "usage_type": "O",
-                            "declaration_ucr": "9GB000004988000-4750436912345",
-                            "declaration_part_number": "Y",
-                            "id": "good_2_id",
-                            "control_date": "20190111",
-                            "quantity_used": "0",
-                            "value_used": "0",
-                            "currency": "",
-                            "trader_id": "",
-                            "claim_ref": "000104",
-                            "origin_country": "",
-                            "customs_mic": "",
-                            "customs_message": "",
-                            "consignee_name": "",
-                        },
-                    ],
-                },
-                {
-                    "id": "GBOGE2017/98765",
-                    "goods": [
-                        {
-                            "usage_type": "O",
-                            "declaration_ucr": "9GB000002816000-273993",
-                            "declaration_part_number": "L",
-                            "id": "good_3_id",
-                            "control_date": "20190109",
-                            "quantity_used": "0",
-                            "value_used": "0",
-                            "currency": "",
-                            "trader_id": "",
-                            "claim_ref": "000316",
-                            "origin_country": "",
-                            "customs_mic": "",
-                            "customs_message": "",
-                            "consignee_name": "",
-                        },
-                    ],
-                },
-                {
-                    "id": "GBOGE2015/87654",
-                    "goods": [
-                        {
-                            "usage_type": "O",
-                            "declaration_ucr": "9GB000003133000-784920212345",
-                            "declaration_part_number": "E",
-                            "id": "good_4_id",
-                            "control_date": "20190111",
-                            "quantity_used": "0",
-                            "value_used": "0",
-                            "currency": "",
-                            "trader_id": "",
-                            "claim_ref": "000640",
-                            "origin_country": "",
-                            "customs_mic": "",
-                            "customs_message": "",
-                            "consignee_name": "",
-                        },
-                        {
-                            "usage_type": "O",
-                            "declaration_ucr": "9GB000003133000-784918012345",
-                            "declaration_part_number": "D",
-                            "id": "good_5_id",
-                            "control_date": "20190111",
-                            "quantity_used": "0",
-                            "value_used": "0",
-                            "currency": "",
-                            "trader_id": "",
-                            "claim_ref": "000640",
-                            "origin_country": "",
-                            "customs_mic": "",
-                            "customs_message": "",
-                            "consignee_name": "",
-                        },
-                    ],
+                    "id": "1029384756",
+                    "goods": [{"id": "good_id_2", "quantity": "1000000", "value": "0", "currency": "",},],
                 },
             ]
         }
@@ -248,6 +160,30 @@ class FileDeconstruction(LiteHMRCTestClient):
 
     @tag("1022", "build-json-lite")
     def test_lite_json_payload_create(self):
+        LicencePayload.objects.create(reference="GBOGE2011/56789", lite_id="1234567890")
+        LicencePayload.objects.create(reference="GBOGE2017/98765", lite_id="0987654321")
+        LicencePayload.objects.create(reference="GBOGE2015/87654", lite_id="1029384756")
+        self.lite_data_expected[0] = [
+            "licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\",
+            "line\\2\\17\\0\\",
+        ]
+        self.lite_data_expected[2] = [
+            "licenceUsage\\LU04148/00007\\insert\\GBOGE2015/87654\\O\\",
+            "line\\1\\1000000\\0\\",
+        ]
+        GoodIdMapping.objects.create(licence_reference="GBOGE2011/56789", line_number=2, lite_id="good_id_1")
+        GoodIdMapping.objects.create(licence_reference="GBOGE2015/87654", line_number=1, lite_id="good_id_2")
         lite_payload = build_json_payload_from_data_blocks(self.lite_data_expected)
+        print(lite_payload)
+        print(self.expected_lite_json_payload)
 
         self.assertEqual(lite_payload, self.expected_lite_json_payload)
+
+    @tag("de-mapping-goods")
+    def test_de_mapping_goods(self):
+        licence_reference = "GB2020/00001/SIE/P"
+        lite_good_id = "good_id_1"
+        line_number = 1
+        GoodIdMapping.objects.create(lite_id=lite_good_id, line_number=line_number, licence_reference=licence_reference)
+
+        self.assertEqual(get_good_id(line_number=line_number, licence_reference=licence_reference), lite_good_id)

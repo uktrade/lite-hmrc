@@ -1,6 +1,7 @@
 import json
 
 from mail.enums import SourceEnum
+from mail.libraries.helpers import get_good_id, get_licence_id
 from mail.models import LicencePayload
 
 
@@ -88,39 +89,25 @@ def build_json_payload_from_data_blocks(data_blocks: list):
 
         for line in block:
             good_payload = {
-                "usage_type": "",
-                "declaration_ucr": "",
-                "declaration_part_number": "",
-                "control_date": "",
-                "quantity_used": "",
-                "value_used": "",
+                "id": "",
+                "quantity": "",
+                "value": "",
                 "currency": "",
-                "trader_id": "",
-                "claim_ref": "",
-                "origin_country": "",
-                "customs_mic": "",
-                "customs_message": "",
-                "consignee_name": "",
             }
 
-            skip_currency = False
             if "licenceUsage" in line and "end" not in line:
-                licence_payload["id"] = line.split("\\")[3]
+                licence_reference = line.split("\\")[3]
+                licence_payload["id"] = get_licence_id(licence_reference)
 
-            if "usage" in line:
-                line_array = line.split("\\")
-                line_array.pop(0)
-                key_number = 0
+            line_array = line.split("\\")
+            if "line" == line_array[0]:
+                print(line_array)
 
-                for key in good_payload.keys():
-                    if key == "value_used" and (line_array[key_number] == "0" or line_array[key_number] == ""):
-                        skip_currency = True
-                    if key == "currency" and skip_currency:
-                        good_payload[key] = ""
-                        skip_currency = False
-                        continue
-                    good_payload[key] = line_array[key_number]
-                    key_number += 1
+                good_payload["id"] = get_good_id(line_number=line_array[1], licence_reference=licence_reference)
+                good_payload["quantity"] = line_array[2]
+                good_payload["value"] = line_array[3]
+                if len(line_array) == 5:
+                    good_payload["currency"] = line_array[4]
 
                 licence_payload["goods"].append(good_payload)
 
