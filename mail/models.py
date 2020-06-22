@@ -104,6 +104,14 @@ class UsageUpdate(models.Model):
 
         send_licence_usage_figures_to_lite_api(str(id))
 
+    def set_lite_sent_at(self, value):
+        """
+        For avoiding use of 'save()' which would trigger 'send_usage_updates_to_lite()' again
+        """
+
+        self.lite_sent_at = value
+        super(UsageUpdate, self).save()
+
 
 class LicencePayload(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

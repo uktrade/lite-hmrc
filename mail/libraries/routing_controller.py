@@ -54,7 +54,7 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
-    from mail.tasks import email_lite_licence_updates
+    from mail.tasks import send_lite_licence_updates_to_hmrc
 
     logging.info(f"Mail [{mail.id}] being sent")
     message_to_send_dto = to_email_message_dto_from(mail)
@@ -65,7 +65,7 @@ def _collect_and_send(mail: Mail):
         send(message_to_send_dto)
     update_mail(mail, message_to_send_dto)
     if message_to_send_dto.receiver == SPIRE_ADDRESS:
-        email_lite_licence_updates(schedule=0)  # noqa
+        send_lite_licence_updates_to_hmrc(schedule=0)  # noqa
     logging.info(f"Email routed from [{message_to_send_dto.sender}] to [{message_to_send_dto.receiver}]")
 
 

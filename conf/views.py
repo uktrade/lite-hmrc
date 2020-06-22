@@ -1,6 +1,7 @@
 import datetime
 import logging
 import time
+import uuid
 
 from background_task.models import Task
 from django.shortcuts import render_to_response
@@ -15,8 +16,8 @@ from conf.settings import (
     EMAIL_AWAITING_CORRECTIONS_TIME,
 )
 from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
-from mail.models import Mail
-from mail.tasks import LICENCE_UPDATES_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
+from mail.models import Mail, UsageUpdate
+from mail.tasks import LICENCE_UPDATES_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE, send_licence_usage_figures_to_lite_api
 
 
 class HealthCheck(APIView):
@@ -91,3 +92,11 @@ class HealthCheck(APIView):
         context = {"message": message, "response_time": response_time}
 
         return render_to_response("healthcheck.xml", context, content_type="application/xml", status=status)
+
+
+class Test(APIView):
+    def get(self, request):
+        lu = UsageUpdate.objects.create(
+            lite_payload={"licences": [{"id": str(uuid.uuid4()), "goods": [{"id": str(uuid.uuid4()), "usage": 10}]}]}
+        )
+        send_licence_usage_figures_to_lite_api(lu)

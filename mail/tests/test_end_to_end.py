@@ -13,7 +13,7 @@ from mail.libraries.mailbox_service import read_last_message, send_email
 from mail.libraries.routing_controller import check_and_route_emails, _collect_and_send
 from mail.models import Mail, LicenceUpdate, LicencePayload
 from mail.servers import MailServer
-from mail.tasks import email_lite_licence_updates
+from mail.tasks import send_lite_licence_updates_to_hmrc
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
@@ -101,7 +101,7 @@ class EndToEndTests(LiteHMRCTestClient):
             reverse("mail:update_licence"), data=self.licence_payload_json, content_type="application/json"
         )
 
-        email_lite_licence_updates.now()  # Manually calling background task logic
+        send_lite_licence_updates_to_hmrc.now()  # Manually calling background task logic
 
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)
 
@@ -111,6 +111,6 @@ class EndToEndTests(LiteHMRCTestClient):
             reverse("mail:update_licence"), data=self.licence_payload_json, content_type="application/json"
         )
 
-        email_lite_licence_updates.now()
+        send_lite_licence_updates_to_hmrc.now()
 
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 2)

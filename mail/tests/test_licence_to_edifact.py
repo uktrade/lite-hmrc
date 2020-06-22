@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from mail.libraries.lite_to_edifact_converter import licences_to_edifact, get_transaction_reference
 from mail.models import LicencePayload, Mail, OrganisationIdMapping, GoodIdMapping
-from mail.tasks import email_lite_licence_updates
+from mail.tasks import send_lite_licence_updates_to_hmrc
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
@@ -53,7 +53,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
     @mock.patch("mail.tasks.send")
     def test_licence_is_marked_as_processed_after_sending(self, send):
         send.return_value = None
-        email_lite_licence_updates.now()
+        send_lite_licence_updates_to_hmrc.now()
 
         self.assertEqual(Mail.objects.count(), 1)
         self.single_siel_licence_payload.refresh_from_db()
