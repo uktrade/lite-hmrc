@@ -10,12 +10,17 @@ class MailConfig(AppConfig):
     @classmethod
     def initialize_background_tasks(cls, **kwargs):
         from background_task.models import Task
-        from mail.tasks import send_lite_licence_updates_to_hmrc, manage_inbox_queue
+        from mail.tasks import (
+            MANAGE_INBOX_TASK_QUEUE,
+            LICENCE_UPDATES_TASK_QUEUE,
+            send_lite_licence_updates_to_hmrc,
+            manage_inbox_queue,
+            send_licence_usage_figures_to_lite_api,
+        )
         from mail.models import UsageUpdate
-        from mail.tasks import send_licence_usage_figures_to_lite_api
 
-        Task.objects.filter(queue="mail.tasks.manage_inbox_queue").delete()
-        Task.objects.filter(queue="mail.tasks.send_lite_licence_updates_to_hmrc").delete()
+        Task.objects.filter(queue=MANAGE_INBOX_TASK_QUEUE).delete()
+        Task.objects.filter(queue=LICENCE_UPDATES_TASK_QUEUE).delete()
 
         if BACKGROUND_TASK_ENABLED:
             manage_inbox_queue(repeat=INBOX_POLL_INTERVAL, repeat_until=None)  # noqa

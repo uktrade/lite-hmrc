@@ -4,6 +4,7 @@ import time
 import uuid
 
 from background_task.models import Task
+from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils import timezone
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
@@ -96,7 +97,13 @@ class HealthCheck(APIView):
 
 class Test(APIView):
     def get(self, request):
+        mail = Mail.objects.create()
         lu = UsageUpdate.objects.create(
-            lite_payload={"licences": [{"id": str(uuid.uuid4()), "goods": [{"id": str(uuid.uuid4()), "usage": 10}]}]}
+            mail=mail,
+            licence_ids="[]",
+            hmrc_run_number=0,
+            spire_run_number=0,
+            lite_payload={"licences": [{"id": str(uuid.uuid4()), "goods": [{"id": str(uuid.uuid4()), "usage": 10}]}]},
         )
-        send_licence_usage_figures_to_lite_api(lu)
+        send_licence_usage_figures_to_lite_api.now(str(lu.id))
+        return HttpResponse(status=HTTP_200_OK)
