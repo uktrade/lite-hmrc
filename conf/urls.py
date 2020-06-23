@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from conf.views import HealthCheck, Test
+from conf.views import HealthCheck
 
 urlpatterns = [
     path("admin/", admin.site.urls),
