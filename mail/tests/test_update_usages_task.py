@@ -28,22 +28,24 @@ class MockResponse:
         return self.json_data
 
 
+@mock.patch("mail.apps.BACKGROUND_TASK_ENABLED", False)  # Disable task from being run on app initialization
 class UpdateUsagesTaskTests(LiteHMRCTestClient):
     def setUp(self):
         super().setUp()
-
         self.mail = Mail.objects.create()
         self.usage_update = UsageUpdate.objects.create(
             mail=self.mail,
-            licence_ids="",
+            licence_ids='["GBSIEL/2020/0000001/P", "GBSIEL/2020/0000002/P"]',
             hmrc_run_number=0,
             spire_run_number=0,
-            lite_payload={"licences": [{"id": str(uuid.uuid4()), "goods": [{"id": str(uuid.uuid4()), "usage": 10}]}]},
+            lite_payload={},
         )
 
     @mock.patch("mail.tasks.put")
-    def test_schedule_usages_for_lite_api_200_ok(self, put_request):
+    @mock.patch("mail.tasks.build_lite_payload")
+    def test_schedule_usages_for_lite_api_200_ok(self, build_payload, put_request):
         original_sent_at = self.usage_update.lite_sent_at
+        build_payload.return_value = None
         put_request.return_value = MockResponse(status_code=HTTP_200_OK)
 
         send_licence_usage_figures_to_lite_api.now(str(self.usage_update.id))
@@ -60,7 +62,9 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertNotEqual(self.usage_update.lite_sent_at, original_sent_at)
 
     @mock.patch("mail.tasks.put")
-    def test_schedule_usages_for_lite_api_400_bad_request(self, put_request):
+    @mock.patch("mail.tasks.build_lite_payload")
+    def test_schedule_usages_for_lite_api_400_bad_request(self, build_payload, put_request):
+        build_payload.return_value = None
         put_request.return_value = MockResponse(status_code=HTTP_400_BAD_REQUEST)
 
         with self.assertRaises(Exception) as error:
@@ -79,7 +83,9 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
     @mock.patch("mail.tasks.schedule_max_tried_task_as_new_task")
     @mock.patch("mail.tasks.Task.objects.get")
     @mock.patch("mail.tasks.put")
-    def test_schedule_usages_for_lite_api_max_tried_task(self, put_request, get_task, schedule_new_task):
+    @mock.patch("mail.tasks.build_lite_payload")
+    def test_schedule_usages_for_lite_api_max_tried_task(self, build_payload, put_request, get_task, schedule_new_task):
+        build_payload.return_value = None
         put_request.return_value = MockResponse(status_code=HTTP_400_BAD_REQUEST)
         get_task.return_value = MockTask(MAX_ATTEMPTS - 1)
         schedule_new_task.return_value = None

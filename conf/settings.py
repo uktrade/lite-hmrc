@@ -59,7 +59,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "background_task",
-    "mail.app.MailConfig",
+    "mail.apps.MailConfig",
 ]
 
 MIDDLEWARE = [

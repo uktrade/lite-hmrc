@@ -78,7 +78,7 @@ class FileDeconstruction(LiteHMRCTestClient):
             ],
         ]
         self.expected_file_for_spire = (
-            "1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\9876\\\n"
+            "1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\\n"
             "2\\licenceUsage\\LU04148/00001\\insert\\GBOIE2017/12345B\\O\\\n"
             "3\\line\\1\\0\\0\\\n"
             "4\\usage\\O\\9GB000001328000-PE112345\\R\\20190112\\0\\0\\\\000262\\\\\\\\\n"
@@ -103,17 +103,13 @@ class FileDeconstruction(LiteHMRCTestClient):
             "23\\end\\licenceUsage\\5\n"
             "24\\fileTrailer\\7"
         )
-        expected_lite_payload = {
+        self.expected_lite_json_payload = {
             "licences": [
-                {"id": "1234567890", "goods": [{"id": "good_id_1", "usage": "17", "value": "0", "currency": "",},],},
-                {"id": "0987654321", "goods": [{"id": None, "usage": "0", "value": "0", "currency": "",},],},
-                {
-                    "id": "1029384756",
-                    "goods": [{"id": "good_id_2", "usage": "1000000", "value": "0", "currency": "",},],
-                },
+                {"id": "1234567890", "goods": [{"id": "good_id_1", "usage": "17", "value": "0", "currency": ""}]},
+                {"id": "0987654321", "goods": [{"id": None, "usage": "0", "value": "0", "currency": ""}]},
+                {"id": "1029384756", "goods": [{"id": "good_id_2", "usage": "1000000", "value": "0", "currency": ""}],},
             ]
         }
-        self.expected_lite_json_payload = json.dumps(expected_lite_payload)
         """
         [line number (some int)] = 0
         [line start (always usage)] = 1
@@ -155,7 +151,6 @@ class FileDeconstruction(LiteHMRCTestClient):
     @tag("1022", "rebuilding-file-spire")
     def test_spire_file_rebuild(self):
         spire_file = build_edifact_file_from_data_blocks(self.spire_data_expected)
-
         self.assertEqual(spire_file, self.expected_file_for_spire)
 
     @tag("1022", "build-json-lite")
@@ -174,8 +169,6 @@ class FileDeconstruction(LiteHMRCTestClient):
         GoodIdMapping.objects.create(licence_reference="GBOGE2011/56789", line_number=2, lite_id="good_id_1")
         GoodIdMapping.objects.create(licence_reference="GBOGE2015/87654", line_number=1, lite_id="good_id_2")
         lite_payload = build_json_payload_from_data_blocks(self.lite_data_expected)
-        print(lite_payload)
-        print(self.expected_lite_json_payload)
 
         self.assertEqual(lite_payload, self.expected_lite_json_payload)
 

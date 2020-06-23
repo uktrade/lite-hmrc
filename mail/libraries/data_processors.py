@@ -19,11 +19,6 @@ from mail.libraries.helpers import (
     get_extract_type,
 )
 from mail.libraries.mailbox_service import find_mail_of
-from mail.libraries.usage_data_decomposition import (
-    split_edi_data_by_id,
-    build_edifact_file_from_data_blocks,
-    build_json_payload_from_data_blocks,
-)
 from mail.models import LicenceUpdate, Mail, UsageUpdate, LicencePayload
 from mail.serializers import (
     LicenceUpdateMailSerializer,

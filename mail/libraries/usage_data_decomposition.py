@@ -1,5 +1,3 @@
-import json
-
 from mail.enums import SourceEnum
 from mail.libraries.helpers import get_good_id, get_licence_id
 from mail.models import LicencePayload

@@ -16,6 +16,7 @@ from mail.libraries.helpers import select_email_for_sending
 from mail.libraries.mailbox_service import read_last_three_emails, send_email
 from mail.models import Mail
 from mail.servers import MailServer
+from mail.tasks import send_lite_licence_updates_to_hmrc
 
 
 def check_and_route_emails():
@@ -60,8 +61,6 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
-    from mail.tasks import send_lite_licence_updates_to_hmrc
-
     logging.info(f"Mail [{mail.id}] being sent")
     message_to_send_dto = to_email_message_dto_from(mail)
     is_locked_by_me = lock_db_for_sending_transaction(mail)
@@ -70,10 +69,10 @@ def _collect_and_send(mail: Mail):
     if message_to_send_dto.receiver != SourceEnum.LITE:
         send(message_to_send_dto)
     update_mail(mail, message_to_send_dto)
-    # if message_to_send_dto.receiver == SPIRE_ADDRESS:
-    # Pick up any LITE licence updates once we send a licence update reply email to SPIRE
-    # so LITE does not get locked out of the queue by SPIRE
-    # send_lite_licence_updates_to_hmrc(schedule=0)  # noqa
+    if message_to_send_dto.receiver == SPIRE_ADDRESS:
+        # Pick up any LITE licence updates once we send a licence update reply email to SPIRE
+        # so LITE does not get locked out of the queue by SPIRE
+        send_lite_licence_updates_to_hmrc(schedule=0)  # noqa
     logging.info(f"Email routed from [{message_to_send_dto.sender}] to [{message_to_send_dto.receiver}]")
 
 

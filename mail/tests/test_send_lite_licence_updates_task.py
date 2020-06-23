@@ -8,6 +8,7 @@ from mail.tasks import send_lite_licence_updates_to_hmrc
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
+@mock.patch("mail.apps.BACKGROUND_TASK_ENABLED", False)  # Disable task from being run on app initialization
 class TaskTests(LiteHMRCTestClient):
     @tag("missed-timing")
     @mock.patch("mail.tasks.send")

@@ -222,12 +222,12 @@ def get_good_id(line_number, licence_reference):
     try:
         lite_good_id = GoodIdMapping.objects.get(line_number=line_number, licence_reference=licence_reference).lite_id
         return lite_good_id
-    except:
+    except Exception as exc:  # noqa
         return
 
 
 def get_licence_id(licence_reference):
     try:
         return LicencePayload.objects.get(reference=licence_reference).lite_id
-    except:
+    except Exception as exc:  # noqa
         return
