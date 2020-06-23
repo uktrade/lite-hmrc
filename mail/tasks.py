@@ -9,6 +9,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import status
 
+from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
 from mail.requests import put
 
 from conf.settings import (
@@ -116,10 +117,16 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
             f"LITE UsageUpdate [{lite_usage_update_id}] does not exist.", lite_usage_update_id,
         )
     else:
-        licences = list(lite_usage_update.licence_ids)
+        licences = lite_usage_update.get_licence_ids()
         logging.info(f"Sending LITE UsageUpdate [{lite_usage_update_id}] figures for Licences [{licences}] to LITE API")
 
         try:
+            _, data = split_edi_data_by_id(lite_usage_update.mail.edi_data)
+            payload = build_json_payload_from_data_blocks(data)
+            payload["transaction_id"] = str(lite_usage_update.id)
+            lite_usage_update.lite_payload = payload
+            lite_usage_update.save()
+
             response = put(
                 f"{LITE_API_URL}/licences/hmrc-integration/",
                 lite_usage_update.lite_payload,
@@ -140,7 +147,8 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
                     lite_usage_update_id,
                 )
 
-            lite_usage_update.set_lite_sent_at(timezone.now())
+            lite_usage_update.lite_sent_at = timezone.now()
+            lite_usage_update.save()
             logging.info(f"Successfully sent LITE UsageUpdate [{lite_usage_update_id}] to LITE API")
 
 

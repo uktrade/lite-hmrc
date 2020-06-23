@@ -83,14 +83,9 @@ class UsageUpdate(models.Model):
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING)
     spire_run_number = models.IntegerField()
     hmrc_run_number = models.IntegerField()
+    has_lite_data = models.NullBooleanField(default=None)
     lite_payload = JSONField()
     lite_sent_at = models.DateTimeField(blank=True, null=True)  # When update was sent to LITE API
-
-    def save(self, *args, **kwargs):
-        super(UsageUpdate, self).save(*args, **kwargs)
-
-        if self.lite_payload:
-            self.send_usage_updates_to_lite(self.id)
 
     def set_licence_ids(self, data: List):
         self.licence_ids = json.dumps(data)
@@ -98,19 +93,18 @@ class UsageUpdate(models.Model):
     def get_licence_ids(self):
         return json.loads(self.licence_ids)
 
+    def set_has_lite_data(self, value):
+        self.has_lite_data = value
+        super(UsageUpdate, self).save()
+
+        if self.has_lite_data:
+            self.send_usage_updates_to_lite(self.id)
+
     @staticmethod
     def send_usage_updates_to_lite(id):
         from mail.tasks import send_licence_usage_figures_to_lite_api
 
         send_licence_usage_figures_to_lite_api(str(id))
-
-    def set_lite_sent_at(self, value):
-        """
-        For avoiding use of 'save()' which would trigger 'send_usage_updates_to_lite()' again
-        """
-
-        self.lite_sent_at = value
-        super(UsageUpdate, self).save()
 
 
 class LicencePayload(models.Model):

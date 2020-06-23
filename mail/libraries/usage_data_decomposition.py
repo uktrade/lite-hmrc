@@ -113,7 +113,7 @@ def build_json_payload_from_data_blocks(data_blocks: list):
 
         payload.append(licence_payload)
 
-    return json.dumps({"licences": payload})
+    return {"licences": payload}
 
 
 def id_owner(licence_reference):

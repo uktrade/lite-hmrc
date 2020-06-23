@@ -24,7 +24,7 @@ from mail.libraries.usage_data_decomposition import (
     build_edifact_file_from_data_blocks,
     build_json_payload_from_data_blocks,
 )
-from mail.models import LicenceUpdate, Mail, UsageUpdate
+from mail.models import LicenceUpdate, Mail, UsageUpdate, LicencePayload
 from mail.serializers import (
     LicenceUpdateMailSerializer,
     UpdateResponseSerializer,
@@ -152,12 +152,13 @@ def _check_and_raise_error(obj, error_msg: str):
         raise ValueError(error_msg)
 
 
-def prepare_lite_payloads():
+def flag_lite_payloads():
+    for uu in UsageUpdate.objects.filter(has_lite_data__isnull=True):
+        has_lite_data = False
 
-    for uu in UsageUpdate.objects.filter(lite_payload=None):
-        _, lite_data = split_edi_data_by_id(uu.mail.edi_data)
+        for licence in uu.get_licence_ids():
+            if LicencePayload.objects.filter(reference=licence).exists():
+                has_lite_data = True
+                break
 
-        uu.lite_payload = build_json_payload_from_data_blocks(lite_data)
-        uu.save()
-    else:
-        logging.info("No usage updates missing their lite payloads")
+        uu.has_lite_data(has_lite_data)
