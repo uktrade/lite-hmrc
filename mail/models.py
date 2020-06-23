@@ -118,6 +118,9 @@ class LicencePayload(models.Model):
     received_at = models.DateTimeField(default=timezone.now)
     is_processed = models.BooleanField(default=False)
 
+    class Meta:
+        unique_together = [["lite_id", "action"]]
+
 
 class OrganisationIdMapping(models.Model):
     lite_id = models.CharField(unique=True, null=False, blank=False, max_length=36)
