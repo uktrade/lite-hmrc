@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from django.test import tag
 
@@ -132,7 +133,7 @@ class FileDeconstruction(LiteHMRCTestClient):
         spire_id_1 = "GBSIE2018/45678"
         spire_id_2 = "GBOIE2017/12345B"
         lite_id = "GBOGE2011/56789"
-        LicencePayload.objects.create(reference=lite_id)
+        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference=lite_id)
         self.assertEqual(id_owner(spire_id_1), SourceEnum.SPIRE)
         self.assertEqual(id_owner(spire_id_2), SourceEnum.SPIRE)
         self.assertEqual(id_owner(lite_id), SourceEnum.LITE)
@@ -140,9 +141,9 @@ class FileDeconstruction(LiteHMRCTestClient):
     @tag("1022", "splitting-file")
     def test_usage_data_split_according_to_licence_ids(self):
         usage_data = self.licence_usage_file_body.decode("utf-8")
-        LicencePayload.objects.create(reference="GBOGE2011/56789")
-        LicencePayload.objects.create(reference="GBOGE2017/98765")
-        LicencePayload.objects.create(reference="GBOGE2015/87654")
+        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference="GBOGE2011/56789")
+        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference="GBOGE2017/98765")
+        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference="GBOGE2015/87654")
         spire_data, lite_data = split_edi_data_by_id(usage_data)
 
         self.assertEqual(spire_data, self.spire_data_expected)
