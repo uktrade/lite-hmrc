@@ -19,6 +19,11 @@ from mail.libraries.helpers import (
     get_extract_type,
 )
 from mail.libraries.mailbox_service import find_mail_of
+from mail.libraries.usage_data_decomposition import (
+    split_edi_data_by_id,
+    build_edifact_file_from_data_blocks,
+    build_json_payload_from_data_blocks,
+)
 from mail.models import LicenceUpdate, Mail, UsageUpdate
 from mail.serializers import (
     LicenceUpdateMailSerializer,
@@ -41,15 +46,17 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
     serializer = get_serializer_for_dto(extract_type)
     serializer = serializer(instance=instance, data=data, partial=partial)
 
-    if serializer.is_valid():
-        _mail = serializer.save()
-        if data["extract_type"] in ["licence_reply", "usage_reply"]:
-            _mail.set_response_date_time()
-
-        logging.info("Successfully serialized email")
-        return _mail
-    else:
+    if not serializer.is_valid():
         logging.error(f"Failed to serialize email -> {serializer.errors}")
+        return
+
+    _mail = serializer.save()
+    if data["extract_type"] in ["licence_reply", "usage_reply"]:
+        _mail.set_response_date_time()
+
+    logging.info("Successfully serialized email")
+
+    return _mail
 
 
 def convert_dto_data_for_serialization(dto: EmailMessageDto, extract_type) -> dict:
@@ -143,3 +150,14 @@ def lock_db_for_sending_transaction(mail: Mail) -> bool:
 def _check_and_raise_error(obj, error_msg: str):
     if obj is None:
         raise ValueError(error_msg)
+
+
+def prepare_lite_payloads():
+
+    for uu in UsageUpdate.objects.filter(lite_payload=None):
+        _, lite_data = split_edi_data_by_id(uu.mail.edi_data)
+
+        uu.lite_payload = build_json_payload_from_data_blocks(lite_data)
+        uu.save()
+    else:
+        logging.info("No usage updates missing their lite payloads")

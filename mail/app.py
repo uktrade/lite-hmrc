@@ -28,7 +28,7 @@ class MailConfig(AppConfig):
 
             usage_update_not_sent_to_lite = UsageUpdate.objects.filter(
                 lite_payload__isnull=False, lite_sent_at__isnull=True
-            )
+            ).exclude(lite_payload={})
             for usage_update_not_sent_to_lite in usage_update_not_sent_to_lite:
                 send_licence_usage_figures_to_lite_api(str(usage_update_not_sent_to_lite.id))
 

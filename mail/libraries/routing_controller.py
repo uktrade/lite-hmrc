@@ -4,13 +4,14 @@ from django.utils import timezone
 
 from conf.settings import SPIRE_ADDRESS
 from mail.enums import ReceptionStatusEnum, SourceEnum
+from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
     lock_db_for_sending_transaction,
+    prepare_lite_payloads,
 )
 from mail.libraries.email_message_dto import EmailMessageDto
-from mail.libraries.builders import build_email_message
 from mail.libraries.helpers import select_email_for_sending
 from mail.libraries.mailbox_service import read_last_three_emails, send_email
 from mail.models import Mail
@@ -26,6 +27,11 @@ def check_and_route_emails():
         serialize_email_message(dto)
     logging.info("Finished checking for emails")
     mail = select_email_for_sending()  # Can return None in the event of in flight or no pending or no reply_received
+    try:
+        prepare_lite_payloads()
+    except Exception as exc:  # noqa
+        logging.error(f"An unexpected error occurred -> {type(exc).__name__}: {exc}")
+
     if mail:
         _collect_and_send(mail)
 
@@ -65,6 +71,8 @@ def _collect_and_send(mail: Mail):
         send(message_to_send_dto)
     update_mail(mail, message_to_send_dto)
     if message_to_send_dto.receiver == SPIRE_ADDRESS:
+        # Pick up any LITE licence updates once we send a licence update reply email to SPIRE
+        # so LITE does not get locked out of the queue by SPIRE
         send_lite_licence_updates_to_hmrc(schedule=0)  # noqa
     logging.info(f"Email routed from [{message_to_send_dto.sender}] to [{message_to_send_dto.receiver}]")
 

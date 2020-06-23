@@ -68,7 +68,7 @@ class UsageUpdateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UsageUpdate
-        fields = "__all__"
+        fields = ("licence_ids", "mail", "spire_run_number", "hmrc_run_number")
 
     def create(self, validated_data):
         instance, _ = UsageUpdate.objects.get_or_create(**validated_data)
