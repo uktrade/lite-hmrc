@@ -79,6 +79,7 @@ class LicenceUpdate(models.Model):
 
 
 class UsageUpdate(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     licence_ids = models.TextField()
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING)
     spire_run_number = models.IntegerField()
