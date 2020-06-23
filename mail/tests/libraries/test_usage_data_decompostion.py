@@ -105,11 +105,11 @@ class FileDeconstruction(LiteHMRCTestClient):
         )
         expected_lite_payload = {
             "licences": [
-                {"id": "1234567890", "goods": [{"id": "good_id_1", "quantity": "17", "value": "0", "currency": "",},],},
-                {"id": "0987654321", "goods": [{"id": None, "quantity": "0", "value": "0", "currency": "",},],},
+                {"id": "1234567890", "goods": [{"id": "good_id_1", "usage": "17", "value": "0", "currency": "",},],},
+                {"id": "0987654321", "goods": [{"id": None, "usage": "0", "value": "0", "currency": "",},],},
                 {
                     "id": "1029384756",
-                    "goods": [{"id": "good_id_2", "quantity": "1000000", "value": "0", "currency": "",},],
+                    "goods": [{"id": "good_id_2", "usage": "1000000", "value": "0", "currency": "",},],
                 },
             ]
         }

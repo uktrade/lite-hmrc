@@ -90,7 +90,7 @@ def build_json_payload_from_data_blocks(data_blocks: list):
         for line in block:
             good_payload = {
                 "id": "",
-                "quantity": "",
+                "usage": "",
                 "value": "",
                 "currency": "",
             }
@@ -104,7 +104,7 @@ def build_json_payload_from_data_blocks(data_blocks: list):
                 print(line_array)
 
                 good_payload["id"] = get_good_id(line_number=line_array[1], licence_reference=licence_reference)
-                good_payload["quantity"] = line_array[2]
+                good_payload["usage"] = line_array[2]
                 good_payload["value"] = line_array[3]
                 if len(line_array) == 5:
                     good_payload["currency"] = line_array[4]
