@@ -22,5 +22,4 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("mail/", include("mail.urls")),
     path("healthcheck/", HealthCheck.as_view()),
-    path("test/", Test.as_view()),
 ]

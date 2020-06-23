@@ -1,10 +1,8 @@
 import datetime
 import logging
 import time
-import uuid
 
 from background_task.models import Task
-from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils import timezone
 from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
@@ -17,8 +15,8 @@ from conf.settings import (
     EMAIL_AWAITING_CORRECTIONS_TIME,
 )
 from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
-from mail.models import Mail, UsageUpdate
-from mail.tasks import LICENCE_UPDATES_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE, send_licence_usage_figures_to_lite_api
+from mail.models import Mail
+from mail.tasks import LICENCE_UPDATES_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
 
 
 class HealthCheck(APIView):
@@ -93,17 +91,3 @@ class HealthCheck(APIView):
         context = {"message": message, "response_time": response_time}
 
         return render_to_response("healthcheck.xml", context, content_type="application/xml", status=status)
-
-
-class Test(APIView):
-    def get(self, request):
-        mail = Mail.objects.create()
-        lu = UsageUpdate.objects.create(
-            mail=mail,
-            licence_ids="[]",
-            hmrc_run_number=0,
-            spire_run_number=0,
-            lite_payload={"licences": [{"id": str(uuid.uuid4()), "goods": [{"id": str(uuid.uuid4()), "usage": 10}]}]},
-        )
-        send_licence_usage_figures_to_lite_api.now(str(lu.id))
-        return HttpResponse(status=HTTP_200_OK)
