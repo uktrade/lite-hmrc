@@ -59,7 +59,7 @@ class Mail(models.Model):
 
     @staticmethod
     def notify_users(id, response_date):
-        from mail.tasks.tasks import notify_users_of_rejected_mail
+        from mail.tasks.notify_users_of_rejected_mail import notify_users_of_rejected_mail
 
         notify_users_of_rejected_mail(str(id), response_date)
 
@@ -103,9 +103,9 @@ class UsageUpdate(models.Model):
 
     @staticmethod
     def send_usage_updates_to_lite(id):
-        from mail.tasks.send_licence_usage_figures_to_lite_api import send_licence_usage_figures_to_lite_api
+        from mail.tasks.send_licence_usage_figures_to_lite_api import schedule_licence_usage_figures_for_lite_api
 
-        send_licence_usage_figures_to_lite_api(str(id))
+        schedule_licence_usage_figures_for_lite_api(str(id))
 
 
 class LicencePayload(models.Model):

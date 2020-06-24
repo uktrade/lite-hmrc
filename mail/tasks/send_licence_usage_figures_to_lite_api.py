@@ -20,6 +20,17 @@ USAGE_FIGURES_QUEUE = "usage_figures_queue"
 TASK_BACK_OFF = 3600  # Time, in seconds, to wait before scheduling a new task (used after MAX_ATTEMPTS is reached)
 
 
+def schedule_licence_usage_figures_for_lite_api(lite_usage_update_id):
+    logging.info(f"Scheduling UsageUpdate '{lite_usage_update_id}' for LITE API")
+    task = Task.objects.filter(queue=USAGE_FIGURES_QUEUE, task_params=f'[["{lite_usage_update_id}"], {{}}]')
+
+    if task.exists():
+        logging.info(f"UsageUpdate '{lite_usage_update_id}' has already been scheduled")
+    else:
+        send_licence_usage_figures_to_lite_api(lite_usage_update_id)
+        logging.info(f"UsageUpdate '{lite_usage_update_id}' has been scheduled")
+
+
 @background(queue=USAGE_FIGURES_QUEUE, schedule=0)
 def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
     logging.info(f"Preparing LITE UsageUpdate [{lite_usage_update_id}] for LITE API")

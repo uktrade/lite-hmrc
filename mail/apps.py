@@ -12,7 +12,7 @@ class MailConfig(AppConfig):
         from background_task.models import Task
         from mail.models import UsageUpdate
         from mail.tasks.manage_inbox import MANAGE_INBOX_TASK_QUEUE, manage_inbox
-        from mail.tasks.send_licence_usage_figures_to_lite_api import send_licence_usage_figures_to_lite_api
+        from mail.tasks.send_licence_usage_figures_to_lite_api import schedule_licence_usage_figures_for_lite_api
         from mail.tasks.send_licence_updates_to_hmrc import (
             LICENCE_UPDATES_TASK_QUEUE,
             send_licence_updates_to_hmrc,
@@ -27,7 +27,7 @@ class MailConfig(AppConfig):
 
             usage_update_not_sent_to_lite = UsageUpdate.objects.filter(has_lite_data=True, lite_sent_at__isnull=True)
             for usage_update_not_sent_to_lite in usage_update_not_sent_to_lite:
-                send_licence_usage_figures_to_lite_api(str(usage_update_not_sent_to_lite.id))
+                schedule_licence_usage_figures_for_lite_api(str(usage_update_not_sent_to_lite.id))
 
     def ready(self):
         post_migrate.connect(self.initialize_background_tasks, sender=self)
