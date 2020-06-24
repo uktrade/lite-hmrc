@@ -35,6 +35,8 @@ class Mail(models.Model):
     currently_processing_at = models.DateTimeField(null=True)
     currently_processed_by = models.CharField(null=True, max_length=100)
 
+    retry = models.BooleanField(default=False)
+
     class Meta:
         db_table = "mail"
         ordering = ["created_at"]
@@ -87,6 +89,12 @@ class UsageUpdate(models.Model):
     has_lite_data = models.NullBooleanField(default=None)
     lite_payload = JSONField()
     lite_sent_at = models.DateTimeField(blank=True, null=True)  # When update was sent to LITE API
+    lite_accepted_licences = JSONField()
+    lite_rejected_licences = JSONField()
+    spire_accepted_licences = JSONField()
+    spire_rejected_licences = JSONField()
+    lite_licences = JSONField()
+    spire_licences = JSONField()
 
     def set_licence_ids(self, data: List):
         self.licence_ids = json.dumps(data)

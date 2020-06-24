@@ -148,12 +148,12 @@ def _check_and_raise_error(obj, error_msg: str):
 
 
 def flag_lite_payloads():
-    for uu in UsageUpdate.objects.filter(has_lite_data__isnull=True):
+    for usage_update in UsageUpdate.objects.filter(has_lite_data__isnull=True):
         has_lite_data = False
 
-        for licence in uu.get_licence_ids():
+        for licence in usage_update.get_licence_ids():
             if LicencePayload.objects.filter(reference=licence).exists():
                 has_lite_data = True
                 break
 
-        uu.has_lite_data(has_lite_data)
+        usage_update.has_lite_data(has_lite_data)
