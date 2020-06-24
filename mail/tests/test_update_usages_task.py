@@ -1,11 +1,13 @@
-import uuid
 from unittest import mock
 
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from conf.settings import LITE_API_URL, HAWK_LITE_HMRC_INTEGRATION_CREDENTIALS, LITE_API_REQUEST_TIMEOUT, MAX_ATTEMPTS
 from mail.models import Mail, UsageUpdate
-from mail.tasks import send_licence_usage_figures_to_lite_api, schedule_max_tried_task_as_new_task
+from mail.tasks.send_licence_usage_figures_to_lite_api import (
+    send_licence_usage_figures_to_lite_api,
+    schedule_max_tried_task_as_new_task,
+)
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
@@ -41,8 +43,8 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
             lite_payload={},
         )
 
-    @mock.patch("mail.tasks.put")
-    @mock.patch("mail.tasks.build_lite_payload")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.put")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.build_lite_payload")
     def test_schedule_usages_for_lite_api_200_ok(self, build_payload, put_request):
         original_sent_at = self.usage_update.lite_sent_at
         build_payload.return_value = None
@@ -61,8 +63,8 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertIsNotNone(self.usage_update.lite_sent_at)
         self.assertNotEqual(self.usage_update.lite_sent_at, original_sent_at)
 
-    @mock.patch("mail.tasks.put")
-    @mock.patch("mail.tasks.build_lite_payload")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.put")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.build_lite_payload")
     def test_schedule_usages_for_lite_api_400_bad_request(self, build_payload, put_request):
         build_payload.return_value = None
         put_request.return_value = MockResponse(status_code=HTTP_400_BAD_REQUEST)
@@ -80,10 +82,10 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.usage_update.refresh_from_db()
         self.assertIsNone(self.usage_update.lite_sent_at)
 
-    @mock.patch("mail.tasks.schedule_max_tried_task_as_new_task")
-    @mock.patch("mail.tasks.Task.objects.get")
-    @mock.patch("mail.tasks.put")
-    @mock.patch("mail.tasks.build_lite_payload")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.schedule_max_tried_task_as_new_task")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.Task.objects.get")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.put")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.build_lite_payload")
     def test_schedule_usages_for_lite_api_max_tried_task(self, build_payload, put_request, get_task, schedule_new_task):
         build_payload.return_value = None
         put_request.return_value = MockResponse(status_code=HTTP_400_BAD_REQUEST)
@@ -107,7 +109,7 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertIsNone(self.usage_update.lite_sent_at)
         self.assertIsNone(self.usage_update.lite_sent_at)
 
-    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.send_licence_usage_figures_to_lite_api")
     def test_schedule_new_task(self, send_licence_usage_figures):
         send_licence_usage_figures.return_value = None
 

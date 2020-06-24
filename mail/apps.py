@@ -10,21 +10,20 @@ class MailConfig(AppConfig):
     @classmethod
     def initialize_background_tasks(cls, **kwargs):
         from background_task.models import Task
-        from mail.tasks import (
-            MANAGE_INBOX_TASK_QUEUE,
-            LICENCE_UPDATES_TASK_QUEUE,
-            send_lite_licence_updates_to_hmrc,
-            manage_inbox_queue,
-            send_licence_usage_figures_to_lite_api,
-        )
         from mail.models import UsageUpdate
+        from mail.tasks.manage_inbox import MANAGE_INBOX_TASK_QUEUE, manage_inbox
+        from mail.tasks.send_licence_usage_figures_to_lite_api import send_licence_usage_figures_to_lite_api
+        from mail.tasks.send_licence_updates_to_hmrc import (
+            LICENCE_UPDATES_TASK_QUEUE,
+            send_licence_updates_to_hmrc,
+        )
 
         Task.objects.filter(queue=MANAGE_INBOX_TASK_QUEUE).delete()
         Task.objects.filter(queue=LICENCE_UPDATES_TASK_QUEUE).delete()
 
         if BACKGROUND_TASK_ENABLED:
-            manage_inbox_queue(repeat=INBOX_POLL_INTERVAL, repeat_until=None)  # noqa
-            send_lite_licence_updates_to_hmrc(repeat=LITE_LICENCE_UPDATE_POLL_INTERVAL, repeat_until=None)  # noqa
+            manage_inbox(repeat=INBOX_POLL_INTERVAL, repeat_until=None)  # noqa
+            send_licence_updates_to_hmrc(repeat=LITE_LICENCE_UPDATE_POLL_INTERVAL, repeat_until=None)  # noqa
 
             usage_update_not_sent_to_lite = UsageUpdate.objects.filter(has_lite_data=True, lite_sent_at__isnull=True)
             for usage_update_not_sent_to_lite in usage_update_not_sent_to_lite:
