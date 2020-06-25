@@ -1,6 +1,6 @@
 from unittest import mock
 
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED
 
 from conf.settings import LITE_API_URL, HAWK_LITE_HMRC_INTEGRATION_CREDENTIALS, LITE_API_REQUEST_TIMEOUT, MAX_ATTEMPTS
 from mail.models import Mail, UsageUpdate
@@ -45,10 +45,30 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
 
     @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.put")
     @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.build_lite_payload")
-    def test_schedule_usages_for_lite_api_200_ok(self, build_payload, put_request):
+    def test_schedule_usages_for_lite_api_207_ok(self, build_payload, put_request):
         original_sent_at = self.usage_update.lite_sent_at
         build_payload.return_value = None
-        put_request.return_value = MockResponse(status_code=HTTP_200_OK)
+        put_request.return_value = MockResponse(status_code=HTTP_207_MULTI_STATUS)
+
+        send_licence_usage_figures_to_lite_api.now(str(self.usage_update.id))
+
+        put_request.assert_called_with(
+            f"{LITE_API_URL}/licences/hmrc-integration/",
+            self.usage_update.lite_payload,
+            hawk_credentials=HAWK_LITE_HMRC_INTEGRATION_CREDENTIALS,
+            timeout=LITE_API_REQUEST_TIMEOUT,
+        )
+
+        self.usage_update.refresh_from_db()
+        self.assertIsNotNone(self.usage_update.lite_sent_at)
+        self.assertNotEqual(self.usage_update.lite_sent_at, original_sent_at)
+
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.put")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.build_lite_payload")
+    def test_schedule_usages_for_lite_api_208_ok(self, build_payload, put_request):
+        original_sent_at = self.usage_update.lite_sent_at
+        build_payload.return_value = None
+        put_request.return_value = MockResponse(status_code=HTTP_208_ALREADY_REPORTED)
 
         send_licence_usage_figures_to_lite_api.now(str(self.usage_update.id))
 

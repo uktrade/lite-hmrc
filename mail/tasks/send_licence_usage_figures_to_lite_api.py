@@ -4,7 +4,7 @@ from datetime import timedelta
 from background_task import background
 from background_task.models import Task
 from django.utils import timezone
-from rest_framework import status
+from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED
 
 from conf.settings import (
     LITE_API_URL,
@@ -60,7 +60,7 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
                 lite_usage_update_id,
             )
         else:
-            if response.status_code != status.HTTP_200_OK:
+            if response.status_code not in [HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED]:
                 _handle_exception(
                     f"An unexpected response was received when sending LITE UsageUpdate [{lite_usage_update_id}] to "
                     f"LITE API -> status=[{response.status_code}], message=[{response.text}]",
