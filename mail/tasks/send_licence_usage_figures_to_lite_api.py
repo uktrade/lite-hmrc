@@ -75,7 +75,7 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
 def build_lite_payload(lite_usage_update):
     _, data = split_edi_data_by_id(lite_usage_update.mail.edi_data)
     payload = build_json_payload_from_data_blocks(data)
-    payload["transaction_id"] = str(lite_usage_update.id)
+    payload["usage_update_id"] = str(lite_usage_update.id)
     lite_usage_update.lite_payload = payload
     lite_usage_update.save()
 
