@@ -1,6 +1,6 @@
 from mail.enums import SourceEnum
 from mail.libraries.helpers import get_good_id, get_licence_id
-from mail.models import LicencePayload
+from mail.models import LicenceIdMapping
 
 
 def split_edi_data_by_id(usage_data):
@@ -115,7 +115,7 @@ def build_json_payload_from_data_blocks(data_blocks: list):
 
 
 def id_owner(licence_reference):
-    if LicencePayload.objects.filter(reference=licence_reference):
+    if LicenceIdMapping.objects.filter(reference=licence_reference).exists():
         return SourceEnum.LITE
     else:
         return SourceEnum.SPIRE

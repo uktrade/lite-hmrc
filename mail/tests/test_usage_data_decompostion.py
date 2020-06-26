@@ -106,9 +106,32 @@ class FileDeconstruction(LiteHMRCTestClient):
         )
         self.expected_lite_json_payload = {
             "licences": [
-                {"id": "1234567890", "goods": [{"id": "good_id_1", "usage": "17", "value": "0", "currency": ""}]},
-                {"id": "0987654321", "goods": [{"id": None, "usage": "0", "value": "0", "currency": ""}]},
-                {"id": "1029384756", "goods": [{"id": "good_id_2", "usage": "1000000", "value": "0", "currency": ""}],},
+                {
+                    "id": uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                    "goods": [
+                        {
+                            "id": uuid.UUID("00000000-0000-0000-0000-000000000001"),
+                            "usage": "17",
+                            "value": "0",
+                            "currency": "",
+                        }
+                    ],
+                },
+                {
+                    "id": uuid.UUID("00000000-0000-0000-0000-000000000002"),
+                    "goods": [{"id": None, "usage": "0", "value": "0", "currency": ""}],
+                },
+                {
+                    "id": uuid.UUID("00000000-0000-0000-0000-000000000003"),
+                    "goods": [
+                        {
+                            "id": uuid.UUID("00000000-0000-0000-0000-000000000002"),
+                            "usage": "1000000",
+                            "value": "0",
+                            "currency": "",
+                        }
+                    ],
+                },
             ]
         }
         """
@@ -156,9 +179,15 @@ class FileDeconstruction(LiteHMRCTestClient):
 
     @tag("1022", "build-json-lite")
     def test_lite_json_payload_create(self):
-        LicencePayload.objects.create(reference="GBOGE2011/56789", lite_id="1234567890")
-        LicencePayload.objects.create(reference="GBOGE2017/98765", lite_id="0987654321")
-        LicencePayload.objects.create(reference="GBOGE2015/87654", lite_id="1029384756")
+        LicencePayload.objects.create(
+            reference="GBOGE2011/56789", lite_id=uuid.UUID("00000000-0000-0000-0000-000000000001")
+        )
+        LicencePayload.objects.create(
+            reference="GBOGE2017/98765", lite_id=uuid.UUID("00000000-0000-0000-0000-000000000002")
+        )
+        LicencePayload.objects.create(
+            reference="GBOGE2015/87654", lite_id=uuid.UUID("00000000-0000-0000-0000-000000000003")
+        )
         self.lite_data_expected[0] = [
             "licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\",
             "line\\2\\17\\0\\",
@@ -167,8 +196,16 @@ class FileDeconstruction(LiteHMRCTestClient):
             "licenceUsage\\LU04148/00007\\insert\\GBOGE2015/87654\\O\\",
             "line\\1\\1000000\\0\\",
         ]
-        GoodIdMapping.objects.create(licence_reference="GBOGE2011/56789", line_number=2, lite_id="good_id_1")
-        GoodIdMapping.objects.create(licence_reference="GBOGE2015/87654", line_number=1, lite_id="good_id_2")
+        GoodIdMapping.objects.create(
+            licence_reference="GBOGE2011/56789",
+            line_number=2,
+            lite_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
+        )
+        GoodIdMapping.objects.create(
+            licence_reference="GBOGE2015/87654",
+            line_number=1,
+            lite_id=uuid.UUID("00000000-0000-0000-0000-000000000002"),
+        )
         lite_payload = build_json_payload_from_data_blocks(self.lite_data_expected)
 
         self.assertEqual(lite_payload, self.expected_lite_json_payload)
@@ -176,7 +213,7 @@ class FileDeconstruction(LiteHMRCTestClient):
     @tag("de-mapping-goods")
     def test_de_mapping_goods(self):
         licence_reference = "GB2020/00001/SIE/P"
-        lite_good_id = "good_id_1"
+        lite_good_id = uuid.UUID("00000000-0000-0000-0000-000000000001")
         line_number = 1
         GoodIdMapping.objects.create(lite_id=lite_good_id, line_number=line_number, licence_reference=licence_reference)
 

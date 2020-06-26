@@ -19,7 +19,7 @@ from mail.libraries.helpers import (
     get_extract_type,
 )
 from mail.libraries.mailbox_service import find_mail_of
-from mail.models import LicenceUpdate, Mail, UsageUpdate, LicencePayload
+from mail.models import LicenceUpdate, Mail, UsageUpdate, LicencePayload, LicenceIdMapping
 from mail.serializers import (
     LicenceUpdateMailSerializer,
     UpdateResponseSerializer,
@@ -152,7 +152,7 @@ def flag_lite_payloads():
         has_lite_data = False
 
         for licence in usage_update.get_licence_ids():
-            if LicencePayload.objects.filter(reference=licence).exists():
+            if LicenceIdMapping.objects.filter(reference=licence).exists():
                 has_lite_data = True
                 break
 

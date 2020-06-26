@@ -13,7 +13,7 @@ from conf.settings import (
     MAX_ATTEMPTS,
 )
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
-from mail.models import UsageUpdate, LicencePayload
+from mail.models import UsageUpdate, LicencePayload, LicenceIdMapping
 from mail.requests import put
 
 USAGE_FIGURES_QUEUE = "usage_figures_queue"
@@ -42,49 +42,62 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
         _handle_exception(
             f"LITE UsageUpdate [{lite_usage_update_id}] does not exist.", lite_usage_update_id,
         )
-    else:
-        logging.info(f"Sending LITE UsageUpdate [{lite_usage_update_id}] figures for Licences [{licences}] to LITE API")
+        return
 
+    logging.info(f"Sending LITE UsageUpdate [{lite_usage_update_id}] figures for Licences [{licences}] to LITE API")
+
+    try:
+        build_lite_payload(lite_usage_update)
+        response = put(
+            f"{LITE_API_URL}/licences/hmrc-integration/",
+            lite_usage_update.lite_payload,
+            hawk_credentials=HAWK_LITE_HMRC_INTEGRATION_CREDENTIALS,
+            timeout=LITE_API_REQUEST_TIMEOUT,
+        )
+    except Exception as exc:  # noqa
+        _handle_exception(
+            f"An unexpected error occurred when sending LITE UsageUpdate [{lite_usage_update_id}] to LITE API -> "
+            f"{type(exc).__name__}: {exc}",
+            lite_usage_update_id,
+        )
+        return
+
+    if response.status_code not in [HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED]:
+        _handle_exception(
+            f"An unexpected response was received when sending LITE UsageUpdate [{lite_usage_update_id}] to "
+            f"LITE API -> status=[{response.status_code}], message=[{response.text}]",
+            lite_usage_update_id,
+        )
+        return
+
+    if response.status_code == HTTP_207_MULTI_STATUS:
         try:
-            build_lite_payload(lite_usage_update)
-            response = put(
-                f"{LITE_API_URL}/licences/hmrc-integration/",
-                lite_usage_update.lite_payload,
-                hawk_credentials=HAWK_LITE_HMRC_INTEGRATION_CREDENTIALS,
-                timeout=LITE_API_REQUEST_TIMEOUT,
-            )
+            accepted_licences, rejected_licences = parse_response(response)
         except Exception as exc:  # noqa
             _handle_exception(
-                f"An unexpected error occurred when sending LITE UsageUpdate [{lite_usage_update_id}] to LITE API -> "
-                f"{type(exc).__name__}: {exc}",
+                f"An unexpected error occurred when parsing the response for LITE UsageUpdate "
+                f"[{lite_usage_update_id}] -> {type(exc).__name__}: {exc}",
                 lite_usage_update_id,
             )
-        else:
-            if response.status_code not in [HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED]:
-                _handle_exception(
-                    f"An unexpected response was received when sending LITE UsageUpdate [{lite_usage_update_id}] to "
-                    f"LITE API -> status=[{response.status_code}], message=[{response.text}]",
-                    lite_usage_update_id,
-                )
+            return
+        save_response(lite_usage_update, accepted_licences, rejected_licences)
 
-            try:
-                accepted_licences, rejected_licences = parse_response(response)
-            except Exception as exc:  # noqa
-                _handle_exception(
-                    f"An unexpected error occurred when parsing the response for LITE UsageUpdate "
-                    f"[{lite_usage_update_id}] -> {type(exc).__name__}: {exc}",
-                    lite_usage_update_id,
-                )
-            else:
-                save_response(lite_usage_update, accepted_licences, rejected_licences)
-                logging.info(f"Successfully sent LITE UsageUpdate [{lite_usage_update_id}] to LITE API")
+    logging.info(f"Successfully sent LITE UsageUpdate [{lite_usage_update_id}] to LITE API")
 
 
 def parse_response(response) -> (list, list):
     licences = response.json()["licences"]
 
-    accepted_licences = [LicencePayload.objects.get(licence.get("id")) for licence in licences["accepted_licences"]]
-    rejected_licences = [LicencePayload.objects.get(licence.get("id")) for licence in licences["accepted_licences"]]
+    accepted_licences = [
+        LicenceIdMapping.objects.get(lite_id=licence.get("id")).reference
+        for licence in licences["accepted"]
+        if licence.get("id")
+    ]
+    rejected_licences = [
+        LicenceIdMapping.objects.get(lite_id=licence.get("id")).reference
+        for licence in licences["rejected"]
+        if licence.get("id")
+    ]
 
     return accepted_licences, rejected_licences
 

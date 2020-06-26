@@ -118,8 +118,7 @@ class UsageUpdate(models.Model):
 
 class LicencePayload(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    # Convenience field for cross-referencing LITE services
-    lite_id = models.CharField(null=False, blank=False, max_length=36)
+    lite_id = models.UUIDField(null=False, blank=False, unique=False)
     reference = models.CharField(null=False, blank=False, max_length=35)
     action = models.CharField(choices=LicenceActionEnum.choices, null=False, blank=False, max_length=6)
     data = JSONField()
@@ -129,15 +128,24 @@ class LicencePayload(models.Model):
     class Meta:
         unique_together = [["lite_id", "action"]]
 
+    def save(self, *args, **kwargs):
+        super(LicencePayload, self).save(*args, **kwargs)
+        LicenceIdMapping.objects.get_or_create(lite_id=self.lite_id, reference=self.reference)
+
+
+class LicenceIdMapping(models.Model):
+    lite_id = models.UUIDField(primary_key=True, null=False, blank=False)
+    reference = models.CharField(null=False, blank=False, max_length=35, unique=True)
+
 
 class OrganisationIdMapping(models.Model):
-    lite_id = models.CharField(unique=True, null=False, blank=False, max_length=36)
+    lite_id = models.UUIDField(null=False, blank=False)
     rpa_trader_id = models.AutoField(primary_key=True)
 
 
 class GoodIdMapping(models.Model):
-    lite_id = models.CharField(null=False, blank=False, max_length=36)
-    licence_reference = models.CharField(null=False, blank=False, max_length=35)
+    lite_id = models.UUIDField(primary_key=True, null=False, blank=False)
+    licence_reference = models.CharField(null=False, blank=False, max_length=35, unique=True)
     line_number = models.PositiveIntegerField()
 
     class Meta:

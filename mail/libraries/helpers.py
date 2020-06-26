@@ -9,7 +9,7 @@ from django.utils.encoding import smart_text
 from conf.settings import SPIRE_ADDRESS, HMRC_ADDRESS
 from mail.enums import SourceEnum, ExtractTypeEnum, UnitMapping, ReceptionStatusEnum
 from mail.libraries.email_message_dto import EmailMessageDto
-from mail.models import LicenceUpdate, UsageUpdate, Mail, GoodIdMapping, LicencePayload
+from mail.models import LicenceUpdate, UsageUpdate, Mail, GoodIdMapping, LicenceIdMapping
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream", "text/plain"]
 
@@ -234,14 +234,13 @@ def select_email_for_sending() -> Mail or None:
 
 def get_good_id(line_number, licence_reference):
     try:
-        lite_good_id = GoodIdMapping.objects.get(line_number=line_number, licence_reference=licence_reference).lite_id
-        return lite_good_id
+        return str(GoodIdMapping.objects.get(line_number=line_number, licence_reference=licence_reference).lite_id)
     except Exception as exc:  # noqa
         return
 
 
 def get_licence_id(licence_reference):
     try:
-        return LicencePayload.objects.get(reference=licence_reference).lite_id
+        return str(LicenceIdMapping.objects.get(reference=licence_reference).lite_id)
     except Exception as exc:  # noqa
         return
