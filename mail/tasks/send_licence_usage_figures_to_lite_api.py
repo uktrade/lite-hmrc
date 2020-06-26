@@ -13,7 +13,7 @@ from conf.settings import (
     MAX_ATTEMPTS,
 )
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
-from mail.models import UsageUpdate
+from mail.models import UsageUpdate, LicencePayload
 from mail.requests import put
 
 USAGE_FIGURES_QUEUE = "usage_figures_queue"
@@ -67,12 +67,36 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
                     lite_usage_update_id,
                 )
 
-            lite_usage_update.lite_sent_at = timezone.now()
-            lite_usage_update.save()
-            logging.info(f"Successfully sent LITE UsageUpdate [{lite_usage_update_id}] to LITE API")
+            try:
+                accepted_licences, rejected_licences = parse_response(response)
+            except Exception as exc:  # noqa
+                _handle_exception(
+                    f"An unexpected error occurred when parsing the response for LITE UsageUpdate "
+                    f"[{lite_usage_update_id}] -> {type(exc).__name__}: {exc}",
+                    lite_usage_update_id,
+                )
+            else:
+                save_response(lite_usage_update, accepted_licences, rejected_licences)
+                logging.info(f"Successfully sent LITE UsageUpdate [{lite_usage_update_id}] to LITE API")
 
 
-def build_lite_payload(lite_usage_update):
+def parse_response(response) -> (list, list):
+    licences = response.json()["licences"]
+
+    accepted_licences = [LicencePayload.objects.get(licence.get("id")) for licence in licences["accepted_licences"]]
+    rejected_licences = [LicencePayload.objects.get(licence.get("id")) for licence in licences["accepted_licences"]]
+
+    return accepted_licences, rejected_licences
+
+
+def save_response(lite_usage_update: UsageUpdate, accepted_licences, rejected_licences):
+    lite_usage_update.lite_accepted_licences = accepted_licences
+    lite_usage_update.lite_rejected_licences = rejected_licences
+    lite_usage_update.lite_sent_at = timezone.now()
+    lite_usage_update.save()
+
+
+def build_lite_payload(lite_usage_update: UsageUpdate):
     _, data = split_edi_data_by_id(lite_usage_update.mail.edi_data)
     payload = build_json_payload_from_data_blocks(data)
     payload["usage_update_id"] = str(lite_usage_update.id)
