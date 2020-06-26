@@ -159,13 +159,70 @@ class FileDeconstruction(LiteHMRCTestClient):
     @tag("1022", "splitting-file")
     def test_usage_data_split_according_to_licence_ids(self):
         usage_data = self.licence_usage_file_body.decode("utf-8")
-        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference="GBOGE2011/56789")
-        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference="GBOGE2017/98765")
-        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference="GBOGE2015/87654")
+        spire_data_expected = [
+            ["fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\"],
+            [
+                "licenceUsage\\LU04148/00001\\insert\\GBOIE2017/12345B\\O\\",
+                "line\\1\\0\\0\\",
+                "usage\\O\\9GB000001328000-PE112345\\R\\20190112\\0\\0\\\\000262\\\\\\\\",
+                "usage\\O\\9GB000001328000-PE112345\\L\\20190112\\0\\0\\\\000262\\\\\\\\",
+                "usage\\O\\9GB000001328000-PE112345\\K\\20190112\\0\\0\\\\000262\\\\\\\\",
+                "end\\line\\5",
+                "end\\licenceUsage\\7",
+            ],
+            [
+                "licenceUsage\\LU04148/00002\\insert\\GBOGE2014/23456\\O\\",
+                "line\\1\\0\\0\\",
+                "usage\\O\\9GB000003133000-445251012345\\Z\\20190112\\0\\0\\\\000962\\\\\\\\",
+                "end\\line\\3",
+                "end\\licenceUsage\\5",
+            ],
+            [
+                "licenceUsage\\LU04148/00003\\insert\\GBOGE2018/34567\\O\\",
+                "line\\1\\0\\0\\",
+                "usage\\O\\9GB000001328000-PE112345\\A\\20190112\\0\\0\\\\000442\\\\\\\\",
+                "end\\line\\3",
+                "end\\licenceUsage\\5",
+            ],
+            [
+                "licenceUsage\\LU04148/00004\\insert\\GBSIE2018/45678\\O\\",
+                "line\\1\\3\\0\\",
+                "usage\\O\\9GB00000133000-774170812345\\D\\20190112\\3\\0\\\\009606\\\\\\\\",
+                "end\\line\\3",
+                "end\\licenceUsage\\5",
+            ],
+            [
+                "licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\",
+                "line\\1\\0\\0\\",
+                "usage\\O\\9GB000004988000-4750437112345\\G\\20190111\\0\\0\\\\000104\\\\\\\\",
+                "usage\\O\\9GB000004988000-4750436912345\\Y\\20190111\\0\\0\\\\000104\\\\\\\\",
+                "end\\line\\4",
+                "end\\licenceUsage\\6",
+            ],
+            ["fileTrailer\\7"],
+        ]
+        lite_data_expected = [
+            [
+                "licenceUsage\\LU04148/00006\\insert\\GBSIEL/2020/0000001/P\\O\\",
+                "line\\1\\1\\0\\",
+                "usage\\O\\9GB000002816000-273993\\L\\20190109\\0\\0\\\\000316\\\\\\\\",
+                "end\\line\\3",
+                "end\\licenceUsage\\5",
+            ],
+            [
+                "licenceUsage\\LU04148/00007\\insert\\GBSIEL/2020/0000002/P\\O\\",
+                "line\\1\\1\\0\\",
+                "usage\\O\\9GB000003133000-784920212345\\E\\20190111\\0\\0\\\\000640\\\\\\\\",
+                "usage\\O\\9GB000003133000-784918012345\\D\\20190111\\0\\0\\\\000640\\\\\\\\",
+                "end\\line\\4",
+                "end\\licenceUsage\\6",
+            ],
+        ]
+        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference="GBSIEL/2020/0000002/P")
         spire_data, lite_data = split_edi_data_by_id(usage_data)
 
-        self.assertEqual(spire_data, self.spire_data_expected)
-        self.assertEqual(lite_data, self.lite_data_expected)
+        self.assertEqual(spire_data, spire_data_expected)
+        self.assertEqual(lite_data, lite_data_expected)
 
     @tag("1022", "rebuilding-file-spire")
     def test_spire_file_rebuild(self):

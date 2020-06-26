@@ -144,8 +144,8 @@ class OrganisationIdMapping(models.Model):
 
 
 class GoodIdMapping(models.Model):
-    lite_id = models.UUIDField(primary_key=True, null=False, blank=False)
-    licence_reference = models.CharField(null=False, blank=False, max_length=35, unique=True)
+    lite_id = models.UUIDField(primary_key=False, null=False, blank=False, unique=False)
+    licence_reference = models.CharField(null=False, blank=False, max_length=35, unique=False)
     line_number = models.PositiveIntegerField()
 
     class Meta:
