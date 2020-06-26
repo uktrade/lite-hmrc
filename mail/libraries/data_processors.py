@@ -19,7 +19,7 @@ from mail.libraries.helpers import (
     get_extract_type,
 )
 from mail.libraries.mailbox_service import find_mail_of
-from mail.models import LicenceUpdate, Mail, UsageUpdate, LicencePayload, LicenceIdMapping
+from mail.models import LicenceUpdate, Mail, UsageUpdate, LicenceIdMapping
 from mail.serializers import (
     LicenceUpdateMailSerializer,
     UpdateResponseSerializer,

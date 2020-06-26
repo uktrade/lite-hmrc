@@ -217,4 +217,4 @@ class FileDeconstruction(LiteHMRCTestClient):
         line_number = 1
         GoodIdMapping.objects.create(lite_id=lite_good_id, line_number=line_number, licence_reference=licence_reference)
 
-        self.assertEqual(get_good_id(line_number=line_number, licence_reference=licence_reference), lite_good_id)
+        self.assertEqual(get_good_id(line_number=line_number, licence_reference=licence_reference), str(lite_good_id))

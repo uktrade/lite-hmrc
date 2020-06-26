@@ -13,7 +13,7 @@ from conf.settings import (
     MAX_ATTEMPTS,
 )
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
-from mail.models import UsageUpdate, LicencePayload, LicenceIdMapping
+from mail.models import UsageUpdate, LicenceIdMapping
 from mail.requests import put
 
 USAGE_FIGURES_QUEUE = "usage_figures_queue"
