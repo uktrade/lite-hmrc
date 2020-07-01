@@ -1,5 +1,3 @@
-import base64
-
 from django.test import tag
 
 from conf.settings import HMRC_ADDRESS, SPIRE_ADDRESS, EMAIL_USER

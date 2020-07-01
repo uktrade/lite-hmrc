@@ -244,3 +244,12 @@ def get_licence_id(licence_reference):
         return str(LicenceIdMapping.objects.get(reference=licence_reference).lite_id)
     except Exception as exc:  # noqa
         return
+
+
+def get_previous_licence_reference(reference):
+    if ord(reference[-1]) == 97:
+        if len(reference) >= 2 and reference[-2] == "/":
+            return reference[0:-2]
+        return reference[0:-1]
+    else:
+        return reference[0:-1] + chr(ord(reference[-1]) - 1)
