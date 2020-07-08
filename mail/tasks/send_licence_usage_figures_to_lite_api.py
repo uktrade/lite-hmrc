@@ -110,7 +110,7 @@ def save_response(lite_usage_update: UsageUpdate, accepted_licences, rejected_li
 
 
 def build_lite_payload(lite_usage_update: UsageUpdate):
-    _, data = split_edi_data_by_id(lite_usage_update.mail.edi_data)
+    _, data = split_edi_data_by_id(lite_usage_update.mail.edi_data, lite_usage_update)
     payload = build_json_payload_from_data_blocks(data)
     payload["usage_update_id"] = str(lite_usage_update.id)
     lite_usage_update.lite_payload = payload
