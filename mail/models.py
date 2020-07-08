@@ -95,6 +95,7 @@ class UsageUpdate(models.Model):
     spire_rejected_licences = JSONField()
     lite_licences = JSONField()
     spire_licences = JSONField()
+    lite_response = JSONField()
 
     def set_licence_ids(self, data: List):
         self.licence_ids = json.dumps(data)
@@ -150,3 +151,10 @@ class GoodIdMapping(models.Model):
 
     class Meta:
         unique_together = [["lite_id", "licence_reference"]]
+
+
+class TransactionMapping(models.Model):
+    licence_reference = models.CharField(null=False, blank=False, max_length=35, unique=False)
+    line_number = models.PositiveIntegerField()
+    usage_transaction = models.CharField(null=False, blank=False, max_length=35)
+    usage_update = models.ForeignKey(UsageUpdate, on_delete=models.DO_NOTHING)
