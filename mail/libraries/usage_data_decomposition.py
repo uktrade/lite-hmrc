@@ -1,21 +1,32 @@
 from mail.enums import SourceEnum
 from mail.libraries.helpers import get_good_id, get_licence_id
-from mail.models import LicenceIdMapping
+from mail.models import LicenceIdMapping, TransactionMapping, UsageUpdate
 
 
-def split_edi_data_by_id(usage_data):
+def split_edi_data_by_id(usage_data, usage_update: UsageUpdate = None):
     lines = usage_data.split("\n")
     spire_blocks = []
     lite_blocks = []
     block = []
     licence_owner = None
+    licence_id = None
+    transaction_id = None
     for line in lines:
         if "licenceUsage" in line and "end" not in line:
             licence_id = line.split(r"\{}".format(""))[4]
             licence_owner = id_owner(licence_id)
+            transaction_id = line.split(r"\{}".format(""))[2]
 
+        line_number = line.split(r"\{}".format(""), 1)[0]
         data_line = line.split(r"\{}".format(""), 1)[1]
         block.append(data_line)
+        if usage_update and licence_owner == SourceEnum.LITE and "line" in data_line and "end" not in data_line:
+            TransactionMapping.objects.get_or_create(
+                line_number=line_number,
+                usage_update=usage_update,
+                licence_reference=licence_id,
+                usage_transaction=transaction_id,
+            )
 
         if "fileTrailer" in line:
             spire_blocks.append(block)
