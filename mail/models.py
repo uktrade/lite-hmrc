@@ -158,3 +158,6 @@ class TransactionMapping(models.Model):
     line_number = models.PositiveIntegerField()
     usage_transaction = models.CharField(null=False, blank=False, max_length=35)
     usage_update = models.ForeignKey(UsageUpdate, on_delete=models.DO_NOTHING)
+
+    class Meta:
+        unique_together = [["licence_reference", "line_number", "usage_update"]]

@@ -11,7 +11,7 @@ from mail.libraries.usage_data_decomposition import (
     build_json_payload_from_data_blocks,
     id_owner,
 )
-from mail.models import LicencePayload, GoodIdMapping
+from mail.models import LicencePayload, GoodIdMapping, UsageUpdate, Mail, TransactionMapping, LicenceIdMapping
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
@@ -260,3 +260,15 @@ class FileDeconstruction(LiteHMRCTestClient):
         GoodIdMapping.objects.create(lite_id=lite_good_id, line_number=line_number, licence_reference=licence_reference)
 
         self.assertEqual(get_good_id(line_number=line_number, licence_reference=licence_reference), lite_good_id)
+
+    @tag("create-transaction-mapping")
+    def test_create_transaction_mapping_for_lite_licences(self):
+        usage_data = self.licence_usage_file_body.decode("utf-8")
+        LicenceIdMapping.objects.create(
+            lite_id="00000000-0000-0000-0000-000000000001", reference="GBSIEL/2020/0000002/P"
+        )
+        spire_data, lite_data = split_edi_data_by_id(
+            usage_data, UsageUpdate.objects.create(mail=Mail.objects.create(), spire_run_number=1, hmrc_run_number=1)
+        )
+
+        self.assertEqual(TransactionMapping.objects.count(), 2)

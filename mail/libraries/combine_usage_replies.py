@@ -7,13 +7,8 @@ def combine_lite_and_spire_usage_responses(mail):
     spire_response = mail.response_data
     edi_lines = mail.edi_data.split("\n")
 
-    print(lite_response)
-    print(spire_response)
-
     spire_lines = spire_response.split("\n")
 
-    print(len(spire_lines))
-    print(spire_lines)
     i = 1
     edifact_file = ""
     for line in spire_lines:

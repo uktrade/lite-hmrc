@@ -20,6 +20,7 @@ def split_edi_data_by_id(usage_data, usage_update: UsageUpdate = None):
         line_number = line.split(r"\{}".format(""), 1)[0]
         data_line = line.split(r"\{}".format(""), 1)[1]
         block.append(data_line)
+
         if usage_update and licence_owner == SourceEnum.LITE and "line" in data_line and "end" not in data_line:
             TransactionMapping.objects.get_or_create(
                 line_number=line_number,
@@ -110,7 +111,6 @@ def build_json_payload_from_data_blocks(data_blocks: list):
 
             line_array = line.split("\\")
             if "line" == line_array[0]:
-                print(line_array)
 
                 good_payload["id"] = get_good_id(line_number=line_array[1], licence_reference=licence_reference)
                 good_payload["usage"] = line_array[2]
