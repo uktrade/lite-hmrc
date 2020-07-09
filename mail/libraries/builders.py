@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 
 from conf.settings import HMRC_ADDRESS, SPIRE_ADDRESS, EMAIL_USER
 from mail.enums import SourceEnum, ExtractTypeEnum
+from mail.libraries.combine_usage_replies import combine_lite_and_spire_usage_responses
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import convert_source_to_sender
 from mail.libraries.lite_to_edifact_converter import licences_to_edifact
@@ -83,6 +84,7 @@ def build_reply_mail_message_dto(mail) -> EmailMessageDto:
         run_number = usage_update.spire_run_number
         sender = SPIRE_ADDRESS
         receiver = HMRC_ADDRESS
+        mail.response_data = combine_lite_and_spire_usage_responses(mail)
 
     attachment = [
         build_sent_filename(mail.response_filename, run_number),
