@@ -61,7 +61,7 @@ class Mail(models.Model):
 
     @staticmethod
     def notify_users(id, response_date):
-        from mail.notify_users_of_rejected_mail import notify_users_of_rejected_mail
+        from mail.tasks import notify_users_of_rejected_mail
 
         notify_users_of_rejected_mail(str(id), response_date)
 
@@ -83,7 +83,7 @@ class LicenceUpdate(models.Model):
 class UsageUpdate(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     licence_ids = models.TextField()
-    mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING)
+    mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING, null=False)
     spire_run_number = models.IntegerField()
     hmrc_run_number = models.IntegerField()
     has_lite_data = models.NullBooleanField(default=None)
@@ -97,6 +97,9 @@ class UsageUpdate(models.Model):
     lite_licences = JSONField()
     spire_licences = JSONField()
     lite_response = JSONField()
+
+    class Meta:
+        ordering = ["mail__created_at"]
 
     def set_licence_ids(self, data: List):
         self.licence_ids = json.dumps(data)

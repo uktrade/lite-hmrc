@@ -204,6 +204,8 @@ def map_unit(data: dict, g: int) -> dict:
 
 
 def select_email_for_sending() -> Mail or None:
+    logging.info("Selecting email to send")
+
     reply_received = Mail.objects.filter(status=ReceptionStatusEnum.REPLY_RECEIVED).first()
     if reply_received:
         if reply_received.extract_type == ExtractTypeEnum.USAGE_UPDATE:

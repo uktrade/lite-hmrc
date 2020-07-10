@@ -36,11 +36,12 @@ def build_request_mail_message_dto(mail: Mail) -> EmailMessageDto:
         update = UsageUpdate.objects.get(mail=mail)
         run_number = update.spire_run_number
         spire_data, _ = split_edi_data_by_id(mail.edi_data)
-        file = build_edifact_file_from_data_blocks(spire_data)
-        attachment = [
-            build_sent_filename(mail.edi_filename, run_number),
-            build_sent_file_data(file, run_number),
-        ]
+        if len(spire_data) > 2:  # if SPIRE blocks contain more than just a header & footer
+            file = build_edifact_file_from_data_blocks(spire_data)
+            attachment = [
+                build_sent_filename(mail.edi_filename, run_number),
+                build_sent_file_data(file, run_number),
+            ]
 
     return EmailMessageDto(
         run_number=run_number,

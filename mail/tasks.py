@@ -41,19 +41,10 @@ TASK_BACK_OFF = 3600  # Time, in seconds, to wait before scheduling a new task (
 # Send Usage Figures to LITE API
 
 
-def schedule_licence_usage_figures_for_lite_api(lite_usage_update_id):
-    logging.info(f"Scheduling UsageUpdate '{lite_usage_update_id}' for LITE API")
-    task = Task.objects.filter(queue=USAGE_FIGURES_QUEUE, task_params=f'[["{lite_usage_update_id}"], {{}}]')
-
-    if task.exists():
-        logging.info(f"UsageUpdate '{lite_usage_update_id}' has already been scheduled")
-    else:
-        send_licence_usage_figures_to_lite_api(lite_usage_update_id)
-        logging.info(f"UsageUpdate '{lite_usage_update_id}' has been scheduled")
-
-
 @background(queue=USAGE_FIGURES_QUEUE, schedule=0)
 def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
+    """Sends HMRC Usage figure updates to LITE"""
+
     logging.info(f"Preparing LITE UsageUpdate [{lite_usage_update_id}] for LITE API")
 
     try:
@@ -106,6 +97,17 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
     logging.info(f"Successfully sent LITE UsageUpdate [{lite_usage_update_id}] to LITE API")
 
 
+def schedule_licence_usage_figures_for_lite_api(lite_usage_update_id):
+    logging.info(f"Scheduling UsageUpdate '{lite_usage_update_id}' for LITE API")
+    task = Task.objects.filter(queue=USAGE_FIGURES_QUEUE, task_params=f'[["{lite_usage_update_id}"], {{}}]')
+
+    if task.exists():
+        logging.info(f"UsageUpdate '{lite_usage_update_id}' has already been scheduled")
+    else:
+        send_licence_usage_figures_to_lite_api(lite_usage_update_id)
+        logging.info(f"UsageUpdate '{lite_usage_update_id}' has been scheduled")
+
+
 def parse_response(response) -> (list, list):
     response = response.json()
     licences = response["licences"]
@@ -129,6 +131,11 @@ def save_response(lite_usage_update: UsageUpdate, accepted_licences, rejected_li
     lite_usage_update.lite_rejected_licences = rejected_licences
     lite_usage_update.lite_sent_at = timezone.now()
     lite_usage_update.lite_response = response
+
+    if not lite_usage_update.has_spire_data:
+        lite_usage_update.mail.status = ReceptionStatusEnum.REPLY_RECEIVED
+        lite_usage_update.mail.save()
+
     lite_usage_update.save()
 
 
@@ -182,8 +189,12 @@ def _handle_exception(message, lite_usage_update_id):
 
 
 # Send Licence Updates to HMRC
+
+
 @background(queue=LICENCE_UPDATES_TASK_QUEUE, schedule=0)
 def send_licence_updates_to_hmrc():
+    """Sends LITE licence updates to HMRC"""
+
     logging.info("Sending LITE licence updates to HMRC")
 
     if not _is_email_slot_free():
@@ -245,6 +256,8 @@ def _get_rejected_mail() -> []:
 
 @background(queue=NOTIFY_USERS_TASK_QUEUE, schedule=0)
 def notify_users_of_rejected_mail(mail_id, mail_response_date):
+    """If a rejected email is found, this task notifies users of the rejection"""
+
     logging.info(f"Notifying users of rejected Mail [{mail_id}, {mail_response_date}]")
 
     try:
@@ -277,6 +290,8 @@ def notify_users_of_rejected_mail(mail_id, mail_response_date):
 
 @background(queue=MANAGE_INBOX_TASK_QUEUE, schedule=0)
 def manage_inbox():
+    """Main task which scans inbox for SPIRE and HMRC emails"""
+
     logging.info("Polling inbox for updates")
 
     # try:

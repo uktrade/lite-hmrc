@@ -20,18 +20,19 @@ from mail.servers import MailServer
 
 def check_and_route_emails():
     logging.info("Checking for emails")
-    dtos = _read_last_message()
-    if not dtos:
-        logging.info("Last email considered invalid")
-    for dto in dtos:
-        serialize_email_message(dto)
-    logging.info("Finished checking for emails")
-    mail = select_email_for_sending()  # Can return None in the event of in flight or no pending or no reply_received
-    try:
-        flag_lite_payloads()
-    except Exception as exc:  # noqa
-        logging.error(f"An unexpected error occurred -> {type(exc).__name__}: {exc}")
+    email_message_dtos = _get_email_message_dtos()
+    if not email_message_dtos:
+        logging.info("Emails considered invalid")
+        return
 
+    for email in email_message_dtos:
+        serialize_email_message(email)
+
+    logging.info("Finished checking for emails")
+
+    flag_lite_payloads()
+
+    mail = select_email_for_sending()  # Can return None in the event of in flight or no pending or no reply_received
     if mail:
         _collect_and_send(mail)
 
@@ -62,24 +63,32 @@ def send(email_message_dto: EmailMessageDto):
 def _collect_and_send(mail: Mail):
     from mail.tasks import send_licence_updates_to_hmrc
 
-    logging.info(f"Mail [{mail.id}] being sent")
+    logging.info(f"Sending Mail [{mail.id}]")
+
     message_to_send_dto = to_email_message_dto_from(mail)
     is_locked_by_me = lock_db_for_sending_transaction(mail)
+
     if not is_locked_by_me:
-        logging.info("Email being sent by another thread")
-    if message_to_send_dto.receiver != SourceEnum.LITE:
-        send(message_to_send_dto)
-    update_mail(mail, message_to_send_dto)
-    if message_to_send_dto.receiver == SPIRE_ADDRESS and mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
-        # Pick up any LITE licence updates once we send a licence update reply email to SPIRE
-        # so LITE does not get locked out of the queue by SPIRE
-        send_licence_updates_to_hmrc(schedule=0)  # noqa
-    logging.info(f"Email routed from [{message_to_send_dto.sender}] to [{message_to_send_dto.receiver}]")
+        logging.info(f"Mail [{mail.id}] is being sent by another thread")
+
+    if message_to_send_dto:
+        if message_to_send_dto.receiver != SourceEnum.LITE and message_to_send_dto.subject:
+            send(message_to_send_dto)
+            update_mail(mail, message_to_send_dto)
+
+            logging.info(
+                f"Mail [{mail.id}] routed from [{message_to_send_dto.sender}] to [{message_to_send_dto.receiver}]"
+            )
+
+        if message_to_send_dto.receiver == SPIRE_ADDRESS and mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
+            # Pick up any LITE licence updates once we send a licence update reply email to SPIRE
+            # so LITE does not get locked out of the queue by SPIRE
+            send_licence_updates_to_hmrc(schedule=0)  # noqa
 
 
-def _read_last_message() -> list:
+def _get_email_message_dtos() -> list:
     server = MailServer()
     pop3_connection = server.connect_to_pop3()
-    dtos = read_last_three_emails(pop3_connection)
+    emails = read_last_three_emails(pop3_connection)
     server.quit_pop3_connection()
-    return dtos
+    return emails

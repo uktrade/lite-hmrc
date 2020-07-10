@@ -109,7 +109,9 @@ def get_mail_instance(extract_type, run_number) -> Mail or None:
             return
         return find_mail_of(ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
-        if UsageUpdate.objects.filter(spire_run_number=run_number).last().mail.status in [
+        last_email = UsageUpdate.objects.filter(spire_run_number=run_number).last()
+
+        if last_email and last_email.mail.status in [
             ReceptionStatusEnum.REPLY_SENT,
             ReceptionStatusEnum.REPLY_RECEIVED,
         ]:
@@ -130,7 +132,7 @@ def to_email_message_dto_from(mail: Mail) -> EmailMessageDto:
     elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
         logging.debug(f"building reply mail [{mail.id}] message dto from [{mail.status}] mail status")
         return build_reply_mail_message_dto(mail)
-    raise ValueError(f"Unexpected mail [{mail.id}] with status [{mail.status}] while converting to EmailMessageDto")
+    logging.warning(f"Unexpected mail [{mail.id}] with status [{mail.status}] while converting to EmailMessageDto")
 
 
 def lock_db_for_sending_transaction(mail: Mail) -> bool:
@@ -157,6 +159,8 @@ def _check_and_raise_error(obj, error_msg: str):
 
 
 def flag_lite_payloads():
+    logging.info("Checking email for LITE and SPIRE data")
+
     for usage_update in UsageUpdate.objects.filter(has_lite_data__isnull=True):
         has_lite_data = False
         has_spire_data = False
