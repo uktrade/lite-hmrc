@@ -267,7 +267,7 @@ class FileDeconstruction(LiteHMRCTestClient):
         LicenceIdMapping.objects.create(
             lite_id="00000000-0000-0000-0000-000000000001", reference="GBSIEL/2020/0000002/P"
         )
-        spire_data, lite_data = split_edi_data_by_id(
+        split_edi_data_by_id(
             usage_data, UsageUpdate.objects.create(mail=Mail.objects.create(), spire_run_number=1, hmrc_run_number=1)
         )
 
