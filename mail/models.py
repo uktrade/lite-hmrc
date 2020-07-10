@@ -61,7 +61,7 @@ class Mail(models.Model):
 
     @staticmethod
     def notify_users(id, response_date):
-        from mail.tasks.notify_users_of_rejected_mail import notify_users_of_rejected_mail
+        from mail.notify_users_of_rejected_mail import notify_users_of_rejected_mail
 
         notify_users_of_rejected_mail(str(id), response_date)
 
@@ -87,6 +87,7 @@ class UsageUpdate(models.Model):
     spire_run_number = models.IntegerField()
     hmrc_run_number = models.IntegerField()
     has_lite_data = models.NullBooleanField(default=None)
+    has_spire_data = models.NullBooleanField(default=None)
     lite_payload = JSONField()
     lite_sent_at = models.DateTimeField(blank=True, null=True)  # When update was sent to LITE API
     lite_accepted_licences = JSONField()
@@ -103,8 +104,9 @@ class UsageUpdate(models.Model):
     def get_licence_ids(self):
         return json.loads(self.licence_ids)
 
-    def set_has_lite_data(self, value):
-        self.has_lite_data = value
+    def set_has_lite_and_spire_data(self, has_lite_data=False, has_spire_data=False):
+        self.has_lite_data = has_lite_data
+        self.has_spire_data = has_spire_data
         super(UsageUpdate, self).save()
 
         if self.has_lite_data:
@@ -112,7 +114,7 @@ class UsageUpdate(models.Model):
 
     @staticmethod
     def send_usage_updates_to_lite(id):
-        from mail.tasks.send_licence_usage_figures_to_lite_api import schedule_licence_usage_figures_for_lite_api
+        from mail.tasks import schedule_licence_usage_figures_for_lite_api
 
         schedule_licence_usage_figures_for_lite_api(str(id))
 

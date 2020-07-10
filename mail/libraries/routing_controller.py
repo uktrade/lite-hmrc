@@ -3,7 +3,7 @@ import logging
 from django.utils import timezone
 
 from conf.settings import SPIRE_ADDRESS
-from mail.enums import ReceptionStatusEnum, SourceEnum
+from mail.enums import ReceptionStatusEnum, SourceEnum, ExtractTypeEnum
 from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
     serialize_email_message,
@@ -60,7 +60,7 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
-    from mail.tasks.send_licence_updates_to_hmrc import send_licence_updates_to_hmrc
+    from mail.tasks import send_licence_updates_to_hmrc
 
     logging.info(f"Mail [{mail.id}] being sent")
     message_to_send_dto = to_email_message_dto_from(mail)
@@ -70,7 +70,7 @@ def _collect_and_send(mail: Mail):
     if message_to_send_dto.receiver != SourceEnum.LITE:
         send(message_to_send_dto)
     update_mail(mail, message_to_send_dto)
-    if message_to_send_dto.receiver == SPIRE_ADDRESS:
+    if message_to_send_dto.receiver == SPIRE_ADDRESS and mail.extract_type == ExtractTypeEnum.LICENCE_UPDATE:
         # Pick up any LITE licence updates once we send a licence update reply email to SPIRE
         # so LITE does not get locked out of the queue by SPIRE
         send_licence_updates_to_hmrc(schedule=0)  # noqa

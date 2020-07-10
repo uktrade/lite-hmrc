@@ -33,7 +33,7 @@ def combine_lite_and_spire_usage_responses(mail):
         for licence in lite_response.get("licences").get("rejected"):
             for good in licence.get("goods").get("rejected"):
                 licence_reference = LicenceIdMapping.objects.get(lite_id=licence["id"]).reference
-                print(good["id"], licence_reference)
+                # print(good["id"], licence_reference)
                 good_mapping = GoodIdMapping.objects.get(licence_reference=licence_reference, lite_id=good["id"])
                 transaction = TransactionMapping.objects.get(
                     licence_reference=licence_reference, line_number=good_mapping.line_number, usage_update=usage_update

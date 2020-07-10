@@ -4,7 +4,7 @@ from django.test import tag
 
 from mail.enums import ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
-from mail.tasks.send_licence_updates_to_hmrc import send_licence_updates_to_hmrc
+from mail.send_licence_updates_to_hmrc import send_licence_updates_to_hmrc
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 

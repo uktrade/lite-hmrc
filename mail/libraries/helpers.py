@@ -206,21 +206,18 @@ def map_unit(data: dict, g: int) -> dict:
 def select_email_for_sending() -> Mail or None:
     reply_received = Mail.objects.filter(status=ReceptionStatusEnum.REPLY_RECEIVED).first()
     if reply_received:
-        if (
-            reply_received.extract_type == ExtractTypeEnum.USAGE_REPLY
-            and UsageUpdate.objects.get(mail=reply_received).has_lite_data
-            and not UsageUpdate.objects.get(mail=reply_received).lite_sent_at
-        ):
-            return
+        if reply_received.extract_type == ExtractTypeEnum.USAGE_UPDATE:
+            usage_update = UsageUpdate.objects.get(mail=reply_received)
+            if usage_update.has_lite_data and not usage_update.lite_sent_at:
+                return
         return reply_received
 
     reply_pending = Mail.objects.filter(status=ReceptionStatusEnum.REPLY_PENDING).first()
     if reply_pending:
-        if (
-            reply_pending.extract_type == ExtractTypeEnum.USAGE_UPDATE
-            and not UsageUpdate.objects.get(mail=reply_received).has_spire_data
-        ):
-            return reply_pending
+        if reply_pending.extract_type == ExtractTypeEnum.USAGE_UPDATE:
+            usage_update = UsageUpdate.objects.get(mail=reply_pending)
+            if not usage_update.has_spire_data:
+                return reply_pending
         logging.info("Email currently in flight")
         return
 

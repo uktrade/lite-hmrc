@@ -6,7 +6,7 @@ from django.utils import timezone
 from mail.enums import LicenceActionEnum
 from mail.libraries.lite_to_edifact_converter import licences_to_edifact, get_transaction_reference
 from mail.models import LicencePayload, Mail, OrganisationIdMapping, GoodIdMapping
-from mail.tasks.send_licence_updates_to_hmrc import send_licence_updates_to_hmrc
+from mail.send_licence_updates_to_hmrc import send_licence_updates_to_hmrc
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 

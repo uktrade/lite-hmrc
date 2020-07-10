@@ -4,10 +4,7 @@ from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_207_MULTI_STATUS, H
 
 from conf.settings import LITE_API_URL, HAWK_LITE_HMRC_INTEGRATION_CREDENTIALS, LITE_API_REQUEST_TIMEOUT, MAX_ATTEMPTS
 from mail.models import Mail, UsageUpdate, LicencePayload
-from mail.tasks.send_licence_usage_figures_to_lite_api import (
-    send_licence_usage_figures_to_lite_api,
-    schedule_max_tried_task_as_new_task,
-)
+from mail.tasks import send_licence_usage_figures_to_lite_api, schedule_max_tried_task_as_new_task
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 

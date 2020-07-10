@@ -101,12 +101,18 @@ def get_mail_instance(extract_type, run_number) -> Mail or None:
     if extract_type == ExtractTypeEnum.LICENCE_REPLY:
         last_email = LicenceUpdate.objects.filter(hmrc_run_number=run_number).last()
 
-        if last_email and last_email.mail.status == ReceptionStatusEnum.REPLY_SENT:
+        if last_email and last_email.mail.status in [
+            ReceptionStatusEnum.REPLY_SENT,
+            ReceptionStatusEnum.REPLY_RECEIVED,
+        ]:
             logging.info("Licence update reply has already been processed")
             return
         return find_mail_of(ExtractTypeEnum.LICENCE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
     elif extract_type == ExtractTypeEnum.USAGE_REPLY:
-        if UsageUpdate.objects.filter(spire_run_number=run_number).last().mail.status == ReceptionStatusEnum.REPLY_SENT:
+        if UsageUpdate.objects.filter(spire_run_number=run_number).last().mail.status in [
+            ReceptionStatusEnum.REPLY_SENT,
+            ReceptionStatusEnum.REPLY_RECEIVED,
+        ]:
             logging.info("Usage update reply has already been processed")
             return
         return find_mail_of(ExtractTypeEnum.USAGE_UPDATE, ReceptionStatusEnum.REPLY_PENDING)
@@ -114,14 +120,17 @@ def get_mail_instance(extract_type, run_number) -> Mail or None:
 
 def to_email_message_dto_from(mail: Mail) -> EmailMessageDto:
     _check_and_raise_error(mail, "Invalid mail object received!")
-    logging.debug(f"converting mail with status [{mail.status}] extract_type [{mail.extract_type}] to EmailMessageDto")
+    logging.debug(
+        f"converting mail [{mail.id}] with status [{mail.status}] extract_type [{mail.extract_type}] "
+        f"to EmailMessageDto"
+    )
     if mail.status == ReceptionStatusEnum.PENDING:
-        logging.debug(f"building request mail message dto from [{mail.status}] mail status")
+        logging.debug(f"building request mail [{mail.id}] message dto from [{mail.status}] mail status")
         return build_request_mail_message_dto(mail)
     elif mail.status == ReceptionStatusEnum.REPLY_RECEIVED:
-        logging.debug(f"building reply mail message dto from [{mail.status}] mail status")
+        logging.debug(f"building reply mail [{mail.id}] message dto from [{mail.status}] mail status")
         return build_reply_mail_message_dto(mail)
-    raise ValueError(f"Unexpected mail with status [{mail.status}] while converting to EmailMessageDto")
+    raise ValueError(f"Unexpected mail [{mail.id}] with status [{mail.status}] while converting to EmailMessageDto")
 
 
 def lock_db_for_sending_transaction(mail: Mail) -> bool:
@@ -150,10 +159,12 @@ def _check_and_raise_error(obj, error_msg: str):
 def flag_lite_payloads():
     for usage_update in UsageUpdate.objects.filter(has_lite_data__isnull=True):
         has_lite_data = False
+        has_spire_data = False
 
         for licence in usage_update.get_licence_ids():
             if LicenceIdMapping.objects.filter(reference=licence).exists():
                 has_lite_data = True
-                break
+            else:
+                has_spire_data = True
 
-        usage_update.has_lite_data(has_lite_data)
+        usage_update.set_has_lite_and_spire_data(has_lite_data, has_spire_data)

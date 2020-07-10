@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 
-from conf.settings import INBOX_POLL_INTERVAL, LITE_LICENCE_UPDATE_POLL_INTERVAL, BACKGROUND_TASK_ENABLED
+from conf.settings import BACKGROUND_TASK_ENABLED, INBOX_POLL_INTERVAL, LITE_LICENCE_UPDATE_POLL_INTERVAL
 
 
 class MailConfig(AppConfig):
@@ -11,10 +11,11 @@ class MailConfig(AppConfig):
     def initialize_background_tasks(cls, **kwargs):
         from background_task.models import Task
         from mail.models import UsageUpdate
-        from mail.tasks.manage_inbox import MANAGE_INBOX_TASK_QUEUE, manage_inbox
-        from mail.tasks.send_licence_usage_figures_to_lite_api import schedule_licence_usage_figures_for_lite_api
-        from mail.tasks.send_licence_updates_to_hmrc import (
+        from mail.tasks import (
+            MANAGE_INBOX_TASK_QUEUE,
             LICENCE_UPDATES_TASK_QUEUE,
+            schedule_licence_usage_figures_for_lite_api,
+            manage_inbox,
             send_licence_updates_to_hmrc,
         )
 

@@ -16,8 +16,7 @@ from conf.settings import (
 )
 from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
 from mail.models import Mail
-from mail.tasks.send_licence_updates_to_hmrc import LICENCE_UPDATES_TASK_QUEUE
-from mail.tasks.manage_inbox import MANAGE_INBOX_TASK_QUEUE
+from mail.tasks import LICENCE_UPDATES_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
 
 
 class HealthCheck(APIView):
