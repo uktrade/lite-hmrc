@@ -17,11 +17,11 @@ def split_edi_data_by_id(usage_data, usage_update: UsageUpdate = None):
             licence_owner = id_owner(licence_id)
             transaction_id = line.split(r"\{}".format(""))[2]
 
-        line_number = line.split(r"\{}".format(""), 1)[0]
         data_line = line.split(r"\{}".format(""), 1)[1]
         block.append(data_line)
 
         if usage_update and licence_owner == SourceEnum.LITE and "line" in data_line and "end" not in data_line:
+            line_number = int(data_line.split("\\")[1])
             TransactionMapping.objects.get_or_create(
                 line_number=line_number,
                 usage_update=usage_update,
