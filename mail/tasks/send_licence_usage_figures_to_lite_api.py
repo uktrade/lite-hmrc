@@ -62,6 +62,9 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
         )
         return
 
+    lite_usage_update.lite_response = response
+    lite_usage_update.save()
+
     if response.status_code not in [HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED]:
         _handle_exception(
             f"An unexpected response was received when sending LITE UsageUpdate [{lite_usage_update_id}] to "
