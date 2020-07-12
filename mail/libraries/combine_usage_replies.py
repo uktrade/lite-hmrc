@@ -21,9 +21,10 @@ def combine_lite_and_spire_usage_responses(mail):
             edifact_file += line + "\n"
             i += 1
     else:
-        mail.response_filename = "{}"
         now = timezone.now()
         time_stamp = "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
+        mail.response_filename = "SPIRE_live_CHIEF_usageReply_<run_number>_{}".format(time_stamp)
+        mail.save()
         edifact_file = "1\\fileHeader\\SPIRE\\CHIEF\\usageReply\\{}\\<run_number>".format(time_stamp)
 
     if lite_response:
