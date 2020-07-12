@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from mail.models import UsageUpdate, LicenceIdMapping, GoodIdMapping, TransactionMapping
 
 
@@ -6,16 +8,23 @@ def combine_lite_and_spire_usage_responses(mail):
     lite_response = usage_update.lite_response
     spire_response = mail.response_data
     edi_lines = mail.edi_data.split("\n")
-    i = 1
+
     edifact_file = ""
+    i = 1
 
     if spire_response:
         spire_lines = spire_response.split("\n")
+
         for line in spire_lines:
             if "fileTrailer" in line:
                 break
             edifact_file += line + "\n"
             i += 1
+    else:
+        mail.response_filename = "{}"
+        now = timezone.now()
+        time_stamp = "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
+        edifact_file = "1\\fileHeader\\SPIRE\\CHIEF\\usageReply\\{}\\<run_number>".format(time_stamp)
 
     if lite_response:
         if lite_response.get("licences").get("accepted"):
