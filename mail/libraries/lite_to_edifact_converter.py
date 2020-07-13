@@ -131,7 +131,6 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
 
 def get_transaction_reference(licence_reference: str):
     if licence_reference[-1] in string.ascii_lowercase:
-        print(licence_reference)
         split = licence_reference.rsplit("/", 1)
         return split[0][2:-1].replace("/", "") + split[1]
     return licence_reference[2:-1].replace("/", "")
