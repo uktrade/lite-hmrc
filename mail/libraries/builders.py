@@ -82,7 +82,7 @@ def build_reply_mail_message_dto(mail) -> EmailMessageDto:
         receiver = convert_source_to_sender(licence_update.source)
     elif mail.extract_type == ExtractTypeEnum.USAGE_UPDATE:
         usage_update = UsageUpdate.objects.get(mail=mail)
-        run_number = usage_update.spire_run_number
+        run_number = usage_update.hmrc_run_number
         sender = SPIRE_ADDRESS
         receiver = HMRC_ADDRESS
         mail.response_data = combine_lite_and_spire_usage_responses(mail)
