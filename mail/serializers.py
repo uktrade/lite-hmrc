@@ -78,10 +78,10 @@ class UsageUpdateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data["licence_ids"] = json.loads(validated_data["licence_ids"])
 
-        for licence in validated_data["licence_ids"]:
-            has_lite_data = False
-            has_spire_data = False
+        has_lite_data = False
+        has_spire_data = False
 
+        for licence in validated_data["licence_ids"]:
             if LicenceIdMapping.objects.filter(reference=licence).exists():
                 has_lite_data = True
             else:
@@ -92,7 +92,7 @@ class UsageUpdateSerializer(serializers.ModelSerializer):
 
         instance, created = UsageUpdate.objects.get_or_create(**validated_data)
 
-        if created:
+        if created and instance.has_lite_data:
             instance.send_usage_updates_to_lite(instance.id)
 
         return instance
