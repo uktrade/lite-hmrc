@@ -9,7 +9,6 @@ from mail.libraries.data_processors import (
     serialize_email_message,
     to_email_message_dto_from,
     lock_db_for_sending_transaction,
-    flag_lite_payloads,
 )
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import select_email_for_sending
@@ -29,8 +28,6 @@ def check_and_route_emails():
         serialize_email_message(email)
 
     logging.info("Finished checking for emails")
-
-    flag_lite_payloads()
 
     mail = select_email_for_sending()  # Can return None in the event of in flight or no pending or no reply_received
     if mail:

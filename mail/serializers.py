@@ -1,8 +1,9 @@
+import json
 import logging
 
 from rest_framework import serializers
 
-from mail.models import Mail, LicenceUpdate, UsageUpdate
+from mail.models import Mail, LicenceUpdate, UsageUpdate, LicenceIdMapping
 
 
 class LicenceUpdateSerializer(serializers.ModelSerializer):
@@ -75,7 +76,25 @@ class UsageUpdateSerializer(serializers.ModelSerializer):
         fields = ("licence_ids", "mail", "spire_run_number", "hmrc_run_number")
 
     def create(self, validated_data):
-        instance, _ = UsageUpdate.objects.get_or_create(**validated_data)
+        validated_data["licence_ids"] = json.loads(validated_data["licence_ids"])
+
+        for licence in validated_data["licence_ids"]:
+            has_lite_data = False
+            has_spire_data = False
+
+            if LicenceIdMapping.objects.filter(reference=licence).exists():
+                has_lite_data = True
+            else:
+                has_spire_data = True
+
+            validated_data["has_lite_data"] = has_lite_data
+            validated_data["has_spire_data"] = has_spire_data
+
+        instance, created = UsageUpdate.objects.get_or_create(**validated_data)
+
+        if created:
+            instance.send_usage_updates_to_lite(instance.id)
+
         return instance
 
 
@@ -95,15 +114,16 @@ class UsageUpdateMailSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         usage_update_data = validated_data.pop("usage_update")
-        mail, _ = Mail.objects.get_or_create(**validated_data)
+        mail, created = Mail.objects.get_or_create(**validated_data)
 
         usage_update_data["mail"] = mail.id
 
-        usage_update_serializer = UsageUpdateSerializer(data=usage_update_data)
-        if usage_update_serializer.is_valid():
-            usage_update_serializer.save()
-        else:
-            raise serializers.ValidationError(usage_update_serializer.errors)
+        if created:
+            usage_update_serializer = UsageUpdateSerializer(data=usage_update_data)
+            if usage_update_serializer.is_valid():
+                usage_update_serializer.save()
+            else:
+                raise serializers.ValidationError(usage_update_serializer.errors)
 
         return mail
 

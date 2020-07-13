@@ -156,19 +156,3 @@ def lock_db_for_sending_transaction(mail: Mail) -> bool:
 def _check_and_raise_error(obj, error_msg: str):
     if obj is None:
         raise ValueError(error_msg)
-
-
-def flag_lite_payloads():
-    logging.info("Checking email for LITE and SPIRE data")
-
-    for usage_update in UsageUpdate.objects.filter(has_lite_data__isnull=True):
-        has_lite_data = False
-        has_spire_data = False
-
-        for licence in usage_update.get_licence_ids():
-            if LicenceIdMapping.objects.filter(reference=licence).exists():
-                has_lite_data = True
-            else:
-                has_spire_data = True
-
-        usage_update.set_has_lite_and_spire_data(has_lite_data, has_spire_data)

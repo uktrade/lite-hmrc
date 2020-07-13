@@ -82,7 +82,7 @@ class LicenceUpdate(models.Model):
 
 class UsageUpdate(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    licence_ids = models.TextField()
+    licence_ids = JSONField()
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING, null=False)
     spire_run_number = models.IntegerField()
     hmrc_run_number = models.IntegerField()
@@ -106,14 +106,6 @@ class UsageUpdate(models.Model):
 
     def get_licence_ids(self):
         return json.loads(self.licence_ids)
-
-    def set_has_lite_and_spire_data(self, has_lite_data=False, has_spire_data=False):
-        self.has_lite_data = has_lite_data
-        self.has_spire_data = has_spire_data
-        super(UsageUpdate, self).save()
-
-        if self.has_lite_data and not self.lite_response:
-            self.send_usage_updates_to_lite(self.id)
 
     @staticmethod
     def send_usage_updates_to_lite(id):
