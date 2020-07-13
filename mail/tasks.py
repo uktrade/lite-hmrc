@@ -294,7 +294,7 @@ def manage_inbox():
 
     logging.info("Polling inbox for updates")
 
-    # try:
-    check_and_route_emails()
-    # except Exception as exc:  # noqa
-    #     logging.error(f"An unexpected error occurred when polling inbox for updates -> {type(exc).__name__}: {exc}")
+    try:
+        check_and_route_emails()
+    except Exception as exc:  # noqa
+        logging.error(f"An unexpected error occurred when polling inbox for updates -> {type(exc).__name__}: {exc}")

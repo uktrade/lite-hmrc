@@ -112,7 +112,7 @@ class UsageUpdate(models.Model):
         self.has_spire_data = has_spire_data
         super(UsageUpdate, self).save()
 
-        if self.has_lite_data:
+        if self.has_lite_data and not self.lite_response:
             self.send_usage_updates_to_lite(self.id)
 
     @staticmethod
