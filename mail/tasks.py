@@ -49,7 +49,7 @@ def send_licence_usage_figures_to_lite_api(lite_usage_update_id):
 
     try:
         lite_usage_update = UsageUpdate.objects.get(id=lite_usage_update_id)
-        licences = lite_usage_update.get_licence_ids()
+        licences = UsageUpdate.licence_ids
     except UsageUpdate.DoesNotExist:  # noqa
         _handle_exception(
             f"LITE UsageUpdate [{lite_usage_update_id}] does not exist.", lite_usage_update_id,

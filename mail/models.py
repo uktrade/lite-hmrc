@@ -101,9 +101,6 @@ class UsageUpdate(models.Model):
     class Meta:
         ordering = ["mail__created_at"]
 
-    def set_licence_ids(self, data: List):
-        self.licence_ids = json.dumps(data)
-
     def get_licence_ids(self):
         return json.loads(self.licence_ids)
 
