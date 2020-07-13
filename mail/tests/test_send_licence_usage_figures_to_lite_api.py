@@ -61,7 +61,7 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
             spire_run_number=0,
         )
 
-    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.put")
+    @mock.patch("mail.tasks.put")
     def test_schedule_usages_for_lite_api_207_ok(self, put_request):
         put_request.return_value = MockResponse(
             json={
@@ -108,7 +108,7 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertEqual(self.usage_update.lite_accepted_licences, ["GBSIEL/2020/0000008/P"])
         self.assertEqual(self.usage_update.lite_rejected_licences, ["GBSIEL/2020/0000009/P"])
 
-    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.put")
+    @mock.patch("mail.tasks.put")
     def test_schedule_usages_for_lite_api_208_ok(self, put_request):
         original_sent_at = self.usage_update.lite_sent_at
         original_accepted_licences = self.usage_update.lite_accepted_licences
@@ -129,7 +129,7 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertEqual(self.usage_update.lite_accepted_licences, original_accepted_licences)
         self.assertEqual(self.usage_update.lite_rejected_licences, original_rejected_licences)
 
-    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.put")
+    @mock.patch("mail.tasks.put")
     def test_schedule_usages_for_lite_api_400_bad_request(self, put_request):
         put_request.return_value = MockResponse(status_code=HTTP_400_BAD_REQUEST)
 
@@ -146,9 +146,9 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.usage_update.refresh_from_db()
         self.assertIsNone(self.usage_update.lite_sent_at)
 
-    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.schedule_max_tried_task_as_new_task")
-    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.Task.objects.get")
-    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.put")
+    @mock.patch("mail.tasks.schedule_max_tried_task_as_new_task")
+    @mock.patch("mail.tasks.Task.objects.get")
+    @mock.patch("mail.tasks.put")
     def test_schedule_usages_for_lite_api_max_tried_task(self, put_request, get_task, schedule_new_task):
         put_request.return_value = MockResponse(status_code=HTTP_400_BAD_REQUEST)
         get_task.return_value = MockTask(MAX_ATTEMPTS - 1)
@@ -168,7 +168,7 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.usage_update.refresh_from_db()
         self.assertIsNone(self.usage_update.lite_sent_at)
 
-    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api.send_licence_usage_figures_to_lite_api")
+    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api")
     def test_schedule_new_task(self, send_licence_usage_figures):
         send_licence_usage_figures.return_value = None
 

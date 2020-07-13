@@ -76,7 +76,7 @@ class EmailSelectTests(LiteHMRCTestClient):
     @tag("select-email")
     def test_do_not_select_usage_reply_if_lite_response_not_received(self):
         mail_1 = Mail.objects.create(
-            status=ReceptionStatusEnum.REPLY_RECEIVED, extract_type=ExtractTypeEnum.USAGE_REPLY
+            status=ReceptionStatusEnum.REPLY_RECEIVED, extract_type=ExtractTypeEnum.USAGE_UPDATE
         )
         UsageUpdate.objects.create(mail=mail_1, spire_run_number=1, hmrc_run_number=1, has_lite_data=True)
 
@@ -87,7 +87,7 @@ class EmailSelectTests(LiteHMRCTestClient):
     @tag("select-email")
     def test_email_selected_if_no_lite_data(self):
         mail_1 = Mail.objects.create(
-            status=ReceptionStatusEnum.REPLY_RECEIVED, extract_type=ExtractTypeEnum.USAGE_REPLY
+            status=ReceptionStatusEnum.REPLY_RECEIVED, extract_type=ExtractTypeEnum.USAGE_UPDATE
         )
         UsageUpdate.objects.create(mail=mail_1, spire_run_number=1, hmrc_run_number=1, has_lite_data=False)
 
@@ -98,7 +98,7 @@ class EmailSelectTests(LiteHMRCTestClient):
     @tag("select-email")
     def test_email_selected_if_no_spire_data(self):
         mail_1 = Mail.objects.create(
-            status=ReceptionStatusEnum.REPLY_RECEIVED, extract_type=ExtractTypeEnum.USAGE_REPLY
+            status=ReceptionStatusEnum.REPLY_RECEIVED, extract_type=ExtractTypeEnum.USAGE_UPDATE
         )
         UsageUpdate.objects.create(
             mail=mail_1,

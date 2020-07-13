@@ -10,7 +10,7 @@ from mail.libraries.mailbox_service import read_last_message
 from mail.libraries.routing_controller import _collect_and_send
 from mail.models import Mail, LicenceUpdate, LicencePayload
 from mail.servers import MailServer
-from mail.send_licence_updates_to_hmrc import send_licence_updates_to_hmrc
+from mail.tasks import send_licence_updates_to_hmrc
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 

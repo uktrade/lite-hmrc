@@ -3,7 +3,7 @@ from django.utils import timezone
 from mail.models import UsageUpdate, LicenceIdMapping, GoodIdMapping, TransactionMapping
 
 
-def combine_lite_and_spire_usage_responses(mail):
+def combine_lite_and_spire_usage_responses(mail):  # noqa
     usage_update = UsageUpdate.objects.get(mail=mail)
     lite_response = usage_update.lite_response
     spire_response = mail.response_data
@@ -72,7 +72,6 @@ def combine_lite_and_spire_usage_responses(mail):
                             if line.split("\\")[2] == str(transaction.line_number):
                                 error_line = str(j)
 
-                    "5\\error\\76543\\Invalid commodity in line 8\n"
                     edifact_file += "{}\\error\\{}\\{}\n".format(i, i, error_text + error_line)
                     i += 1
                     edifact_file += "{}\\end\\rejected\\{}\n".format(i, i - start_line)
@@ -82,8 +81,8 @@ def combine_lite_and_spire_usage_responses(mail):
     file_trailer = "{}\\fileTrailer\\{}\\{}\\{}".format(
         i,
         edifact_file.count("accepted"),
-        int(edifact_file.count("rejected") / 2),
-        int(edifact_file.count("fileError") / 2),
+        int(edifact_file.count("rejected") // 2),
+        int(edifact_file.count("fileError") // 2),
     )
     edifact_file += file_trailer
     return edifact_file
