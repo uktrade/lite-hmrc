@@ -126,6 +126,7 @@ class LicencePayload(models.Model):
 
     class Meta:
         unique_together = [["lite_id", "action"]]
+        ordering = ["received_at"]
 
     def save(self, *args, **kwargs):
         super(LicencePayload, self).save(*args, **kwargs)

@@ -12,7 +12,7 @@ from mail.serializers import (
     ForiegnTraderSerializer,
     GoodSerializer,
 )
-from mail.tasks import manage_inbox
+from mail.tasks import manage_inbox, send_licence_updates_to_hmrc
 from rest_framework.status import HTTP_200_OK
 
 
@@ -33,8 +33,8 @@ class UpdateLicence(APIView):
             else:
                 if licence.get("action") == LicenceActionEnum.UPDATE:
                     licence["old_reference"] = LicenceIdMapping.objects.get(lite_id=licence["old_id"]).reference
-                elif licence.get("old_id"):
-                    licence.pop("old_id")
+                else:
+                    licence.pop("old_id", None)
 
             if licence.get("type") in LicenceTypeEnum.OPEN_LICENCES:
                 countries = licence.get("countries")
@@ -87,5 +87,12 @@ class UpdateLicence(APIView):
 class ManageInbox(APIView):
     def get(self, request):
         manage_inbox.now()
+
+        return HttpResponse(status=HTTP_200_OK)
+
+
+class SendLicenceUpdatesToHmrc(APIView):
+    def get(self, request):
+        send_licence_updates_to_hmrc.now()
 
         return HttpResponse(status=HTTP_200_OK)
