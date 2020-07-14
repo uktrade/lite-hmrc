@@ -120,6 +120,10 @@ class LicencePayload(models.Model):
     received_at = models.DateTimeField(default=timezone.now)
     is_processed = models.BooleanField(default=False)
 
+    # For updates only
+    old_lite_id = models.UUIDField(null=True, blank=False, unique=False)
+    old_reference = models.CharField(null=True, blank=False, max_length=35)
+
     class Meta:
         unique_together = [["lite_id", "action"]]
 

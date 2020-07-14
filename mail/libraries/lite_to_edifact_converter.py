@@ -18,7 +18,7 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
         start_line = i
         i += 1
         if licence.action == LicenceActionEnum.UPDATE:
-            old_reference = get_previous_licence_reference(licence_payload.get("reference"))
+            old_reference = licence.old_reference
             old_payload = LicencePayload.objects.get(reference=old_reference).data
             edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
                 i,
@@ -36,9 +36,9 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
             i += 1
             edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
                 i,
-                get_transaction_reference(licence_payload.get("reference")),  # transaction_reference
+                get_transaction_reference(licence.reference),  # transaction_reference
                 "insert",
-                licence_payload.get("reference"),
+                licence.reference,
                 licence_payload.get("type"),
                 "E",
                 licence_payload.get("start_date").replace("-", ""),
@@ -47,9 +47,9 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
         else:
             edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
                 i,
-                get_transaction_reference(licence_payload.get("reference")),  # transaction_reference
+                get_transaction_reference(licence.reference),  # transaction_reference
                 licence.action,
-                licence_payload.get("reference"),
+                licence.reference,
                 licence_payload.get("type"),
                 "E",
                 licence_payload.get("start_date").replace("-", ""),

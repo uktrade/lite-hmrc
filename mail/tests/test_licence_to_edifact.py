@@ -78,6 +78,8 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
             data=payload["licence"],
             action=LicenceActionEnum.UPDATE,
             lite_id="00000000-0000-0000-0000-9792333e8cc8",
+            old_lite_id=lp.lite_id,
+            old_reference=lp.reference,
         )
         licences = LicencePayload.objects.filter(is_processed=False)
         result = licences_to_edifact(licences, 1234)
