@@ -1,10 +1,7 @@
-import string
-
 from django.db.models import QuerySet
 from django.utils import timezone
 
 from mail.enums import UnitMapping, LicenceActionEnum
-from mail.libraries.helpers import get_previous_licence_reference
 from mail.models import OrganisationIdMapping, GoodIdMapping, LicencePayload
 
 
@@ -130,4 +127,5 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
 
 
 def get_transaction_reference(licence_reference: str):
-    return licence_reference[2:-1].replace("/", "")
+    licence_reference = licence_reference.split("/", 1)[1]
+    return licence_reference.replace("/", "")

@@ -90,7 +90,7 @@ class HelpersTests(LiteHMRCTestClient):
     def test_get_previous_licence_reference(self, current, old):
         self.assertEqual(get_previous_licence_reference(current), old)
 
-    @parameterized.expand([("GB00001/P", "00001P"), ("GB001/P/A", "001PA"), ("GB0/01/P/a", "001Pa")])
+    @parameterized.expand([("GB/00001/P", "00001P"), ("GB/001/P/A", "001PA"), ("GB/0/01/P/a", "001Pa")])
     @tag("1917", "transaction-ref")
     def test_transaction_reference_for_licence_update(self, reference, transaction_reference):
         self.assertEqual(get_transaction_reference(reference), transaction_reference)
