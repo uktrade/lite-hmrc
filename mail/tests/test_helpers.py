@@ -96,9 +96,7 @@ class HelpersTests(LiteHMRCTestClient):
     def test_transaction_reference_for_licence_update(self, reference, transaction_reference):
         self.assertEqual(get_transaction_reference(reference), transaction_reference)
 
-    @parameterized.expand(
-        [("O", "open"), ("E", "exhaust"), ("D", "date_expired"), ("S", "surrendered"), ("C", "cancelled")]
-    )
+    @parameterized.expand([("O", "open"), ("E", "exhaust"), ("D", "expire"), ("S", "surrender"), ("C", "cancel")])
     @tag("1917", "action-ref")
     def test_action_reference_for_usage(self, reference, action):
         self.assertEqual(get_action(reference), action)

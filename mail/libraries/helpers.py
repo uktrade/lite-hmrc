@@ -260,8 +260,8 @@ def get_action(reference):
     elif reference == "E":
         return "exhaust"
     elif reference == "S":
-        return "surrendered"
+        return "surrender"
     elif reference == "D":
-        return "date_expired"
+        return "expire"
     elif reference == "C":
-        return "cancelled"
+        return "cancel"
