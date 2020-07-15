@@ -108,16 +108,22 @@ class FileDeconstruction(LiteHMRCTestClient):
             "licences": [
                 {
                     "id": "00000000-0000-0000-0000-000000000001",
+                    "action": "open",
+                    "completion_date": "",
                     "goods": [
                         {"id": "00000000-0000-0000-0000-000000000001", "usage": "17", "value": "0", "currency": "",}
                     ],
                 },
                 {
                     "id": "00000000-0000-0000-0000-000000000002",
+                    "action": "open",
+                    "completion_date": "",
                     "goods": [{"id": None, "usage": "0", "value": "0", "currency": ""}],
                 },
                 {
                     "id": "00000000-0000-0000-0000-000000000003",
+                    "action": "open",
+                    "completion_date": "",
                     "goods": [
                         {
                             "id": "00000000-0000-0000-0000-000000000002",

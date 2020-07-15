@@ -1,5 +1,5 @@
 from mail.enums import SourceEnum
-from mail.libraries.helpers import get_good_id, get_licence_id
+from mail.libraries.helpers import get_good_id, get_licence_id, get_action
 from mail.models import LicenceIdMapping, TransactionMapping, UsageUpdate
 
 
@@ -94,6 +94,8 @@ def build_json_payload_from_data_blocks(data_blocks: list):
     for block in data_blocks:
         licence_payload = {
             "id": "",
+            "action": "",
+            "completion_date": "",
             "goods": [],
         }
 
@@ -105,11 +107,15 @@ def build_json_payload_from_data_blocks(data_blocks: list):
                 "currency": "",
             }
 
+            line_array = line.split("\\")
             if "licenceUsage" in line and "end" not in line:
-                licence_reference = line.split("\\")[3]
+                licence_reference = line_array[3]
+                action = line_array[4]
+                licence_payload["action"] = get_action(action)
+                if not action == "O" and len(line_array) >= 6:
+                    licence_payload["completion_date"] = line_array[5]
                 licence_payload["id"] = get_licence_id(licence_reference)
 
-            line_array = line.split("\\")
             if "line" == line_array[0]:
 
                 good_payload["id"] = get_good_id(line_number=line_array[1], licence_reference=licence_reference)

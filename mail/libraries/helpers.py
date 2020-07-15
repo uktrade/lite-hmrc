@@ -252,3 +252,16 @@ def get_previous_licence_reference(reference):
         return reference[0:-1]
     else:
         return reference[0:-1] + chr(ord(reference[-1]) - 1)
+
+
+def get_action(reference):
+    if reference == "O":
+        return "open"
+    elif reference == "E":
+        return "exhaust"
+    elif reference == "S":
+        return "surrendered"
+    elif reference == "D":
+        return "date_expired"
+    elif reference == "C":
+        return "cancelled"
