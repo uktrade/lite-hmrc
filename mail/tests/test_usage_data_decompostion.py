@@ -156,11 +156,17 @@ class FileDeconstruction(LiteHMRCTestClient):
     def test_determine_spire_licence_id_and_lite_licence_ids(self):
         spire_id_1 = "GBSIE2018/45678"
         spire_id_2 = "GBOIE2017/12345B"
-        lite_id = "GBOGE2011/56789"
-        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference=lite_id)
+        lite_id_1 = "GBOGE2011/56789"
+        lite_id_2 = "GBOIEL/2020/0000092/P"
+        lite_id_3 = "GBSIEL/2020/0000107/P/A"
+        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference=lite_id_1)
+        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference=lite_id_2)
+        LicencePayload.objects.create(lite_id=uuid.uuid4(), reference=lite_id_3)
         self.assertEqual(id_owner(spire_id_1), SourceEnum.SPIRE)
         self.assertEqual(id_owner(spire_id_2), SourceEnum.SPIRE)
-        self.assertEqual(id_owner(lite_id), SourceEnum.LITE)
+        self.assertEqual(id_owner(lite_id_1), SourceEnum.LITE)
+        self.assertEqual(id_owner(lite_id_2), SourceEnum.LITE)
+        self.assertEqual(id_owner(lite_id_3), SourceEnum.LITE)
 
     @tag("1022", "splitting-file")
     def test_usage_data_split_according_to_licence_ids(self):
