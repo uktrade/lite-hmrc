@@ -17,7 +17,7 @@ def split_edi_data_by_id(usage_data, usage_update: UsageUpdate = None):
             licence_owner = id_owner(licence_id)
             transaction_id = line.split("\\")[2]
 
-        data_line = line.split(r"\{}".format(""), 1)[1]
+        data_line = line.split("\\", 1)[1]
         block.append(data_line)
 
         if usage_update:
@@ -31,7 +31,8 @@ def split_edi_data_by_id(usage_data, usage_update: UsageUpdate = None):
                 )
 
             if (
-                not TransactionMapping.objects.filter(usage_transaction=transaction_id).exists()
+                licence_owner == SourceEnum.LITE
+                and not TransactionMapping.objects.filter(usage_transaction=transaction_id).exists()
                 and "end\\licenceUsage" in line
             ):
                 TransactionMapping.objects.get_or_create(
@@ -102,6 +103,7 @@ def build_edifact_file_from_data_blocks(data_blocks: list):
 
 def build_json_payload_from_data_blocks(data_blocks: list):
     payload = []
+    licence_reference = None
 
     for block in data_blocks:
         licence_payload = {

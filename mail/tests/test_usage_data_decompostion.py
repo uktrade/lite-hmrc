@@ -264,6 +264,27 @@ class FileDeconstruction(LiteHMRCTestClient):
 
         self.assertEqual(lite_payload, self.expected_lite_json_payload)
 
+    @tag("no-good-mapping")
+    def test_lite_json_payload_create_open_licence(self):
+        LicencePayload.objects.create(reference="GBOGE2011/56789", lite_id="00000000-0000-0000-0000-000000000001")
+        lite_data = [["licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\", "line\\1\\17\\0\\",]]
+        lite_payload = build_json_payload_from_data_blocks(lite_data)
+
+        expected_lite_json_payload = {
+            "licences": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000001",
+                    "action": "open",
+                    "completion_date": "",
+                    "goods": [{"id": None, "usage": "17", "value": "0", "currency": "",}],
+                }
+            ]
+        }
+
+        print(lite_payload)
+
+        self.assertEqual(lite_payload, expected_lite_json_payload)
+
     @tag("de-mapping-goods")
     def test_de_mapping_goods(self):
         licence_reference = "GB2020/00001/SIE/P"
@@ -282,5 +303,8 @@ class FileDeconstruction(LiteHMRCTestClient):
         split_edi_data_by_id(
             usage_data, UsageUpdate.objects.create(mail=Mail.objects.create(), spire_run_number=1, hmrc_run_number=1)
         )
+
+        for t in TransactionMapping.objects.all():
+            print(t.__dict__)
 
         self.assertEqual(TransactionMapping.objects.count(), 2)
