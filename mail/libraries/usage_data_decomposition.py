@@ -13,9 +13,9 @@ def split_edi_data_by_id(usage_data, usage_update: UsageUpdate = None):
     transaction_id = None
     for line in lines:
         if "licenceUsage" in line and "end" not in line:
-            licence_id = line.split(r"\{}".format(""))[4]
+            licence_id = line.split("\\")[4]
             licence_owner = id_owner(licence_id)
-            transaction_id = line.split(r"\{}".format(""))[2]
+            transaction_id = line.split("\\")[2]
 
         data_line = line.split(r"\{}".format(""), 1)[1]
         block.append(data_line)
