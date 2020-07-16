@@ -154,7 +154,7 @@ class GoodIdMapping(models.Model):
 
 class TransactionMapping(models.Model):
     licence_reference = models.CharField(null=False, blank=False, max_length=35, unique=False)
-    line_number = models.PositiveIntegerField()
+    line_number = models.PositiveIntegerField(null=True, blank=True)
     usage_transaction = models.CharField(null=False, blank=False, max_length=35)
     usage_update = models.ForeignKey(UsageUpdate, on_delete=models.DO_NOTHING)
 
