@@ -36,7 +36,7 @@ class UpdateLicence(APIView):
                 else:
                     licence.pop("old_id", None)
 
-            if licence.get("type") in LicenceTypeEnum.OPEN_LICENCES:
+            if licence.get("type") in LicenceTypeEnum.OPEN_LICENCES + LicenceTypeEnum.OPEN_GENERAL_LICENCES:
                 countries = licence.get("countries")
                 if not countries:
                     errors.append({"countries": "This field is required."})
