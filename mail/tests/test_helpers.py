@@ -12,6 +12,7 @@ from mail.libraries.helpers import (
     get_run_number,
     map_unit,
     get_action,
+    process_attachment,
 )
 from mail.libraries.lite_to_edifact_converter import get_transaction_reference
 from mail.models import LicenceUpdate, Mail
@@ -39,8 +40,7 @@ class HelpersTests(LiteHMRCTestClient):
         [[["name", b"data"], "name", "data"], [[], "", ""], [["something"], "", ""], ["something", "", ""],]
     )
     def test_process_attachment(self, attachment, attachment_name, attachment_data):
-
-        pass
+        self.assertEqual((attachment_name, attachment_data), process_attachment(attachment))
 
     def test_get_run_number_from_subject(self):
         subject = "ILBDOTI_live_CHIEF_usageData_9876_201901130300"
