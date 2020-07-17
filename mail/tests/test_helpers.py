@@ -39,7 +39,7 @@ class HelpersTests(LiteHMRCTestClient):
         [[["name", b"data"], "name", "data"], [[], "", ""], [["something"], "", ""], ["something", "", ""],]
     )
     def test_process_attachment(self, attachment, attachment_name, attachment_data):
-        # todo
+
         pass
 
     def test_get_run_number_from_subject(self):
@@ -47,14 +47,12 @@ class HelpersTests(LiteHMRCTestClient):
         run_number = get_run_number(subject)
         self.assertEqual(run_number, 9876)
 
-    # TODO - Value errors
     def value_error_thrown_cannot_find_run_number(self):
         subject = "usageData_9876_201901130300"
         with self.assertRaises(ValueError) as context:
             get_run_number(subject)
         self.assertEqual("Can not find valid run-number", str(context.exception))
 
-    # TODO - Value errors
     def value_error_thrown_run_number_wrong_format(self):
         subject = "abc_xyz_nnn_yyy_a1b34_datetime"
         with self.assertRaises(ValueError) as context:
