@@ -7,7 +7,6 @@ from django.utils import timezone
 from conf import settings
 from mail.enums import LicenceActionEnum
 from mail.libraries.helpers import read_file
-from mail.libraries.helpers import to_smart_text
 from mail.models import LicencePayload
 from mail.tests.libraries import colours
 

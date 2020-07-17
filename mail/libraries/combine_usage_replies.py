@@ -3,7 +3,7 @@ from django.utils import timezone
 from mail.models import UsageUpdate, LicenceIdMapping, GoodIdMapping, TransactionMapping
 
 
-def combine_lite_and_spire_usage_responses(mail):  # noqa
+def combine_lite_and_spire_usage_responses(mail) -> str:  # noqa
     usage_update = UsageUpdate.objects.get(mail=mail)
     lite_response = usage_update.lite_response
     spire_response = mail.response_data

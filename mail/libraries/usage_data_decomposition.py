@@ -3,7 +3,7 @@ from mail.libraries.helpers import get_good_id, get_licence_id, get_action
 from mail.models import LicenceIdMapping, TransactionMapping, UsageUpdate
 
 
-def split_edi_data_by_id(usage_data, usage_update: UsageUpdate = None):
+def split_edi_data_by_id(usage_data, usage_update: UsageUpdate = None) -> (list, list):
     lines = usage_data.split("\n")
     spire_blocks = []
     lite_blocks = []
@@ -59,7 +59,7 @@ def split_edi_data_by_id(usage_data, usage_update: UsageUpdate = None):
     return spire_blocks, lite_blocks
 
 
-def build_edifact_file_from_data_blocks(data_blocks: list):
+def build_edifact_file_from_data_blocks(data_blocks: list) -> str:
     spire_file = ""
     i = 1
     for block in data_blocks:
@@ -71,37 +71,7 @@ def build_edifact_file_from_data_blocks(data_blocks: list):
     return spire_file
 
 
-# Keys for good payload (usage line)
-# """
-# [line number (some int)] = -1 <- inaccessible
-# [line start (always usage)] = 0
-# [usage_type] = 1
-# [declaration-ucr] = 2
-# [declaration-part-number] = 3
-# [control-date] = 4
-# [quantity-used] = 5
-# [value-used] = 6
-# [trader-id / TURN] = 7
-# [claim-ref] = 8
-# [origin-country (not used for exports)] = 9
-# [customs-mic] = 10
-# [customs-message] = 11
-# [consignee-name] = 12
-# """
-# Sample block
-# """
-# [
-#     "licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\",
-#     "line\\1\\0\\0\\",
-#     "usage\\O\\9GB000004988000-4750437112345\\G\\20190111\\0\\0\\\\000104\\\\\\\\",
-#     "usage\\O\\9GB000004988000-4750436912345\\Y\\20190111\\0\\0\\\\000104\\\\\\\\",
-#     "end\\line\\4",
-#     "end\\licenceUsage\\6",
-# ]
-# """
-
-
-def build_json_payload_from_data_blocks(data_blocks: list):
+def build_json_payload_from_data_blocks(data_blocks: list) -> dict:
     payload = []
     licence_reference = None
 
@@ -145,7 +115,7 @@ def build_json_payload_from_data_blocks(data_blocks: list):
     return {"licences": payload}
 
 
-def id_owner(licence_reference):
+def id_owner(licence_reference) -> str:
     if LicenceIdMapping.objects.filter(reference=licence_reference).exists():
         return SourceEnum.LITE
     else:

@@ -11,7 +11,6 @@ from mail.libraries.helpers import (
     new_hmrc_run_number,
     get_run_number,
     map_unit,
-    get_previous_licence_reference,
     get_action,
 )
 from mail.libraries.lite_to_edifact_converter import get_transaction_reference
@@ -85,11 +84,6 @@ class HelpersTests(LiteHMRCTestClient):
     def test_mapping(self, lite_input, output):
         data = {"goods": [{"unit": lite_input}]}
         self.assertEqual(output, map_unit(data, 0)["goods"][0]["unit"])
-
-    @parameterized.expand([("a", ""), ("b", "a"), ("GBSIE/a", "GBSIE"), ("GBSIE/b", "GBSIE/a")])
-    @tag("1917", "old-ref")
-    def test_get_previous_licence_reference(self, current, old):
-        self.assertEqual(get_previous_licence_reference(current), old)
 
     @parameterized.expand([("GB/00001/P", "00001P"), ("GB/001/P/A", "001PA"), ("GB/0/01/P/a", "001Pa")])
     @tag("1917", "transaction-ref")

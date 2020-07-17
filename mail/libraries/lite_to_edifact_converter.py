@@ -126,6 +126,6 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
     return edifact_file
 
 
-def get_transaction_reference(licence_reference: str):
+def get_transaction_reference(licence_reference: str) -> str:
     licence_reference = licence_reference.split("/", 1)[1]
     return licence_reference.replace("/", "")

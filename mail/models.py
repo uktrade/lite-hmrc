@@ -73,6 +73,9 @@ class LicenceUpdate(models.Model):
     source = models.CharField(choices=SourceEnum.choices, max_length=10)
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING)
 
+    class Meta:
+        ordering = ["mail__created_at"]
+
     def set_licence_ids(self, data: List):
         self.licence_ids = json.dumps(data)
 
