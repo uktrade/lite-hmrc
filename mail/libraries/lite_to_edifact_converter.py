@@ -2,6 +2,7 @@ from django.db.models import QuerySet
 from django.utils import timezone
 
 from mail.enums import UnitMapping, LicenceActionEnum, LicenceTypeEnum
+from mail.libraries.helpers import get_country_id
 from mail.models import OrganisationIdMapping, GoodIdMapping, LicencePayload
 
 
