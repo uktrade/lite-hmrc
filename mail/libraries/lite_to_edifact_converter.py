@@ -75,14 +75,12 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
             )
             if licence_payload.get("country_group"):
                 i += 1
-                edifact_file += "\n{}\\country\\\\{}\\{}".format(
-                    i, licence_payload.get("country_group"), licence_payload.get("use")
-                )
+                edifact_file += "\n{}\\country\\\\{}\\{}".format(i, licence_payload.get("country_group"), "D")
             elif licence_payload.get("countries"):
                 for country in licence_payload.get("countries"):
                     get_country_id(country)
                     i += 1
-                    edifact_file += "\n{}\\country\\{}\\\\{}".format(i, country, licence_payload.get("use"))
+                    edifact_file += "\n{}\\country\\{}\\\\{}".format(i, country, "D")
             if licence_payload.get("end_user"):
                 trader = licence_payload.get("end_user")
                 i += 1
