@@ -79,6 +79,7 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
                 )
             elif licence_payload.get("countries"):
                 for country in licence_payload.get("countries"):
+                    get_country_id(country)
                     i += 1
                     edifact_file += "\n{}\\country\\{}\\\\{}".format(i, country, licence_payload.get("use"))
             if licence_payload.get("end_user"):
