@@ -73,6 +73,7 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
                 trader.get("address").get("line_5", ""),
                 trader.get("address").get("postcode"),
             )
+            # Uses "D" for licence use because lite only sends allowed countries, to use E would require changes on the API
             if licence_payload.get("country_group"):
                 i += 1
                 edifact_file += "\n{}\\country\\\\{}\\{}".format(i, licence_payload.get("country_group"), "D")
