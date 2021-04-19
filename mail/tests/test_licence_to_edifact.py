@@ -122,10 +122,10 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
         self.single_siel_licence_payload.save()
 
         licences = LicencePayload.objects.filter(is_processed=False)
-
-        result = licences_to_edifact(licences, 1234)
-
         now = timezone.now()
+
+        result = licences_to_edifact(licences, 1234, now)
+
         expected = (
             "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\"
             + "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)

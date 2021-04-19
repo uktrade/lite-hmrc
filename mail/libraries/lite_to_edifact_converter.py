@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 
 from django.db.models import QuerySet
@@ -5,6 +6,7 @@ from django.utils import timezone
 
 from mail.enums import UnitMapping, LicenceActionEnum, LicenceTypeEnum, LITE_HMRC_LICENCE_TYPE_MAPPING
 from mail.libraries.helpers import get_country_id
+from mail.libraries import edifact_records as records
 from mail.models import OrganisationIdMapping, GoodIdMapping, LicencePayload
 from mail.libraries.edifact_validator import validate_edifact_file
 
@@ -13,11 +15,10 @@ class EdifactValidationError(Exception):
     pass
 
 
-def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
-    now = timezone.now()
+def licences_to_edifact(licences: QuerySet, run_number: int, now=timezone.now()) -> str:
     time_stamp = "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
 
-    edifact_file = "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\{}\\{}\\Y".format(time_stamp, run_number)
+    edifact_file = str(records.FileHeader("licenceData", run_number, time_stamp))
 
     line_no = 1
     for licence in licences:
@@ -43,27 +44,11 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
             edifact_file += "\n{}\\end\\licence\\{}".format(line_no, line_no - start_line)
             start_line = line_no
             line_no += 1
-            edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
-                line_no,
-                get_transaction_reference(licence.reference),  # transaction_reference
-                "insert",
-                licence.reference,
-                licence_type,
-                "E",  # Export use
-                licence_payload.get("start_date").replace("-", ""),
-                licence_payload.get("end_date").replace("-", ""),
-            )
+
+            edifact_file += str(records.LicenceTransactionHeader(line_no, licence, "insert"))
         else:
-            edifact_file += "\n{}\\licence\\{}\\{}\\{}\\{}\\{}\\{}\\{}".format(
-                line_no,
-                get_transaction_reference(licence.reference),  # transaction_reference
-                licence.action,
-                licence.reference,
-                licence_type,
-                "E",
-                licence_payload.get("start_date").replace("-", ""),
-                licence_payload.get("end_date").replace("-", ""),
-            )
+            edifact_file += str(records.LicenceTransactionHeader(line_no, licence, licence.action))
+
         if licence.action != LicenceActionEnum.CANCEL:
             trader = licence_payload.get("organisation")
             org_mapping, _ = OrganisationIdMapping.objects.get_or_create(

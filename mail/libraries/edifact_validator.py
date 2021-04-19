@@ -230,7 +230,7 @@ def validate_edifact_file(file_data):
         elif record_type == "fileTrailer":
             line_errors = validate_file_trailer(line)
         else:
-            line_errors.append(f"Invalid record type {record_type}")
+            line_errors.append(f"Invalid record type ({record_type})")
 
         errors.extend(line_errors)
 
