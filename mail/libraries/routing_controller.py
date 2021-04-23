@@ -120,7 +120,7 @@ def send(server: MailServer, email_message_dto: EmailMessageDto):
 def _collect_and_send(mail: Mail):
     from mail.tasks import send_licence_data_to_hmrc
 
-    logger.info(f"Sending Mail [{mail.id}]")
+    logger.info(f"Sending Mail [{mail.id} of status: {mail.status}, filename: {mail.edi_filename}]")
 
     message_to_send_dto = to_email_message_dto_from(mail)
     is_locked_by_me = lock_db_for_sending_transaction(mail)

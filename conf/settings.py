@@ -29,7 +29,7 @@ if os.path.exists(ENV_FILE):
 env = Env(
     ALLOWED_HOSTS=(str, ""),
     DEBUG=(bool, False),
-    LOG_LEVEL=(str, "INFO"),
+    LOG_LEVEL=(str, "DEBUG"),
     HAWK_AUTHENTICATION_ENABLED=(bool, False),
     BACKGROUND_TASK_ENABLED=(bool, True),
     INBOX_POLL_INTERVAL=(int, 300),
@@ -189,7 +189,7 @@ if "test" not in sys.argv:
             }
         },
         "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "json"}},
-        "loggers": {"": {"handlers": ["console"], "level": env("LOG_LEVEL").upper()}},
+        "loggers": {"": {"handlers": ["console"], "level": 'DEBUG'}},
     }
 else:
     LOGGING = {"version": 1, "disable_existing_loggers": True}

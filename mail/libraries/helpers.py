@@ -229,6 +229,7 @@ def select_email_for_sending() -> Mail or None:
             usage_update = UsageUpdate.objects.get(mail=reply_received)
             if usage_update.has_lite_data and not usage_update.lite_sent_at:
                 return
+        logging.info(f"Found Mail (ID: {reply_received.id} with {reply_received.status} status)")
         return reply_received
 
     reply_pending = Mail.objects.filter(status=ReceptionStatusEnum.REPLY_PENDING).first()
@@ -237,11 +238,13 @@ def select_email_for_sending() -> Mail or None:
             usage_update = UsageUpdate.objects.get(mail=reply_pending)
             if not usage_update.has_spire_data:
                 return reply_pending
-        logging.info("Email currently in flight")
+        # logging.info("Email currently in flight")
+        logging.info(f"Found Mail (ID: {reply_pending.id} with {reply_pending.status} status)")
         return
 
     pending = Mail.objects.filter(status=ReceptionStatusEnum.PENDING).first()
     if pending:
+        logging.info(f"Found Mail (ID: {pending.id} with {pending.status} status)")
         return pending
 
     logging.info("No emails to send")
