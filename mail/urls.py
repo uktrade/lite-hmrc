@@ -11,4 +11,5 @@ urlpatterns = [
     # path("send-usage-updates-to-lite-api/", SendUsageUpdatesToLiteApi.as_view(), name="send_updates_to_lite_api"),
     path("send-licence-updates-to-hmrc/", views.SendLicenceUpdatesToHmrc.as_view(), name="send_updates_to_hmrc"),
     path("set-all-to-reply-sent/", views.SetAllToReplySent.as_view(), name="set_all_to_reply_sent"),
+    path("license/", views.License.as_view(), name="license"),
 ]

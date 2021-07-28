@@ -1,5 +1,5 @@
 import logging
-
+from urllib.parse import urlparse
 from django.http import JsonResponse, HttpResponse
 from rest_framework import status
 from rest_framework.views import APIView
@@ -111,3 +111,11 @@ class SetAllToReplySent(APIView):
     def put(self, _):
         Mail.objects.all().update(status=ReceptionStatusEnum.REPLY_SENT)
         return HttpResponse(status=HTTP_200_OK)
+
+
+class License(APIView):
+    def get(self, request):
+        license_id = request.GET.get('id', '')
+
+        return HttpResponse(status=HTTP_200_OK)
+
