@@ -1,5 +1,4 @@
 import logging
-from urllib.parse import urlparse
 from django.http import JsonResponse, HttpResponse
 from rest_framework import status
 from rest_framework.views import APIView

@@ -44,4 +44,4 @@ class EndToEndTests(LiteHMRCTestClient):
         assert body == expected_mail_body  # nosec
         encoded_reference_code = quote("GBSIEL/2020/0000001/P", safe="")
         response = self.client.get(f"/mail/license/?id={encoded_reference_code}")
-        assert "reply_pending" == response.json()["status"]
+        assert "reply_pending" == response.json()["status"]  # nosec
