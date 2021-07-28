@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 
 from conf.authentication import HawkOnlyAuthentication
 from mail.enums import LicenceTypeEnum, LicenceActionEnum, ReceptionStatusEnum
-from mail.models import LicencePayload, LicenceIdMapping, UsageData, Mail
+from mail.models import LicencePayload, LicenceIdMapping, UsageData, Mail, LicenceData
 from mail.serializers import (
     LiteLicenceDataSerializer,
     ForiegnTraderSerializer,
@@ -115,7 +115,6 @@ class SetAllToReplySent(APIView):
 
 class License(APIView):
     def get(self, request):
-        license_id = request.GET.get('id', '')
-
-        return HttpResponse(status=HTTP_200_OK)
-
+        license_id = request.GET.get("id", "")
+        mail = list(LicenceData.objects.filter(licence_ids__contains=license_id))[0].mail
+        return JsonResponse({"status": mail.status})
