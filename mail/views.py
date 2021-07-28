@@ -115,5 +115,5 @@ class SetAllToReplySent(APIView):
 class License(APIView):
     def get(self, request):
         license_id = request.GET.get("id", "")
-        mail = list(LicenceData.objects.filter(licence_ids__contains=license_id))[0].mail
+        mail = LicenceData.objects.get(licence_ids__contains=license_id).mail
         return JsonResponse({"status": mail.status})
