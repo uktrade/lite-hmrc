@@ -10,6 +10,7 @@ from mail.serializers import (
     LiteLicenceDataSerializer,
     ForiegnTraderSerializer,
     GoodSerializer,
+    MailSerializer,
 )
 from mail.tasks import (
     manage_inbox,
@@ -116,4 +117,5 @@ class License(APIView):
     def get(self, request):
         license_id = request.GET.get("id", "")
         mail = LicenceData.objects.get(licence_ids__contains=license_id).mail
-        return JsonResponse({"status": mail.status})
+        serializer = MailSerializer(mail)
+        return JsonResponse(serializer.data)
