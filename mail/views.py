@@ -113,7 +113,7 @@ class SetAllToReplySent(APIView):
         return HttpResponse(status=HTTP_200_OK)
 
 
-class License(APIView):
+class Licence(APIView):
     def get(self, request):
         license_id = request.GET.get("id", "")
         mail = LicenceData.objects.get(licence_ids__contains=license_id).mail
