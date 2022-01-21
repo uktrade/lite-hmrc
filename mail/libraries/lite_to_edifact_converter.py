@@ -15,7 +15,9 @@ from mail.libraries.edifact_validator import (
 
 
 class EdifactValidationError(Exception):
-    pass
+    def __init__(self, message, errors):
+        super().__init__(message)
+        self.errors = errors
 
 
 def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
@@ -155,12 +157,19 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
     if errors:
         logging.error(f"File content not as per specification, {errors}")
         logging.info(f"Generated file content: {edifact_file}")
-        raise EdifactValidationError
+        raise EdifactValidationError(f"Errors found in the Edifact file - {edifact_file}", errors=errors)
 
     logging.debug(f"Generated file content: {edifact_file}")
 
     return edifact_file
 
+
+def process_edifact_line(line, line_no):
+    """Tries to validate a line before adding it to the EDIFACT file.
+    If the validation fails, skips the line so that we can process the
+    rest of the licenses.
+    """
+    pass
 
 def get_transaction_reference(licence_reference: str) -> str:
     licence_reference = licence_reference.split("/", 1)[1]

@@ -269,34 +269,38 @@ def validate_edifact_file(file_data):
     file_lines = [line for line in file_data.split("\n") if line]
 
     errors = []
-    data_identifier = ""
     for line in file_lines[:]:
-        line_errors = list()
-        tokens = line.split("\\")
-        record_type = tokens[1]
-
-        if record_type == "fileHeader":
-            data_identifier = tokens[4]
-            line_errors = validate_file_header(line)
-        elif record_type == "licence":
-            line_errors = validate_licence_transaction_header(data_identifier, line)
-        elif record_type == "trader":
-            line_errors = validate_permitted_trader(line)
-        elif record_type == "country":
-            line_errors = validate_country(line)
-        elif record_type == "foreignTrader":
-            line_errors = validate_foreign_trader(line)
-        elif record_type == "restrictions":
-            line = validate_restrictions(line)
-        elif record_type == "line":
-            line_errors = validate_licence_product_line(line)
-        elif record_type == "end":
-            line_errors = validate_end_line(line)
-        elif record_type == "fileTrailer":
-            line_errors = validate_file_trailer(line)
-        else:
-            line_errors.append(f"Invalid record type {record_type}")
-
+        line_errors = validate_edifact_line(line)
         errors.extend(line_errors)
-
     return errors
+
+
+def validate_edifact_line(line):
+    line_errors = []
+    data_identifier = ""
+    tokens = line.split("\\")
+    record_type = tokens[1]
+
+    if record_type == "fileHeader":
+        data_identifier = tokens[4]
+        line_errors = validate_file_header(line)
+    elif record_type == "licence":
+        line_errors = validate_licence_transaction_header(data_identifier, line)
+    elif record_type == "trader":
+        line_errors = validate_permitted_trader(line)
+    elif record_type == "country":
+        line_errors = validate_country(line)
+    elif record_type == "foreignTrader":
+        line_errors = validate_foreign_trader(line)
+    elif record_type == "restrictions":
+        line = validate_restrictions(line)
+    elif record_type == "line":
+        line_errors = validate_licence_product_line(line)
+    elif record_type == "end":
+        line_errors = validate_end_line(line)
+    elif record_type == "fileTrailer":
+        line_errors = validate_file_trailer(line)
+    else:
+        line_errors.append(f"Invalid record type {record_type}")
+
+    return line_errors
