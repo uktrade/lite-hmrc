@@ -1,4 +1,4 @@
-from unittest import mock
+from unittest import mock, skip
 
 from django.test import override_settings, tag
 
@@ -33,15 +33,6 @@ class TaskTests(LiteHMRCTestClient):
     @mock.patch("mail.tasks.send")
     def test_reply_received(self, send):
         mail = Mail(status=ReceptionStatusEnum.REPLY_RECEIVED)
-        mail.save()
-        send.return_value = None
-        send_licence_data_to_hmrc.now()
-        self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 0)
-
-    @tag("missed-timing", "end-to-end")
-    @mock.patch("mail.tasks.send")
-    def test_reply_sent_rejected(self, send):
-        mail = Mail(status=ReceptionStatusEnum.REPLY_SENT, response_data="rejected")
         mail.save()
         send.return_value = None
         send_licence_data_to_hmrc.now()
