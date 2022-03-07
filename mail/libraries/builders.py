@@ -1,22 +1,20 @@
+import json
 import logging
-
 from datetime import datetime
 from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import json
-
-from unidecode import unidecode
 
 from django.conf import settings
+from django.core import mail
 from django.utils import timezone
+from unidecode import unidecode
 
-from mail.enums import SourceEnum, ExtractTypeEnum
+from mail.enums import ExtractTypeEnum, SourceEnum
 from mail.libraries.combine_usage_replies import combine_lite_and_spire_usage_responses
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import convert_source_to_sender
 from mail.libraries.lite_to_edifact_converter import licences_to_edifact
-from mail.libraries.usage_data_decomposition import split_edi_data_by_id, build_edifact_file_from_data_blocks
+from mail.libraries.usage_data_decomposition import build_edifact_file_from_data_blocks, split_edi_data_by_id
 from mail.models import LicenceData, Mail, UsageData
 
 
@@ -209,40 +207,38 @@ def build_licence_data_file(licences, run_number) -> (str, str):
     return file_name, file_content
 
 
-def build_email_message(email_message_dto: EmailMessageDto) -> MIMEMultipart:
+def build_email_message(email_message_dto: EmailMessageDto) -> mail.EmailMessage:
     """Build mail message from EmailMessageDto.
     :param email_message_dto: the DTO object this mail message is built upon
-    :return: a multipart message
+    :return: a Django message
     """
     _validate_dto(email_message_dto)
 
     logging.info("Building email message...")
-    file = unidecode(email_message_dto.attachment[1], errors="replace")
+    filename, content = email_message_dto.attachment
+    ascii_content = unidecode(content, errors="replace")
 
-    if email_message_dto.attachment[1] != file:
-        logging.info(
-            f"""File content different after transliteration\n
-            Before: {email_message_dto.attachment[1]}\n
-            After: {file}\n"""
-        )
+    if content != ascii_content:
+        logging.info("File content different after transliteration\nBefore: %r\nAfter: %r\n", content, ascii_content)
 
-    multipart_msg = MIMEMultipart()
-    multipart_msg["From"] = settings.EMAIL_USER  # the SMTP server only allows sending as itself
-    multipart_msg["To"] = email_message_dto.receiver
-    multipart_msg["Subject"] = email_message_dto.subject
-    multipart_msg["name"] = email_message_dto.subject
-    multipart_msg.attach(MIMEText("\n\n", "plain", "iso-8859-1"))
-    payload = MIMEApplication(file)
-    payload.set_payload(file)
-    payload.add_header(
-        "Content-Disposition",
-        f'attachment; filename="{email_message_dto.attachment[0]}"',
+    # An empty text part.
+    part1 = MIMEText("\n\n", _charset="iso-8859-1")
+    # Important MIME part with the edifact data.
+    part2 = MIMEApplication(ascii_content)
+    # Setting the payload directly bypasses the default base64 encoder.
+    part2.set_payload(ascii_content)
+    part2.add_header("Content-Disposition", "attachment", filename=filename)
+    part2.add_header("Content-Transfer-Encoding", "7bit")
+
+    message = mail.EmailMessage(
+        subject=email_message_dto.subject,
+        body="",
+        from_email=settings.EMAIL_USER,  # the SMTP server only allows sending as itself
+        to=[email_message_dto.receiver],
+        attachments=[part1, part2],
     )
-    payload.add_header("Content-Transfer-Encoding", "7bit")
-    payload.add_header("name", email_message_dto.subject)
-    multipart_msg.attach(payload)
-    logging.info(f"Message headers: {multipart_msg.items()}, Payload headers: {payload.items()}")
-    return multipart_msg
+
+    return message
 
 
 def _validate_dto(email_message_dto):

@@ -1,8 +1,8 @@
 import logging
 import poplib
-import smtplib
 
 from django.conf import settings
+from django.core import mail
 
 
 class MailServer(object):
@@ -21,7 +21,6 @@ class MailServer(object):
         self.user = user
         self.hostname = hostname
         self.pop3_connection = None
-        self.smtp_connection = None
         self.use_tls = use_tls
 
     def __eq__(self, other):
@@ -49,18 +48,20 @@ class MailServer(object):
     def quit_pop3_connection(self):
         self.pop3_connection.quit()
 
-    def connect_to_smtp(self) -> smtplib.SMTP:
-        logging.info("establishing an smtp connection...")
-        self.smtp_connection = smtplib.SMTP(self.hostname, str(self.smtp_port), timeout=60)
-        logging.info("smtp connection established")
-        if self.use_tls:
-            logging.info("starting tls...")
-            self.smtp_connection.starttls()
-            logging.info("tls started")
-        logging.info("logging in...")
-        self.smtp_connection.login(self.user, self.password)
-        logging.info("logged in")
-        return self.smtp_connection
+    def send_message(self, message: mail.EmailMessage) -> int:
+        """Send an email via SMTP using this server's settings.
 
-    def quit_smtp_connection(self):
-        self.smtp_connection.quit()
+        Return the number of messages sent.
+        """
+        smtp_connection = mail.get_connection(
+            host=self.hostname,
+            port=self.smtp_port,
+            username=self.user,
+            password=self.password,
+            use_tls=self.use_tls,
+        )
+
+        with smtp_connection as conn:
+            message.connection = conn
+
+            return message.send()

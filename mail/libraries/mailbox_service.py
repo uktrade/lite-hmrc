@@ -1,18 +1,13 @@
 import logging
-from django.conf import settings
-from email.message import Message
 from poplib import POP3_SSL, error_proto
-from smtplib import SMTP
 from typing import Callable, Iterator, Tuple, List
+
+from django.conf import settings
 
 from mail.enums import MailReadStatuses
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import to_mail_message_dto
 from mail.models import Mail, MailboxConfig, MailReadStatus
-
-
-def send_email(smtp_connection: SMTP, message: Message):
-    smtp_connection.send_message(message)
 
 
 def get_message_id(pop3_connection, listing_msg):

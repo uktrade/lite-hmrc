@@ -17,7 +17,6 @@ from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORT
 from mail.enums import ReceptionStatusEnum, ReplyStatusEnum
 from mail.libraries.builders import build_licence_data_mail
 from mail.libraries.data_processors import build_request_mail_message_dto
-from mail.libraries.mailbox_service import send_email
 from mail.libraries.lite_to_edifact_converter import EdifactValidationError
 from mail.libraries.routing_controller import check_and_route_emails
 from mail.libraries.routing_controller import update_mail, send
@@ -285,9 +284,8 @@ def notify_users_of_rejected_mail(mail_id, mail_response_date):
         multipart_msg.attach(body)
 
         server = MailServer()
-        smtp_connection = server.connect_to_smtp()
-        send_email(smtp_connection, multipart_msg)
-        server.quit_smtp_connection()
+        server.send_message(multipart_msg)
+
     except Exception as exc:  # noqa
         error_message = (
             f"An unexpected error occurred when notifying users of rejected Mail "

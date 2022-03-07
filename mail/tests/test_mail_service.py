@@ -2,10 +2,10 @@ from collections import OrderedDict
 from poplib import POP3_SSL
 from unittest.mock import MagicMock
 
-from django.test import tag, SimpleTestCase
+from django.test import SimpleTestCase, tag
 from parameterized import parameterized
 
-from mail.libraries.mailbox_service import read_last_message, read_last_three_emails, get_message_iterator
+from mail.libraries.mailbox_service import read_last_message, read_last_three_emails
 from mail.servers import MailServer
 from mail.tests.libraries.client import LiteHMRCTestClient
 

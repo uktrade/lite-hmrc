@@ -22,7 +22,7 @@ from mail.libraries.helpers import (
     check_for_pending_messages,
     publish_queue_status,
 )
-from mail.libraries.mailbox_service import send_email, get_message_iterator
+from mail.libraries.mailbox_service import get_message_iterator
 from mail.models import Mail
 from mail.servers import MailServer
 
@@ -161,9 +161,9 @@ def update_mail(mail: Mail, mail_dto: EmailMessageDto):
 
 def send(server: MailServer, email_message_dto: EmailMessageDto):
     logging.info("Preparing to send email")
-    smtp_connection = server.connect_to_smtp()
-    send_email(smtp_connection, build_email_message(email_message_dto))
-    server.quit_smtp_connection()
+    message = build_email_message(email_message_dto)
+
+    return server.send_message(message)
 
 
 def _collect_and_send(mail: Mail):
