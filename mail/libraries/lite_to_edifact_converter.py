@@ -170,43 +170,14 @@ def licences_to_edifact(licences: QuerySet, run_number: int) -> str:
     # lines, we format them ("\" as field separator) and insert the line
     # numbers. Some lines reference previous line numbers, so we need to
     # track those.
-    lines = []
-
-    time_stamp = timezone.now().strftime("%Y%m%d%H%M")  # YYYYMMDDhhmm
-    # Setting this to Y will override the hmrc run number with the run number in this file.
-    # This is usually set to N in almost all cases
-    reset_run_number_indicator = "N"
     src_system = "SPIRE"
     dest_system = "CHIEF"
-    file_header = (
-        "fileHeader",
-        src_system,
-        dest_system,
-        "licenceData",
-        time_stamp,
-        run_number,
-        reset_run_number_indicator,
-    )
-    lines.append(file_header)
+    time_stamp = timezone.now()
 
-    logging.info(f"File header:{file_header}")
-
-    for licence in licences:
-        licence_lines = list(generate_lines_for_licence(licence))
-        lines.extend(licence_lines)
-        end_licence = ("end", "licence")
-        lines.append(end_licence)
-
-    # File trailer includes the number of licences, but +1 for each "update"
-    # because this code represents those as "cancel" followed by "insert".
-    num_transactions = licences.count() + licences.filter(action=LicenceActionEnum.UPDATE).count()
-    file_trailer = ("fileTrailer", num_transactions)
-    lines.append(file_trailer)
-
-    # Convert line tuples to the final string with line numbers, etc.
-    edifact_file = chiefprotocol.format_lines(lines)
-
+    message = chiefprotocol.LicenceDataMessage(licences)
+    edifact_file = message.finalize(src_system, dest_system, time_stamp, run_number)
     logging.debug("Generated file content: %r", edifact_file)
+
     errors = validate_edifact_file(edifact_file)
     if errors:
         logging.error("File content not as per specification, %r", errors)
