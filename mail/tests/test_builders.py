@@ -11,7 +11,9 @@ from mail.libraries.email_message_dto import EmailMessageDto
 class BuildEmailMessageTest(testcases.TestCase):
     maxDiff = None
 
-    def test_build_email_message(self):
+    @mock.patch("django.core.mail.message.formatdate")
+    @mock.patch("django.core.mail.message.make_msgid")
+    def test_build_email_message(self, mock_make_msgid, mock_formatdate):
         attachment = "30 \U0001d5c4\U0001d5c6/\U0001d5c1 \u5317\u4EB0"
         email_message_dto = EmailMessageDto(
             run_number=1,
@@ -24,7 +26,12 @@ class BuildEmailMessageTest(testcases.TestCase):
             raw_data="",
         )
 
-        mime_multipart = builders.build_email_message(email_message_dto)
+        # Message-Id is normally a random value + MTA hostname.
+        mock_make_msgid.return_value = "<xyz@local>"
+        mock_formatdate.return_value = "Mon, 17 May 2021 14:20:18 +0100"
+
+        django_email = builders.build_email_message(email_message_dto)
+        mime_multipart = django_email.message()
         mime_multipart.set_boundary("===============8537751789001939036==")
 
         self.assertEqual(
@@ -32,10 +39,13 @@ class BuildEmailMessageTest(testcases.TestCase):
             (
                 'Content-Type: multipart/mixed; boundary="===============8537751789001939036=="\n'
                 "MIME-Version: 1.0\n"
+                "Subject: Some subject\n"
                 f"From: {settings.EMAIL_USER}\n"
                 f"To: {settings.SPIRE_ADDRESS}\n"
-                "Subject: Some subject\n"
-                "name: Some subject\n\n"
+                "Date: Mon, 17 May 2021 14:20:18 +0100\n"
+                "Message-ID: <xyz@local>\n"
+                "name: Some subject\n"
+                "\n"
                 "--===============8537751789001939036==\n"
                 'Content-Type: text/plain; charset="iso-8859-1"\n'
                 "MIME-Version: 1.0\n"
@@ -47,7 +57,7 @@ class BuildEmailMessageTest(testcases.TestCase):
                 "Content-Transfer-Encoding: base64\n"
                 'Content-Disposition: attachment; filename="some filename"\n'
                 "Content-Transfer-Encoding: 7bit\n"
-                "name: Some subject\n\n"
+                "\n"
                 "30 km/h Bei Jing \n"
                 "--===============8537751789001939036==--\n"
             ),

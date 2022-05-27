@@ -2,10 +2,10 @@ import json
 import logging
 from datetime import datetime
 from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from django.conf import settings
+from django.core import mail
 from django.utils import timezone
 from unidecode import unidecode
 
@@ -224,40 +224,41 @@ def build_licence_data_file(licences, run_number, when):
     return file_name, file_content
 
 
-def build_email_message(email_message_dto: EmailMessageDto) -> MIMEMultipart:
+def build_email_message(email_message_dto: EmailMessageDto) -> mail.EmailMessage:
     """Build mail message from EmailMessageDto.
     :param email_message_dto: the DTO object this mail message is built upon
-    :return: a multipart message
+    :return: a Django message
     """
     _validate_dto(email_message_dto)
 
     logger.info("Building email message...")
-    file = unidecode(email_message_dto.attachment[1], errors="replace")
+    filename, content = email_message_dto.attachment
+    ascii_content = unidecode(content, errors="replace")
 
-    if email_message_dto.attachment[1] != file:
-        logger.info(
-            "File content different after transliteration\nBefore: %s\nAfter: %s\n",
-            email_message_dto.attachment[1],
-            file,
-        )
+    if content != ascii_content:
+        logger.info("File content different after transliteration\nBefore: %r\nAfter: %r\n", content, ascii_content)
 
-    multipart_msg = MIMEMultipart()
-    multipart_msg["From"] = settings.EMAIL_USER  # the SMTP server only allows sending as itself
-    multipart_msg["To"] = email_message_dto.receiver
-    multipart_msg["Subject"] = email_message_dto.subject
-    multipart_msg["name"] = email_message_dto.subject
-    multipart_msg.attach(MIMEText("\n\n", "plain", "iso-8859-1"))
-    payload = MIMEApplication(file)
-    payload.set_payload(file)
-    payload.add_header(
-        "Content-Disposition",
-        f'attachment; filename="{email_message_dto.attachment[0]}"',
+    # An empty text part.
+    part1 = MIMEText("\n\n", _charset="iso-8859-1")
+    # Important MIME part with the edifact data.
+    part2 = MIMEApplication(ascii_content)
+    # Setting the payload directly bypasses the default base64 encoder. This
+    # is a bug, resulting in 2 transfer encoding headers. Instead we should do
+    # `MIMEApplication(content, _encoder=email.encoders.encode_7or8bit)`.
+    part2.set_payload(ascii_content)
+    part2.add_header("Content-Disposition", "attachment", filename=filename)
+    part2.add_header("Content-Transfer-Encoding", "7bit")
+
+    message = mail.EmailMessage(
+        subject=email_message_dto.subject,
+        body="",
+        from_email=settings.EMAIL_USER,  # the SMTP server only allows sending as itself
+        to=[email_message_dto.receiver],
+        attachments=[part1, part2],
+        headers={"name": email_message_dto.subject},
     )
-    payload.add_header("Content-Transfer-Encoding", "7bit")
-    payload.add_header("name", email_message_dto.subject)
-    multipart_msg.attach(payload)
-    logger.info("Message headers: %s, Payload headers: %s", multipart_msg.items(), payload.items())
-    return multipart_msg
+
+    return message
 
 
 def _validate_dto(email_message_dto):
