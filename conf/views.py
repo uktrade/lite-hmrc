@@ -2,7 +2,7 @@ import datetime
 import logging
 import time
 
-from background_task.models import Task
+from background_task.models import Task as DjangoBackgroundTask
 from django.conf import settings
 from django.shortcuts import render
 from django.utils import timezone
@@ -22,13 +22,17 @@ class HealthCheck(APIView):
 
         start_time = time.time()
 
-        if not self._is_lite_licence_update_task_responsive():
-            logging.error("%s is not responsive", LICENCE_DATA_TASK_QUEUE)
-            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
+        # LITE checks for django background task queues
+        if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.SPIRE:
+            if not self._is_lite_licence_update_task_responsive():
+                logging.error("%s is not responsive", LICENCE_DATA_TASK_QUEUE)
 
-        if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.SPIRE and not self._is_inbox_polling_task_responsive():
-            logging.error("%s is not responsive", MANAGE_INBOX_TASK_QUEUE)
-            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
+                return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
+
+            if not self._is_inbox_polling_task_responsive():
+                logging.error("%s is not responsive", MANAGE_INBOX_TASK_QUEUE)
+
+                return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, "not OK", start_time)
 
         pending_mail = self._get_pending_mail()
         if pending_mail:
@@ -55,13 +59,13 @@ class HealthCheck(APIView):
     def _is_lite_licence_update_task_responsive() -> bool:
         dt = timezone.now() + datetime.timedelta(seconds=settings.LITE_LICENCE_DATA_POLL_INTERVAL)
 
-        return Task.objects.filter(queue=LICENCE_DATA_TASK_QUEUE, run_at__lte=dt).exists()
+        return DjangoBackgroundTask.objects.filter(queue=LICENCE_DATA_TASK_QUEUE, run_at__lte=dt).exists()
 
     @staticmethod
     def _is_inbox_polling_task_responsive() -> bool:
         dt = timezone.now() + datetime.timedelta(seconds=settings.INBOX_POLL_INTERVAL)
 
-        return Task.objects.filter(queue=MANAGE_INBOX_TASK_QUEUE, run_at__lte=dt).exists()
+        return DjangoBackgroundTask.objects.filter(queue=MANAGE_INBOX_TASK_QUEUE, run_at__lte=dt).exists()
 
     @staticmethod
     def _get_pending_mail() -> []:
