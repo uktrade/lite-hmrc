@@ -8,6 +8,7 @@ from rest_framework import authentication, exceptions
 from sentry_sdk import capture_exception
 
 from conf import settings
+from mail.enums import ChiefSystemEnum
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +47,21 @@ def _authenticate(request):
     Raises a HawkFail exception if the passed request cannot be authenticated
     """
 
+    if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.ICMS:
+        url = request.build_absolute_uri()  # pragma: no cover
+    else:
+        # I believe this is a bug, but I will leave to the lite team to investigate.
+        # e.g. "https://".replace("http", "https") == "httpss://"
+        # Original comment below:
+
+        # build_absolute_uri() returns 'http' which is incorrect since our clients communicate via https
+        url = request.build_absolute_uri().replace("http", "https")
+
     if hawk_authentication_enabled():
         return Receiver(
             _lookup_credentials,
             request.META["HTTP_HAWK_AUTHENTICATION"],
-            # build_absolute_uri() returns 'http' which is incorrect since our clients communicate via https
-            request.build_absolute_uri().replace("http", "https"),
+            url,
             request.method,
             content=request.body,
             content_type=request.content_type,
