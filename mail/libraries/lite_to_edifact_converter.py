@@ -248,7 +248,7 @@ def sanitize_foreign_trader_address(trader):
 
 def sanitize_trader_address(trader):
     """
-    Foreign trader address is split into 5 lines.
+    Trader address is split into 5 lines.
     When any since one of these lines exceed 35 chars we need to break then up into lines
     There is a possibility of truncating the address here if this happens we log it
     """
