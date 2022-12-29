@@ -1,9 +1,6 @@
-from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from mail.libraries.mailbox_service import get_message_id
 from mail.models import LicencePayload
-from mail.servers import MailServer
 
 
 class Command(BaseCommand):
