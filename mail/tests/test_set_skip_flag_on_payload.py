@@ -40,3 +40,28 @@ class SetSkipFlagOnPayloadTests(TestCase):
         )
         payload.refresh_from_db()
         self.assertEqual(payload.skip_process, expected)
+
+    @parameterized.expand(
+        [
+            ("True", "False", False),
+            ("False", "False", False),
+            ("False", "True", False),
+            ("True", "True", False),
+        ]
+    )
+    def test_default_skip_process_processed_true(self, skip_process, dry_run, expected):
+
+        payload = self.get_payload()
+        payload.is_processed = True
+        payload.save()
+        call_command(
+            "set_skip_flag_on_payload",
+            "--reference",
+            payload.reference,
+            "--skip_process",
+            skip_process,
+            "--dry_run",
+            dry_run,
+        )
+        payload.refresh_from_db()
+        self.assertEqual(payload.skip_process, expected)
