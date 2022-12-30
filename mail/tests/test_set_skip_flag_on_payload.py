@@ -20,13 +20,24 @@ class SetSkipFlagOnPayloadTests(TestCase):
 
     @parameterized.expand(
         [
-            ("True", "False", True),
-            ("False", "False", False),
-            ("False", "True", False),
-            ("True", "True", False),
+            ("True", True),
+            ("False", False),
         ]
     )
-    def test_default_skip_process(self, skip_process, dry_run, expected):
+    def test_default_skip_process(self, skip_process, expected):
+
+        payload = self.get_payload()
+        call_command("set_skip_flag_on_payload", "--reference", payload.reference, "--skip_process", skip_process)
+        payload.refresh_from_db()
+        self.assertEqual(payload.skip_process, expected)
+
+    @parameterized.expand(
+        [
+            ("True", False),
+            ("False", False),
+        ]
+    )
+    def test_default_skip_process_dry_run(self, skip_process, expected):
 
         payload = self.get_payload()
         call_command(
@@ -36,20 +47,17 @@ class SetSkipFlagOnPayloadTests(TestCase):
             "--skip_process",
             skip_process,
             "--dry_run",
-            dry_run,
         )
         payload.refresh_from_db()
         self.assertEqual(payload.skip_process, expected)
 
     @parameterized.expand(
         [
-            ("True", "False", False),
-            ("False", "False", False),
-            ("False", "True", False),
-            ("True", "True", False),
+            ("True", False),
+            ("False", False),
         ]
     )
-    def test_default_skip_process_processed_true(self, skip_process, dry_run, expected):
+    def test_default_skip_process_processed_true(self, skip_process, expected):
 
         payload = self.get_payload()
         payload.is_processed = True
@@ -60,8 +68,6 @@ class SetSkipFlagOnPayloadTests(TestCase):
             payload.reference,
             "--skip_process",
             skip_process,
-            "--dry_run",
-            dry_run,
         )
         payload.refresh_from_db()
         self.assertEqual(payload.skip_process, expected)

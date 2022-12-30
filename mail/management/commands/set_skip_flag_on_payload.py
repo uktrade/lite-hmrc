@@ -30,7 +30,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--skip_process", type=str, nargs="?", help="To skip processing set to true", default="False"
         )
-        parser.add_argument("--dry_run", type=str, nargs="?", help="Is it a test run", default="True")
+        parser.add_argument("--dry_run", help="Is it a test run?", action="store_true")
 
     def handle(self, *args, **options):
         dry_run = options.pop("dry_run")
@@ -42,8 +42,8 @@ class Command(BaseCommand):
 
         if payload.is_processed:
             logger.info("The payload object has already been processed unable to set skip flag")
-        elif dry_run.lower() == "false":
+        elif not dry_run:
             payload.save()
             logger.info("Reference %s skip_process set to %s", reference, payload.skip_process)
-        elif dry_run.lower() == "true":
+        else:
             logger.info("DRY RUN : Reference %s skip_process set to %s", reference, payload.skip_process)
