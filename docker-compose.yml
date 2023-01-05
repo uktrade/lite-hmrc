@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   lite-hmrc-postgres:
+    platform: linux/amd64
     restart: unless-stopped
     container_name: "lite-hmrc-postgres"
     environment:
@@ -16,6 +17,7 @@ services:
       - 5432:5432
 
   lite-hmrc-intg:
+    platform: linux/amd64
     container_name: "lite-hmrc-intg"
     env_file:
       - .env
