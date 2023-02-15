@@ -26,7 +26,7 @@ class MailServer(object):
         return self.hostname == other.hostname and self.auth == other.auth and self.pop3_port == other.pop3_port
 
     def connect_to_pop3(self) -> poplib.POP3_SSL:
-        logging.info("establishing a pop3 connection...")
+        logging.info("Establishing a pop3 connection to %s:%s", self.hostname, self.pop3_port)
         self.pop3_connection = poplib.POP3_SSL(self.hostname, self.pop3_port, timeout=60)
         self.auth.authenticate(self.pop3_connection)
         logging.info("pop3 connection established")
