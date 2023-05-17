@@ -193,6 +193,7 @@ class UnitMapping(enum.Enum):
     MTR = 57  # meters
     LTR = 94  # litre
     MTQ = 2  # meters_cubed
+    MIR = 74  # millilitre
     ITG = 30  # intangible
 
     @classmethod
