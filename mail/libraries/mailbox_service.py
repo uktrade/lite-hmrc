@@ -70,6 +70,7 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
     mails: list
     _, mails, _ = pop3_connection.list()
     mailbox_config, _ = MailboxConfig.objects.get_or_create(username=username)
+    incoming_email_check_limit = settings.INCOMING_EMAIL_CHECK_LIMIT
 
     # Check only the emails specified in the setting
     # Since we don't delete emails from these mailboxes the total number can be very high over a perio
@@ -78,7 +79,7 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
     # latest emails will always be at the end.
     mail_message_ids = [
         get_message_id(pop3_connection, m.decode(settings.DEFAULT_ENCODING))
-        for m in mails[-settings.INCOMING_EMAIL_CHECK_LIMIT :]
+        for m in mails[-incoming_email_check_limit:]
     ]
 
     # these are mailbox message ids we've seen before
