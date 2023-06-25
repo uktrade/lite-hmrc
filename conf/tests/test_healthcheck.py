@@ -1,11 +1,14 @@
+import poplib
 import uuid
 from datetime import timedelta
+from unittest.mock import patch
 
 from background_task.models import Task
 from django.conf import settings
 from django.test import testcases
 from django.urls import reverse
 from django.utils import timezone
+from parameterized import parameterized
 from rest_framework import status
 
 from mail.enums import LicenceActionEnum, ReceptionStatusEnum, ReplyStatusEnum
@@ -14,8 +17,26 @@ from mail.tasks import LICENCE_DATA_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
 
 
 class TestHealthcheck(testcases.TestCase):
+    MAILSERVERS_TO_PATCH = [
+        "get_hmrc_to_dit_mailserver",
+        "get_spire_to_dit_mailserver",
+    ]
+
     def setUp(self):
+        super().setUp()
+
+        self.mocked_mailservers = {}
+        for mailserver_to_patch in self.MAILSERVERS_TO_PATCH:
+            patched_mailserver = patch(f"conf.views.{mailserver_to_patch}").start()
+            self.mocked_mailservers[mailserver_to_patch] = patched_mailserver
+
         self.url = reverse("healthcheck")
+
+    def tearDown(self) -> None:
+        super().tearDown()
+
+        for mailserver_to_patch in self.MAILSERVERS_TO_PATCH:
+            self.mocked_mailservers[mailserver_to_patch].stop()
 
     def test_healthcheck_return_ok(self):
         response = self.client.get(self.url)
@@ -63,4 +84,13 @@ class TestHealthcheck(testcases.TestCase):
         task.save()
         response = self.client.get(self.url)
         self.assertEqual(response.context["message"], "licences_updates_queue error")
+        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    @parameterized.expand(MAILSERVERS_TO_PATCH)
+    def test_healthcheck_service_mailbox_authentication_failure(self, mailserver_factory):
+        mock_mailserver_factory = self.mocked_mailservers[mailserver_factory]
+        mock_mailserver_factory().connect_to_pop3.side_effect = poplib.error_proto("Failed to connect")
+        mock_mailserver_factory().hostname = f"{mailserver_factory}.example.com"
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["message"], "Mailbox authentication error")
         self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)

@@ -1,5 +1,6 @@
 import datetime
 import logging
+import poplib
 import time
 
 from background_task.models import Task
@@ -10,6 +11,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
 from rest_framework.views import APIView
 
 from mail.enums import ChiefSystemEnum, ReceptionStatusEnum, ReplyStatusEnum
+from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
 from mail.models import LicencePayload, Mail
 from mail.tasks import LICENCE_DATA_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
 
@@ -20,6 +22,7 @@ class HealthCheck(APIView):
     ERROR_PENDING_MAIL = "Pending mail error"
     ERROR_REJECTED_MAIL = "Rejected mail error"
     ERROR_PAYLOAD_OBJECTS = "Payload objects error"
+    ERROR_MAILBOX_AUTHENTICATION = "Mailbox authentication error"
 
     def get(self, request):
         """
@@ -27,6 +30,9 @@ class HealthCheck(APIView):
         """
 
         start_time = time.time()
+
+        if not self._can_authenticate_mailboxes():
+            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, self.ERROR_MAILBOX_AUTHENTICATION, start_time)
 
         if not self._is_lite_licence_update_task_responsive():
             logging.error("%s is not responsive", LICENCE_DATA_TASK_QUEUE)
@@ -100,3 +106,28 @@ class HealthCheck(APIView):
         dt = timezone.now() + datetime.timedelta(seconds=settings.LICENSE_POLL_INTERVAL)
 
         return LicencePayload.objects.filter(is_processed=False, received_at__lte=dt).first()
+
+    def _can_authenticate_mailboxes(self) -> bool:
+        mailservers_to_check_factories = (
+            get_hmrc_to_dit_mailserver,
+            get_spire_to_dit_mailserver,
+        )
+        mailbox_results = []
+        for mailserver_to_check_factory in mailservers_to_check_factories:
+            mailserver = mailserver_to_check_factory()
+            try:
+                mailserver.connect_to_pop3()
+            except poplib.error_proto as e:
+                response, *_ = e.args
+                logging.error(
+                    "Failed to connect to mailbox: %s (%s)",
+                    mailserver.hostname,
+                    response,
+                )
+                mailbox_results.append(False)
+            else:
+                mailbox_results.append(True)
+            finally:
+                mailserver.quit_pop3_connection()
+
+        return all(mailbox_results)
