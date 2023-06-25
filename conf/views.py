@@ -28,6 +28,14 @@ class HealthCheck(APIView):
 
         start_time = time.time()
 
+        if not self._is_lite_licence_update_task_responsive():
+            logging.error("%s is not responsive", LICENCE_DATA_TASK_QUEUE)
+            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, self.ERROR_LICENCE_DATA_TASK_QUEUE, start_time)
+
+        if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.SPIRE and not self._is_inbox_polling_task_responsive():
+            logging.error("%s is not responsive", MANAGE_INBOX_TASK_QUEUE)
+            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, self.ERROR_MANAGE_INBOX_TASK_QUEUE, start_time)
+
         payload_object_pending = self._get_license_payload_object_pending()
         if payload_object_pending:
             logging.error(
@@ -45,14 +53,6 @@ class HealthCheck(APIView):
                 pending_mail,
             )
             return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, self.ERROR_PENDING_MAIL, start_time)
-
-        if not self._is_lite_licence_update_task_responsive():
-            logging.error("%s is not responsive", LICENCE_DATA_TASK_QUEUE)
-            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, self.ERROR_LICENCE_DATA_TASK_QUEUE, start_time)
-
-        if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.SPIRE and not self._is_inbox_polling_task_responsive():
-            logging.error("%s is not responsive", MANAGE_INBOX_TASK_QUEUE)
-            return self._build_response(HTTP_503_SERVICE_UNAVAILABLE, self.ERROR_MANAGE_INBOX_TASK_QUEUE, start_time)
 
         logging.info("All services are responsive")
         return self._build_response(HTTP_200_OK, "OK", start_time)
