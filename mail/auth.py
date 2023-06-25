@@ -1,8 +1,11 @@
 import base64
+import logging
 import poplib
 
 import msal
 from typing_extensions import Protocol
+
+logger = logging.getLogger(__name__)
 
 
 class Authenticator(Protocol):
@@ -20,6 +23,7 @@ class BasicAuthentication:
         self.password = password
 
     def authenticate(self, connection: poplib.POP3_SSL):
+        logger.info("Authenticating using basic authentication: %s", self.user)
         connection.user(self.user)
         connection.pass_(self.password)
 
@@ -56,8 +60,10 @@ class ModernAuthentication:
     def _get_access_token(self):
         scopes = ["https://outlook.office.com/.default"]
 
+        logger.info("Attempting to acquire access token silently")
         result = self.app.acquire_token_silent(scopes, account=None)  # This attempts to get the token from the cache
         if not result:  # If we don't find the token in the cache then we go off and retrieve it from the provider
+            logger.info("Token not found in cache")
             result = self.app.acquire_token_for_client(scopes=scopes)
 
         return result["access_token"]
@@ -66,6 +72,7 @@ class ModernAuthentication:
         return base64.b64encode(f"user={username}\x01auth=Bearer {access_token}\x01\x01".encode()).decode()
 
     def authenticate(self, connection: poplib.POP3_SSL):
+        logger.info("Authenticating using OAuth authentication: %s", self.user)
         access_token = self._get_access_token()
         access_string = self._encode_access_string(
             self.user,
