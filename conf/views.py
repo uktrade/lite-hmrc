@@ -108,13 +108,13 @@ class HealthCheck(APIView):
         return LicencePayload.objects.filter(is_processed=False, received_at__lte=dt).first()
 
     def _can_authenticate_mailboxes(self) -> bool:
-        mailservers_to_check_factories = (
+        mailserver_factories = (
             get_hmrc_to_dit_mailserver,
             get_spire_to_dit_mailserver,
         )
         mailbox_results = []
-        for mailserver_to_check_factory in mailservers_to_check_factories:
-            mailserver = mailserver_to_check_factory()
+        for mailserver_factory in mailserver_factories:
+            mailserver = mailserver_factory()
             try:
                 mailserver.connect_to_pop3()
             except poplib.error_proto as e:
