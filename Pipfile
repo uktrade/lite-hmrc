@@ -33,7 +33,7 @@ gunicorn = "*"
 django = "==3.2.19"
 elastic-apm = "==6.7.2"
 django-jsonfield = "==1.4"
-msal = "~=1.18.0"
+msal = "~=1.22.0"
 psycopg2-binary = "~=2.9.3"
 setuptools = "~=65.5.1"
 
