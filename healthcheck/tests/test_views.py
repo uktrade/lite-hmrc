@@ -11,7 +11,7 @@ from django.utils import timezone
 from parameterized import parameterized
 from rest_framework import status
 
-from mail.enums import LicenceActionEnum, ReceptionStatusEnum, ReplyStatusEnum
+from mail.enums import LicenceActionEnum, ReplyStatusEnum
 from mail.models import LicencePayload, Mail
 from mail.tasks import LICENCE_DATA_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
 
@@ -27,7 +27,7 @@ class TestHealthcheck(testcases.TestCase):
 
         self.mocked_mailservers = {}
         for mailserver_to_patch in self.MAILSERVERS_TO_PATCH:
-            patched_mailserver = patch(f"conf.views.{mailserver_to_patch}").start()
+            patched_mailserver = patch(f"healthcheck.views.{mailserver_to_patch}").start()
             self.mocked_mailservers[mailserver_to_patch] = patched_mailserver
 
         self.url = reverse("healthcheck")

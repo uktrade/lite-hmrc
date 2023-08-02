@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "background_task",
     "mail.apps.MailConfig",
+    "healthcheck",
 ]
 
 MIDDLEWARE = [
