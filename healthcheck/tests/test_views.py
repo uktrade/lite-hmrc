@@ -16,7 +16,7 @@ from mail.models import LicencePayload, Mail
 from mail.tasks import LICENCE_DATA_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
 
 
-class TestHealthcheck(testcases.TestCase):
+class TestHealthCheckP1(testcases.TestCase):
     MAILSERVERS_TO_PATCH = [
         "get_hmrc_to_dit_mailserver",
         "get_spire_to_dit_mailserver",
@@ -30,13 +30,52 @@ class TestHealthcheck(testcases.TestCase):
             patched_mailserver = patch(f"healthcheck.views.{mailserver_to_patch}").start()
             self.mocked_mailservers[mailserver_to_patch] = patched_mailserver
 
-        self.url = reverse("healthcheck")
+        self.url = reverse("healthcheck_p1")
 
     def tearDown(self) -> None:
         super().tearDown()
 
         for mailserver_to_patch in self.MAILSERVERS_TO_PATCH:
             self.mocked_mailservers[mailserver_to_patch].stop()
+
+    def test_healthcheck_return_ok(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["message"], "OK")
+        self.assertEqual(response.context["status"], status.HTTP_200_OK)
+
+    def test_healthcheck_service_unavailable_inbox_task_not_responsive(self):
+        run_at = timezone.now() + timedelta(minutes=settings.INBOX_POLL_INTERVAL)
+        task, _ = Task.objects.get_or_create(queue=MANAGE_INBOX_TASK_QUEUE)
+        task.run_at = run_at
+        task.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["message"], "manage_inbox_queue error")
+        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    def test_healthcheck_service_unavailable_licence_update_task_not_responsive(self):
+        run_at = timezone.now() + timedelta(minutes=settings.LITE_LICENCE_DATA_POLL_INTERVAL)
+        task, _ = Task.objects.get_or_create(queue=LICENCE_DATA_TASK_QUEUE)
+        task.run_at = run_at
+        task.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["message"], "licences_updates_queue error")
+        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    @parameterized.expand(MAILSERVERS_TO_PATCH)
+    def test_healthcheck_service_mailbox_authentication_failure(self, mailserver_factory):
+        mock_mailserver_factory = self.mocked_mailservers[mailserver_factory]
+        mock_mailserver_factory().connect_to_pop3.side_effect = poplib.error_proto("Failed to connect")
+        mock_mailserver_factory().hostname = f"{mailserver_factory}.example.com"
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["message"], "Mailbox authentication error")
+        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class TestHealthCheckP2(testcases.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.url = reverse("healthcheck_p2")
 
     def test_healthcheck_return_ok(self):
         response = self.client.get(self.url)
@@ -66,31 +105,4 @@ class TestHealthcheck(testcases.TestCase):
         )
         response = self.client.get(self.url)
         self.assertEqual(response.context["message"], "Payload objects error")
-        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
-
-    def test_healthcheck_service_unavailable_inbox_task_not_responsive(self):
-        run_at = timezone.now() + timedelta(minutes=settings.INBOX_POLL_INTERVAL)
-        task, _ = Task.objects.get_or_create(queue=MANAGE_INBOX_TASK_QUEUE)
-        task.run_at = run_at
-        task.save()
-        response = self.client.get(self.url)
-        self.assertEqual(response.context["message"], "manage_inbox_queue error")
-        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
-
-    def test_healthcheck_service_unavailable_licence_update_task_not_responsive(self):
-        run_at = timezone.now() + timedelta(minutes=settings.LITE_LICENCE_DATA_POLL_INTERVAL)
-        task, _ = Task.objects.get_or_create(queue=LICENCE_DATA_TASK_QUEUE)
-        task.run_at = run_at
-        task.save()
-        response = self.client.get(self.url)
-        self.assertEqual(response.context["message"], "licences_updates_queue error")
-        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
-
-    @parameterized.expand(MAILSERVERS_TO_PATCH)
-    def test_healthcheck_service_mailbox_authentication_failure(self, mailserver_factory):
-        mock_mailserver_factory = self.mocked_mailservers[mailserver_factory]
-        mock_mailserver_factory().connect_to_pop3.side_effect = poplib.error_proto("Failed to connect")
-        mock_mailserver_factory().hostname = f"{mailserver_factory}.example.com"
-        response = self.client.get(self.url)
-        self.assertEqual(response.context["message"], "Mailbox authentication error")
         self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
