@@ -27,7 +27,7 @@ class TestHealthCheckP1(testcases.TestCase):
 
         self.mocked_mailservers = {}
         for mailserver_to_patch in self.MAILSERVERS_TO_PATCH:
-            patched_mailserver = patch(f"healthcheck.views.{mailserver_to_patch}").start()
+            patched_mailserver = patch(f"healthcheck.checks.{mailserver_to_patch}").start()
             self.mocked_mailservers[mailserver_to_patch] = patched_mailserver
 
         self.url = reverse("healthcheck_p1")
@@ -49,7 +49,7 @@ class TestHealthCheckP1(testcases.TestCase):
         task.run_at = run_at
         task.save()
         response = self.client.get(self.url)
-        self.assertEqual(response.context["message"], "manage_inbox_queue error")
+        self.assertEqual(response.context["message"], "Manage inbox queue error")
         self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
 
     def test_healthcheck_service_unavailable_licence_update_task_not_responsive(self):
@@ -58,7 +58,7 @@ class TestHealthCheckP1(testcases.TestCase):
         task.run_at = run_at
         task.save()
         response = self.client.get(self.url)
-        self.assertEqual(response.context["message"], "licences_updates_queue error")
+        self.assertEqual(response.context["message"], "Licences updates queue error")
         self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
 
     @parameterized.expand(MAILSERVERS_TO_PATCH)
