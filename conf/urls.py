@@ -23,5 +23,5 @@ urlpatterns = [
     path("healthcheck/", include("healthcheck.urls")),
 ]
 
-if settings.ENABLE_MOCK_HMRC_SERVICE:
+if settings.ENABLE_MOCK_HMRC_SERVICE:  # pragma: no cover
     urlpatterns += [path("mock-hmrc/", include("mock_hmrc.urls"))]
