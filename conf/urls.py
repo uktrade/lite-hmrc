@@ -17,13 +17,11 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
-from conf.views import HealthCheck
-
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("mail/", include("mail.urls")),
-    path("healthcheck/", HealthCheck.as_view(), name="healthcheck"),
+    path("healthcheck/", include("healthcheck.urls")),
 ]
 
-if settings.ENABLE_MOCK_HMRC_SERVICE:
+if settings.ENABLE_MOCK_HMRC_SERVICE:  # pragma: no cover
     urlpatterns += [path("mock-hmrc/", include("mock_hmrc.urls"))]
