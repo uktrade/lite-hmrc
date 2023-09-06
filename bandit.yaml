@@ -1,0 +1,2 @@
+exclude_dirs: ['mail/tests', '.venv', '.git', 'tests']
+skips: ['B101']

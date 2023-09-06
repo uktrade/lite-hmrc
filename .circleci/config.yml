@@ -89,7 +89,7 @@ jobs:
       - run:
           name: Bandit
           command: |
-            pipenv run bandit -r .
+            pipenv run bandit -c bandit.yaml -r .
 
   check_background_tasks_up:
     machine:
