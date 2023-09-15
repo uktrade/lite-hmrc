@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   tests:
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8.17
       - image: circleci/postgres:12
         environment:
           POSTGRES_USER: postgres
@@ -58,7 +58,7 @@ jobs:
 
   linting:
     docker:
-      - image: circleci/python:3.8
+      - image: cimg/python:3.8.17
     steps:
       - checkout
 
