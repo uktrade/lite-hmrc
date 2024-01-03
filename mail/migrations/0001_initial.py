@@ -4,7 +4,6 @@ import uuid
 
 import django.db.models.deletion
 import django.utils.timezone
-import jsonfield.fields
 from django.db import migrations, models
 
 
@@ -85,20 +84,20 @@ class Migration(migrations.Migration):
             name="UsageUpdate",
             fields=[
                 ("id", models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ("licence_ids", jsonfield.fields.JSONField(default=dict)),
+                ("licence_ids", models.JSONField(default=dict)),
                 ("spire_run_number", models.IntegerField()),
                 ("hmrc_run_number", models.IntegerField()),
-                ("has_lite_data", models.NullBooleanField(default=None)),
-                ("has_spire_data", models.NullBooleanField(default=None)),
-                ("lite_payload", jsonfield.fields.JSONField(default=dict)),
+                ("has_lite_data", models.BooleanField(null=True)),
+                ("has_spire_data", models.BooleanField(null=True)),
+                ("lite_payload", models.JSONField(default=dict)),
                 ("lite_sent_at", models.DateTimeField(blank=True, null=True)),
-                ("lite_accepted_licences", jsonfield.fields.JSONField(default=dict)),
-                ("lite_rejected_licences", jsonfield.fields.JSONField(default=dict)),
-                ("spire_accepted_licences", jsonfield.fields.JSONField(default=dict)),
-                ("spire_rejected_licences", jsonfield.fields.JSONField(default=dict)),
-                ("lite_licences", jsonfield.fields.JSONField(default=dict)),
-                ("spire_licences", jsonfield.fields.JSONField(default=dict)),
-                ("lite_response", jsonfield.fields.JSONField(default=dict)),
+                ("lite_accepted_licences", models.JSONField(default=dict)),
+                ("lite_rejected_licences", models.JSONField(default=dict)),
+                ("spire_accepted_licences", models.JSONField(default=dict)),
+                ("spire_rejected_licences", models.JSONField(default=dict)),
+                ("lite_licences", models.JSONField(default=dict)),
+                ("spire_licences", models.JSONField(default=dict)),
+                ("lite_response", models.JSONField(default=dict)),
                 ("mail", models.ForeignKey(on_delete=django.db.models.deletion.DO_NOTHING, to="mail.Mail")),
             ],
             options={
@@ -134,7 +133,7 @@ class Migration(migrations.Migration):
                         choices=[("insert", "Insert"), ("cancel", "Cancel"), ("update", "Update")], max_length=6
                     ),
                 ),
-                ("data", jsonfield.fields.JSONField(default=dict)),
+                ("data", models.JSONField(default=dict)),
                 ("received_at", models.DateTimeField(default=django.utils.timezone.now)),
                 ("is_processed", models.BooleanField(default=False)),
                 ("old_lite_id", models.UUIDField(null=True)),

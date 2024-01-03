@@ -125,8 +125,8 @@ class UsageData(models.Model):
     mail = models.ForeignKey(Mail, on_delete=models.DO_NOTHING, null=False)
     spire_run_number = models.IntegerField()
     hmrc_run_number = models.IntegerField()
-    has_lite_data = models.NullBooleanField(default=None)
-    has_spire_data = models.NullBooleanField(default=None)
+    has_lite_data = models.BooleanField(null=True)
+    has_spire_data = models.BooleanField(null=True)
     lite_payload = models.JSONField(default=dict)
     lite_sent_at = models.DateTimeField(blank=True, null=True)  # When update was sent to LITE API
     lite_accepted_licences = models.JSONField(default=list)
