@@ -16,6 +16,7 @@ pytest = "*"
 pytest-django = "*"
 pytest-cov = "*"
 requests-mock = "*"
+watchdog = {extras = ["watchmedo"], version = "*"}
 
 [packages]
 djangorestframework = "~=3.9"
@@ -36,6 +37,9 @@ django-jsonfield = "==1.4"
 msal = "~=1.22.0"
 psycopg2-binary = "~=2.9.3"
 setuptools = "~=65.5.1"
+celery = "~=5.2.7"
+redis = "~=4.0.2"
+
 
 [requires]
 python_version = "3.8"

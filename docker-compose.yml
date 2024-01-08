@@ -37,5 +37,25 @@ services:
       - 587:1025  # SMTP
     image: mailhog/mailhog
 
+  celery:
+    build: .
+    volumes:
+      - .:/app
+    env_file: .env
+    links:
+      - lite-hmrc-postgres
+      - redis
+    depends_on:
+      - lite-hmrc-intg
+    command: watchmedo auto-restart -d . -R -p '*.py' -- celery -A conf worker -l info
+
+  redis:
+    image: "redis:5-alpine"
+    container_name: redis
+    expose:
+      - 6379
+    ports:
+      - 6379:6379
+
 volumes:
   maildata:
