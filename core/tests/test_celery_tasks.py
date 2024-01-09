@@ -9,7 +9,7 @@ from mail.enums import ReplyStatusEnum
 from mail.models import Mail
 
 
-class FlagsUpdateTest(APITestCase):
+class CeleryMailTest(APITestCase):
     def test_debug_add(self):
         res = celery_tasks.debug_add(1, 2)
         assert res == 3

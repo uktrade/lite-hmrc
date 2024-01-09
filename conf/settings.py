@@ -26,10 +26,6 @@ DEBUG = env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = "*"
 
-# AWS
-VCAP_SERVICES = env.json("VCAP_SERVICES", {})
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -262,9 +258,7 @@ SEND_REJECTED_EMAIL = env.bool("SEND_REJECTED_EMAIL", default=True)
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-if VCAP_SERVICES:
-    if "aws-s3-bucket" not in VCAP_SERVICES:
-        raise Exception("S3 Bucket not bound to environment")
+VCAP_SERVICES = env.json("VCAP_SERVICES", {})
 
 if "redis" in VCAP_SERVICES:
     REDIS_BASE_URL = VCAP_SERVICES["redis"][0]["credentials"]["uri"]
@@ -286,7 +280,6 @@ if REDIS_BASE_URL:
     CELERY_BROKER_URL = _build_redis_url(REDIS_BASE_URL, REDIS_CELERY_DB, **url_args)
     CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
-CELERY_ALWAYS_EAGER = env.bool("CELERY_ALWAYS_EAGER", False)
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", False)
 CELERY_TASK_STORE_EAGER_RESULT = env.bool("CELERY_TASK_STORE_EAGER_RESULT", False)
 CELERY_TASK_SEND_SENT_EVENT = env.bool("CELERY_TASK_SEND_SENT_EVENT", True)
