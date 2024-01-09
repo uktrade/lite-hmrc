@@ -14,6 +14,8 @@ services:
       - 5432
     ports:
       - 5432:5432
+    networks:
+      - lite
 
   lite-hmrc-intg:
     container_name: "lite-hmrc-intg"
@@ -30,12 +32,18 @@ services:
     expose:
       - 8000
     command: pipenv run ./manage.py runserver 0.0.0.0:8000
+    networks:
+      - lite
+
 
   mailhog:
     ports:
       - 8025:8025  # HTTP
       - 587:1025  # SMTP
     image: mailhog/mailhog
+    networks:
+      - lite
+
 
   celery:
     build: .
@@ -47,15 +55,38 @@ services:
       - redis
     depends_on:
       - lite-hmrc-intg
-    command: watchmedo auto-restart -d . -R -p '*.py' -- celery -A conf worker -l info
+    command: pipenv run watchmedo auto-restart -d . -R -p '*.py' -- celery -A conf worker -l info
+    networks:
+      - lite
+
+
+  celery-scheduler:
+    build: .
+    volumes:
+      - .:/app
+    env_file: .env
+    links:
+      - lite-hmrc-postgres
+      - redis
+    depends_on:
+      - lite-hmrc-intg
+    command:  pipenv run watchmedo auto-restart -d . -R -p '*.py' -- celery -A conf beat
+    networks:
+      - lite
+
 
   redis:
     image: "redis:5-alpine"
-    container_name: redis
+    container_name: hmrc-redis
     expose:
       - 6379
     ports:
       - 6379:6379
+    networks:
+      - lite
 
+networks:
+  lite:
+    external: true
 volumes:
   maildata:

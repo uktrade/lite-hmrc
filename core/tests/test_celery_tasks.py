@@ -1,4 +1,4 @@
-from api.core import celery_tasks
+from core import celery_tasks
 from rest_framework.test import APITestCase
 
 class FlagsUpdateTest(APITestCase):

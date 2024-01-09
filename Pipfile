@@ -40,7 +40,6 @@ setuptools = "~=65.5.1"
 celery = "~=5.2.7"
 redis = "~=4.0.2"
 
-
 [requires]
 python_version = "3.8"
 python_full_version = "3.8.17"
