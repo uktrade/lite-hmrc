@@ -1,5 +1,7 @@
 from celery import shared_task
+
 from mail.models import Mail
+
 
 @shared_task
 def debug_add(x, y):

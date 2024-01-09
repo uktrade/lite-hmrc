@@ -106,7 +106,6 @@ def build_json_payload_from_data_blocks(data_blocks: list) -> dict:
                 licence_payload["id"] = get_licence_id(licence_reference)
 
             if "line" == line_array[0]:
-
                 good_payload["id"] = get_good_id(line_number=line_array[1], licence_reference=licence_reference)
                 good_payload["usage"] = line_array[2]
                 good_payload["value"] = line_array[3]

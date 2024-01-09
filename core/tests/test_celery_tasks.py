@@ -1,5 +1,7 @@
-from core import celery_tasks
 from rest_framework.test import APITestCase
+
+from core import celery_tasks
+
 
 class FlagsUpdateTest(APITestCase):
     def test_debug_add(self):
