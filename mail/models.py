@@ -94,9 +94,9 @@ class Mail(models.Model):
 
     @staticmethod
     def notify_users(id, response_date):
-        from mail.tasks import notify_users_of_rejected_mail
+        from mail.celery_tasks import notify_users_of_rejected_mail
 
-        notify_users_of_rejected_mail(str(id), str(response_date))
+        notify_users_of_rejected_mail.delay(str(id), str(response_date))
 
 
 class LicenceData(models.Model):
