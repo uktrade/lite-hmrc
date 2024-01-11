@@ -7,16 +7,18 @@ from mail.celery_tasks import notify_users_of_rejected_mail
 
 
 class NotifyUsersOfRejectedMailTests(TestCase):
-    @mock.patch("smtplib.SMTP.send_message")
+    @mock.patch("mail.celery_tasks.smtp_send")
     def test_send_success(self, mock_send):
         settings = {
             "EMAIL_USER": "test@example.com",  # /PS-IGNORE
             "NOTIFY_USERS": ["notify@example.com"],  # /PS-IGNORE
         }
         with self.settings(**settings):
-            notify_users_of_rejected_mail.delay("123", "1999-12-31 23:45:59")
+            notify_users_of_rejected_mail("123", "1999-12-31 23:45:59")
 
-        self.assertEqual(len(mock_send.delay.call_args_list), 1)
+        mock_send.assert_called_once()
+
+        self.assertEqual(len(mock_send.call_args_list), 1)
         message = mock_send.call_args[0][0]
         self.assertIsInstance(message, email.mime.multipart.MIMEMultipart)
 
