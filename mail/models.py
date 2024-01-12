@@ -145,9 +145,9 @@ class UsageData(models.Model):
 
     @staticmethod
     def send_usage_updates_to_lite(id):
-        from mail.tasks import schedule_licence_usage_figures_for_lite_api
+        from mail.celery_tasks import send_licence_usage_figures_to_lite_api
 
-        schedule_licence_usage_figures_for_lite_api(str(id))
+        send_licence_usage_figures_to_lite_api.delay(str(id))
 
 
 class LicencePayload(models.Model):
