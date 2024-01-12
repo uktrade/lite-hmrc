@@ -6,6 +6,11 @@ and usage are exchanged as mail attachment between Lite and HMRC
 
 Tasks are managed using this project: [Django Background Tasks](https://github.com/arteria/django-background-tasks/blob/master/docs/index.rst)
 
+We currently have two mechanisms for background tasks in lite;
+- django-background-tasks: `pipenv run ./manage.py process_tasks` will run all background tasks
+- celery: a celery container is running by default when using docker-compose.  If a working copy
+    "on the metal" without docker, run celery with `watchmedo auto-restart -d . -R -p '*.py' -- celery -A conf worker -l info`
+
 The entry point for configuring the tasks is defined here: `lite-hmrc/mail/apps.py`
 
 

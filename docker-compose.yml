@@ -27,6 +27,8 @@ services:
       - 8000:8000
     depends_on:
       - lite-hmrc-postgres
+      - celery
+      - celery-beat
     expose:
       - 8000
     command: pipenv run ./manage.py runserver 0.0.0.0:8000
@@ -37,5 +39,32 @@ services:
       - 587:1025  # SMTP
     image: mailhog/mailhog
 
+  celery:
+    build: .
+    volumes:
+      - .:/app
+    env_file: .env
+    links:
+      - lite-hmrc-postgres
+      - redis
+    command: pipenv run watchmedo auto-restart -d . -R -p '*.py' -- celery -A conf worker -l info
+
+  celery-beat:
+    build: .
+    volumes:
+      - .:/app
+    env_file: .env
+    links:
+      - lite-hmrc-postgres
+      - redis
+    command:  pipenv run watchmedo auto-restart -d . -R -p '*.py' -- celery -A conf beat
+
+  redis:
+    image: "redis:5-alpine"
+    container_name: hmrc-redis
+    expose:
+      - 6379
+    ports:
+      - 6379:6379
 volumes:
   maildata:
