@@ -15,3 +15,4 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load celery_tasks.py modules from all registered Django apps.
 app.autodiscover_tasks(related_name="celery_tasks")
+app.autodiscover_tasks(["core"], related_name="celery_tasks")

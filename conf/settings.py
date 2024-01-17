@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     "background_task",
     "mail.apps.MailConfig",
     "healthcheck",
-    "core",
 ]
 
 MIDDLEWARE = [
