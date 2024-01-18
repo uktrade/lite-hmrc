@@ -1,20 +1,16 @@
 import email.mime.multipart
 from unittest import mock
 
-from django.test import TestCase
+from django.test import override_settings, TestCase
 
-from mail.celery_tasks import notify_users_of_rejected_mail
+from mail.celery_tasks import notify_users_of_rejected_licences
 
 
 class NotifyUsersOfRejectedMailTests(TestCase):
+    @override_settings(EMAIL_USER="test@example.com", NOTIFY_USERS=["notify@example.com"])
     @mock.patch("mail.celery_tasks.smtp_send")
     def test_send_success(self, mock_send):
-        settings = {
-            "EMAIL_USER": "test@example.com",  # /PS-IGNORE
-            "NOTIFY_USERS": ["notify@example.com"],  # /PS-IGNORE
-        }
-        with self.settings(**settings):
-            notify_users_of_rejected_mail("123", "CHIEF_SPIRE_licenceReply_202401180900_42557")
+        notify_users_of_rejected_licences("123", "CHIEF_SPIRE_licenceReply_202401180900_42557")
 
         mock_send.assert_called_once()
 
@@ -27,7 +23,7 @@ class NotifyUsersOfRejectedMailTests(TestCase):
             "MIME-Version": "1.0",
             "From": "test@example.com",  # /PS-IGNORE
             "To": "notify@example.com",  # /PS-IGNORE
-            "Subject": "Mail rejected",
+            "Subject": "Licence rejected by HMRC",
         }
         self.assertDictEqual(dict(message), expected_headers)
 

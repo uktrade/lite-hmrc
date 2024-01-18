@@ -19,7 +19,7 @@ RETRY_BACKOFF = 180
     max_retries=MAX_ATTEMPTS,
     retry_backoff=RETRY_BACKOFF,
 )
-def notify_users_of_rejected_mail(mail_id, mail_response_subject):
+def notify_users_of_rejected_licences(mail_id, mail_response_subject):
     """If a reply is received with rejected licences this task notifies users of the rejection"""
 
     logger.info("Notifying users of rejected licences found in mail with subject %s", mail_response_subject)
@@ -28,19 +28,18 @@ def notify_users_of_rejected_mail(mail_id, mail_response_subject):
         multipart_msg = MIMEMultipart()
         multipart_msg["From"] = settings.EMAIL_USER
         multipart_msg["To"] = ",".join(settings.NOTIFY_USERS)
-        multipart_msg["Subject"] = "Mail rejected"
+        multipart_msg["Subject"] = "Licence rejected by HMRC"
         body = MIMEText(f"Mail (Id: {mail_id}) with subject {mail_response_subject} has rejected licences")
         multipart_msg.attach(body)
 
         smtp_send(multipart_msg)
-    except SMTPException as exc:  # noqa
-        error_message = (
-            f"An unexpected error occurred when notifying users of rejected licences "
-            f"[Id: {mail_id}, subject: {mail_response_subject}] -> {type(exc).__name__}: {exc}"
-        )
 
-        # Raise an exception
-        # this will cause the task to be marked as 'Failed' and retried if there are retry attempts left
-        raise exc(error_message)
+    except SMTPException:  # noqa
+        logger.exception(
+            "An unexpected error occurred when notifying users of rejected licences, Mail Id: %s, subject: %s",
+            mail_id,
+            mail_response_subject,
+        )
+        raise
 
     logger.info("Successfully notified users of rejected licences found in mail with subject %s", mail_response_subject)
