@@ -3,6 +3,7 @@ from celery.utils.log import get_task_logger
 from django.conf import settings
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from smtplib import SMTPException
 
 from mail.servers import smtp_send
 
@@ -14,7 +15,7 @@ RETRY_BACKOFF = 180
 
 # Notify Users of Rejected Mail
 @shared_task(
-    autoretry_for=(Exception,),
+    autoretry_for=(SMTPException,),
     max_retries=MAX_ATTEMPTS,
     retry_backoff=RETRY_BACKOFF,
 )
@@ -32,7 +33,7 @@ def notify_users_of_rejected_mail(mail_id, mail_response_subject):
         multipart_msg.attach(body)
 
         smtp_send(multipart_msg)
-    except Exception as exc:  # noqa
+    except SMTPException as exc:  # noqa
         error_message = (
             f"An unexpected error occurred when notifying users of rejected licences "
             f"[Id: {mail_id}, subject: {mail_response_subject}] -> {type(exc).__name__}: {exc}"
