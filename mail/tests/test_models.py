@@ -32,7 +32,7 @@ class TestSendNotifyEmail:
         self.mail.response_date = timezone.now()
         self.mail.save()
 
-        self.mock_notify_users.assert_called_with(self.mail.id, self.mail.response_date)
+        self.mock_notify_users.assert_called_with(self.mail.id, self.mail.response_filename)
 
     @override_settings(SEND_REJECTED_EMAIL=True)
     def test_notify_users_not_called_when_setting_enabled_but_response_accepted(self):

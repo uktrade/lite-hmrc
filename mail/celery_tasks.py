@@ -29,7 +29,7 @@ def notify_users_of_rejected_mail(mail_id, mail_response_subject):
         multipart_msg["From"] = settings.EMAIL_USER
         multipart_msg["To"] = ",".join(settings.NOTIFY_USERS)
         multipart_msg["Subject"] = "Mail rejected"
-        body = MIMEText(f"Mail [{mail_id}] with subject [{mail_response_subject}] has rejected licences")
+        body = MIMEText(f"Mail (Id: {mail_id}) with subject {mail_response_subject} has rejected licences")
         multipart_msg.attach(body)
 
         smtp_send(multipart_msg)

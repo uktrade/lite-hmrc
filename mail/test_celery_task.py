@@ -14,7 +14,7 @@ class NotifyUsersOfRejectedMailTests(TestCase):
             "NOTIFY_USERS": ["notify@example.com"],  # /PS-IGNORE
         }
         with self.settings(**settings):
-            notify_users_of_rejected_mail("123", "1999-12-31 23:45:59")
+            notify_users_of_rejected_mail("123", "CHIEF_SPIRE_licenceReply_202401180900_42557")
 
         mock_send.assert_called_once()
 
@@ -32,5 +32,5 @@ class NotifyUsersOfRejectedMailTests(TestCase):
         self.assertDictEqual(dict(message), expected_headers)
 
         text_payload = message.get_payload(0)
-        expected_body = "Mail [123] received at [1999-12-31 23:45:59] was rejected"
+        expected_body = "Mail (Id: 123) with subject CHIEF_SPIRE_licenceReply_202401180900_42557 has rejected licences"
         self.assertEqual(text_payload.get_payload(), expected_body)
