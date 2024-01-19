@@ -7,6 +7,7 @@ from typing import List
 from django.conf import settings
 from django.db import IntegrityError, models
 from django.utils import timezone
+from mail.celery_tasks import notify_users_of_rejected_licences
 from model_utils.models import TimeStampedModel
 
 from mail.enums import (
@@ -78,7 +79,7 @@ class Mail(models.Model):
 
         if settings.SEND_REJECTED_EMAIL:
             if self.response_data and ReplyStatusEnum.REJECTED in self.response_data:
-                self.notify_users(self.id, self.response_date)
+                self.notify_users(self.id, self.response_subject)
 
     def set_locking_time(self, offset: int = 0):
         self.currently_processing_at = timezone.now() + timedelta(seconds=offset)
@@ -93,10 +94,8 @@ class Mail(models.Model):
         self.save()
 
     @staticmethod
-    def notify_users(id, response_date):
-        from mail.tasks import notify_users_of_rejected_mail
-
-        notify_users_of_rejected_mail(str(id), str(response_date))
+    def notify_users(id, response_subject):
+        notify_users_of_rejected_licences.delay(str(id), response_subject)
 
 
 class LicenceData(models.Model):
