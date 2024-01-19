@@ -19,6 +19,7 @@ logger = get_task_logger(__name__)
 
 MAX_ATTEMPTS = 3
 RETRY_BACKOFF = 180
+CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_to_hmrc"
 
 
 # Notify Users of Rejected Mail

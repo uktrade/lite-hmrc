@@ -3,13 +3,15 @@ import logging
 import poplib
 
 from background_task.models import Task
+from celery import current_app
 from django.conf import settings
 from django.utils import timezone
 
 from mail.enums import ReceptionStatusEnum
+from mail.celery_tasks import CELERY_SEND_LICENCE_UPDATES_TASK_NAME
 from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
 from mail.models import LicencePayload, Mail
-from mail.tasks import LICENCE_DATA_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
+from mail.tasks import MANAGE_INBOX_TASK_QUEUE
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +57,9 @@ def is_licence_payloads_processing():
 
 
 def is_lite_licence_update_task_responsive():
-    dt = timezone.now() + datetime.timedelta(seconds=settings.LITE_LICENCE_DATA_POLL_INTERVAL)
+    licence_update_task = current_app.tasks.get(CELERY_SEND_LICENCE_UPDATES_TASK_NAME)
 
-    return Task.objects.filter(queue=LICENCE_DATA_TASK_QUEUE, run_at__lte=dt).exists()
+    return bool(licence_update_task)
 
 
 def is_manage_inbox_task_responsive():
