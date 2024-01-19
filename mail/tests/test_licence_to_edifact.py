@@ -3,6 +3,7 @@ from unittest import mock
 from django.utils import timezone
 from parameterized import parameterized
 
+from mail.celery_tasks import send_licence_details_to_hmrc
 from mail.enums import LicenceActionEnum
 from mail.libraries.chieftypes import Country
 from mail.libraries.lite_to_edifact_converter import (
@@ -12,7 +13,6 @@ from mail.libraries.lite_to_edifact_converter import (
     licences_to_edifact,
 )
 from mail.models import GoodIdMapping, LicencePayload, Mail
-from mail.tasks import send_licence_data_to_hmrc
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
@@ -53,10 +53,10 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
 
         self.assertEqual(result, expected)
 
-    @mock.patch("mail.tasks.send")
+    @mock.patch("mail.celery_tasks.send")
     def test_licence_is_marked_as_processed_after_sending(self, send):
         send.return_value = None
-        send_licence_data_to_hmrc.now()
+        send_licence_details_to_hmrc.delay()
 
         self.assertEqual(Mail.objects.count(), 1)
         self.single_siel_licence_payload.refresh_from_db()

@@ -17,15 +17,15 @@ class MailConfig(AppConfig):
             MANAGE_INBOX_TASK_QUEUE,
             manage_inbox,
             schedule_licence_usage_figures_for_lite_api,
-            send_licence_data_to_hmrc,
         )
+        from mail.celery_tasks import send_licence_details_to_hmrc
 
         Task.objects.filter(queue=MANAGE_INBOX_TASK_QUEUE).delete()
         Task.objects.filter(queue=LICENCE_DATA_TASK_QUEUE).delete()
 
         if settings.BACKGROUND_TASK_ENABLED:
             # Tasks common to ICMS and LITE/SPIRE
-            send_licence_data_to_hmrc(repeat=settings.LITE_LICENCE_DATA_POLL_INTERVAL, repeat_until=None)  # noqa
+            send_licence_details_to_hmrc.delay()  # noqa
 
             # LITE/SPIRE Tasks
             if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.SPIRE:

@@ -7,7 +7,6 @@ from typing import List
 from django.conf import settings
 from django.db import IntegrityError, models
 from django.utils import timezone
-from mail.celery_tasks import notify_users_of_rejected_licences
 from model_utils.models import TimeStampedModel
 
 from mail.enums import (
@@ -95,6 +94,8 @@ class Mail(models.Model):
 
     @staticmethod
     def notify_users(id, response_subject):
+        from mail.celery_tasks import notify_users_of_rejected_licences
+
         notify_users_of_rejected_licences.delay(str(id), response_subject)
 
 
