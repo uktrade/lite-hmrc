@@ -1,7 +1,7 @@
 import poplib
 import uuid
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from background_task.models import Task
 from django.conf import settings
@@ -30,6 +30,12 @@ class TestHealthCheckP1(testcases.TestCase):
             patched_mailserver = patch(f"healthcheck.checks.{mailserver_to_patch}").start()
             self.mocked_mailservers[mailserver_to_patch] = patched_mailserver
 
+        # Mock Celery task used in celery_health_check
+        self.add_task_mock = patch("healthcheck.checks.add.apply_async").start()
+        self.mock_result = Mock()
+        self.mock_result.result = 8
+        self.add_task_mock.return_value = self.mock_result
+
         self.url = reverse("healthcheck_p1")
 
     def tearDown(self) -> None:
@@ -37,6 +43,7 @@ class TestHealthCheckP1(testcases.TestCase):
 
         for mailserver_to_patch in self.MAILSERVERS_TO_PATCH:
             self.mocked_mailservers[mailserver_to_patch].stop()
+        self.add_task_mock.stop()
 
     def test_healthcheck_return_ok(self):
         response = self.client.get(self.url)
