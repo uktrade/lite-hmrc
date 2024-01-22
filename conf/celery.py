@@ -6,7 +6,7 @@ from celery.schedules import crontab
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "conf.settings")
 
-app = Celery("hmrc")
+app = Celery("lite-hmrc")
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
