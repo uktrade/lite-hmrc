@@ -50,7 +50,7 @@ class HealthCheckP1(BaseHealthCheckView):
         (can_authenticate_mailboxes, "Mailbox authentication error"),
         (is_lite_licence_update_task_responsive, "Licences updates queue error"),
         (is_manage_inbox_task_responsive, "Manage inbox queue error"),
-        (celery_health_check, "Celery health check error"), 
+        (celery_health_check, "Celery health check error"),
     ]
 
 

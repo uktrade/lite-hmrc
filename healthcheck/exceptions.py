@@ -9,7 +9,8 @@ class HealthCheckException(Exception):
 
     def __str__(self):
         return "%s: %s" % (self.message_type, self.message)
-    
+
+
 class ServiceUnavailable(HealthCheckException):
     message_type = _("unavailable")
 

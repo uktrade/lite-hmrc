@@ -83,9 +83,11 @@ def is_pending_mail_processing():
 
     return not pending_mails.exists()
 
+
 @shared_task(ignore_result=False)
 def add(x, y):
     return x + y
+
 
 def celery_health_check(queue=None):
     errors = []
