@@ -102,7 +102,8 @@ def celery_health_check(queue=None):
         result = add.apply_async(args=[4, 4], expires=queue_timeout, queue=queue)
         result.get(timeout=result_timeout)
         if result.result != 8:
-            raise ServiceReturnedUnexpectedResult("Celery returned wrong result")
+            error = ServiceReturnedUnexpectedResult("Celery returned wrong result")
+            errors.append(error)
     except HealthCheckException as e:
         errors.append(e)
     except (IOError, NotImplementedError, TaskRevokedError, TimeoutError) as e:
@@ -110,7 +111,7 @@ def celery_health_check(queue=None):
         errors.append(error)
     except BaseException:
         logger.exception("Unexpected Error!")
-        raise
+        errors.append(BaseException("Unexpected Error!"))
     finally:
         time_taken = timer() - start
         if errors:
