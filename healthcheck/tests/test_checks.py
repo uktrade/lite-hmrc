@@ -3,7 +3,7 @@ import unittest
 import pytest
 from unittest.mock import Mock
 from healthcheck.exceptions import HealthCheckException
-from healthcheck.checks import celery_health_check
+from healthcheck.checks import celery_health_check, add
 from celery.exceptions import TaskRevokedError, TimeoutError
 
 
@@ -27,6 +27,11 @@ def mock_logger():
 @pytest.fixture
 def add_mock():
     return Mock()
+
+
+def test_add_task():
+    result = add(4, 5)
+    assert result == 9
 
 
 def test_celery_health_check_successful(mock_settings, mock_logger, add_mock):
