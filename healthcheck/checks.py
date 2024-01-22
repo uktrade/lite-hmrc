@@ -1,10 +1,14 @@
 import datetime
 import logging
 import poplib
+from timeit import default_timer as timer
+from celery import shared_task
+from celery.exceptions import TaskRevokedError, TimeoutError
 
 from background_task.models import Task
 from django.conf import settings
 from django.utils import timezone
+from healthcheck.exceptions import HealthCheckException, ServiceReturnedUnexpectedResult, ServiceUnavailable
 
 from mail.enums import ReceptionStatusEnum
 from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
@@ -78,3 +82,39 @@ def is_pending_mail_processing():
         )
 
     return not pending_mails.exists()
+
+@shared_task(ignore_result=False)
+def add(x, y):
+    return x + y
+
+def celery_health_check(queue=None):
+    errors = []
+    start = timer()
+
+    try:
+        # Perform Celery health check
+        timeout = getattr(settings, "HEALTHCHECK_CELERY_TIMEOUT", 3)
+        result_timeout = getattr(settings, "HEALTHCHECK_CELERY_RESULT_TIMEOUT", timeout)
+        queue_timeout = getattr(settings, "HEALTHCHECK_CELERY_QUEUE_TIMEOUT", timeout)
+
+        result = add.apply_async(args=[4, 4], expires=queue_timeout, queue=queue)
+        result.get(timeout=result_timeout)
+        if result.result != 8:
+            raise ServiceReturnedUnexpectedResult("Celery returned wrong result")
+    except HealthCheckException as e:
+        errors.append(e)
+    except (IOError, NotImplementedError, TaskRevokedError, TimeoutError) as e:
+        error = ServiceUnavailable(f"{e.__class__.__name__}: {str(e)}")
+        errors.append(error)
+    except BaseException:
+        logger.exception("Unexpected Error!")
+        raise
+    finally:
+        time_taken = timer() - start
+        if errors:
+            for error in errors:
+                logger.error(str(error))
+            return False
+        else:
+            logger.info(f"Celery health check passed in {time_taken:.2f} seconds")
+            return True
