@@ -14,16 +14,42 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        parser.add_argument("--edi_file_path", type=str, nargs="?", help="Path to local EDI file that should be sent")
-        parser.add_argument("--edi_file_name", type=str, nargs="?", help="Filename for edi data to resend")
-        parser.add_argument("--sender_email", type=str, nargs="?", help="Email for the sender")
-        parser.add_argument("--sender_email_password", type=str, nargs="?", help="Password for the sender")
-        parser.add_argument("--sender_mailbox_url", type=str, nargs="?", help="URL for sender mailbox")
         parser.add_argument(
-            "--target_email", type=str, nargs="?", help="Email for the lite-hmrc mailbox to send this to"
+            "--edi_file_path",
+            type=str,
+            nargs="?",
+            help="Path to local EDI file that should be sent. Contents can be sourced from a valid Mail ORM record on the lite-hmrc environment; Mail.edi_data.",
         )
-
-        parser.add_argument("--dry_run", help="Is it a test run?", action="store_true")
+        parser.add_argument(
+            "--edi_file_name",
+            type=str,
+            nargs="?",
+            help="Filename for edi data to resend. Can be sourced from a valid Mail ORM record on the lite-hmrc environment; Mail.edi_filename",
+        )
+        parser.add_argument(
+            "--sender_email",
+            type=str,
+            nargs="?",
+            help="Email for the sender.  This could be settings.HMRC_ADDRESS if re-sending an email that HMRC would send us",
+        )
+        parser.add_argument(
+            "--sender_email_password",
+            type=str,
+            nargs="?",
+            help="Password for the sender.  Found on Passman 'LITE / SPIRE / ICMS  - 0365/Exchange emails'",
+        )
+        parser.add_argument(
+            "--sender_mailbox_url",
+            type=str,
+            nargs="?",
+            help="URL for sender mailbox.  Found on Passman 'LITE / SPIRE / ICMS  - 0365/Exchange emails'",
+        )
+        parser.add_argument(
+            "--target_email",
+            type=str,
+            nargs="?",
+            help="Email for the lite-hmrc mailbox to send this to. e.g. settings.HMRC_TO_DIT_EMAIL_USER",
+        )
 
     def handle(self, *args, **options):
 
