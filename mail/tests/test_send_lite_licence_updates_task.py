@@ -2,10 +2,10 @@ from unittest import mock
 
 from django.test import override_settings
 from parameterized import parameterized
+from smtplib import SMTPException
 
 from mail.celery_tasks import send_licence_details_to_hmrc
 from mail.enums import ReceptionStatusEnum
-from mail.libraries.lite_to_edifact_converter import EdifactValidationError
 from mail.models import LicencePayload, Mail
 from mail.tests.libraries.client import LiteHMRCTestClient
 
@@ -45,6 +45,7 @@ class TaskTests(LiteHMRCTestClient):
 
     @mock.patch("mail.celery_tasks.send")
     def test_send_licence_details_not_sent_when_there_are_no_payloads(self, mock_send):
+        """Test to ensure no details are sent if there are no payloads to process"""
         self.mail.status = ReceptionStatusEnum.REPLY_SENT
         self.mail.save()
 
@@ -58,10 +59,28 @@ class TaskTests(LiteHMRCTestClient):
         self.assertEqual(Mail.objects.count(), 1)
         mock_send.assert_not_called()
 
-    @mock.patch("mail.libraries.lite_to_edifact_converter.validate_edifact_file")
-    def test_send_licence_details_raises_exception(self, validator):
-        validator.side_effect = EdifactValidationError()
-        with self.assertRaises(EdifactValidationError):
+    @mock.patch("mail.celery_tasks.send")
+    def test_send_licence_details_task_payload_not_processed_if_validation_error(self, mock_send):
+        """Test to ensure payload is not processed if there is a validation error"""
+        self.mail.status = ReceptionStatusEnum.REPLY_SENT
+        self.mail.save()
+
+        # invalid post code triggers validation error
+        self.single_siel_licence_payload.data["organisation"]["address"]["postcode"] = "invalid_postcode"
+        self.single_siel_licence_payload.is_processed = False
+        self.single_siel_licence_payload.save()
+
+        self.assertEqual(LicencePayload.objects.filter(is_processed=False).count(), 1)
+
+        send_licence_details_to_hmrc.delay()
+
+        self.assertEqual(LicencePayload.objects.filter(is_processed=False).count(), 1)
+        mock_send.assert_not_called()
+
+    @mock.patch("mail.celery_tasks.send")
+    def test_send_licence_details_raises_exception(self, mock_send):
+        mock_send.side_effect = SMTPException()
+        with self.assertRaises(SMTPException):
             self.mail.status = ReceptionStatusEnum.REPLY_SENT
             self.mail.save()
             send_licence_details_to_hmrc()

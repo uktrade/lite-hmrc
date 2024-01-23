@@ -9,7 +9,6 @@ from smtplib import SMTPException
 from mail.enums import ReceptionStatusEnum, SourceEnum
 from mail.libraries.builders import build_licence_data_mail
 from mail.libraries.data_processors import build_request_mail_message_dto
-from mail.libraries.lite_to_edifact_converter import EdifactValidationError
 from mail.libraries.routing_controller import send, update_mail
 from mail.models import LicencePayload, Mail
 from mail.servers import smtp_send
@@ -55,7 +54,7 @@ def notify_users_of_rejected_licences(mail_id, mail_response_subject):
 
 
 @shared_task(
-    autoretry_for=(EdifactValidationError, SMTPException),
+    autoretry_for=(SMTPException,),
     max_retries=MAX_ATTEMPTS,
     retry_backoff=RETRY_BACKOFF,
 )
@@ -98,7 +97,7 @@ def send_licence_details_to_hmrc():
             licences.update(is_processed=True)
             logger.info("Licence references [%s] marked as processed", licence_references)
 
-    except (EdifactValidationError, SMTPException):  # noqa
+    except SMTPException:
         logger.exception("An unexpected error occurred when sending LITE licence updates to HMRC -> %s")
         raise
 
