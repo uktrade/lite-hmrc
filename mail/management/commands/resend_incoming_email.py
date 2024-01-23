@@ -18,7 +18,8 @@ class Command(BaseCommand):
             "--edi_file_path",
             type=str,
             nargs="?",
-            help="Path to local EDI file that should be sent. Contents can be sourced from a valid Mail ORM record on the lite-hmrc environment; Mail.edi_data.",
+            help="Path to local EDI file that should be sent. Contents can be sourced from a valid Mail ORM record on the lite-hmrc environment; "
+            "Mail.edi_data.",
         )
         parser.add_argument(
             "--edi_file_name",
