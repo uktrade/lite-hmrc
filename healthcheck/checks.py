@@ -2,7 +2,6 @@ import datetime
 import logging
 import poplib
 
-from background_task.models import Task
 from django.conf import settings
 from django.utils import timezone
 
@@ -11,7 +10,7 @@ from health_check.exceptions import HealthCheckException
 from mail.enums import ReceptionStatusEnum
 from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
 from mail.models import LicencePayload, Mail
-from mail.tasks import MANAGE_INBOX_TASK_QUEUE
+from mail.tasks import emit_test_file
 
 
 logger = logging.getLogger(__name__)
@@ -48,14 +47,6 @@ class LicencePayloadsHealthCheck(BaseHealthCheckBackend):
 
         if unprocessed_payloads.exists():
             raise HealthCheckException("There are unprocessed licence payloads.")
-
-
-class ManageInboxTaskHealthCheck(BaseHealthCheckBackend):
-    def check_status(self):
-        dt = timezone.now() + datetime.timedelta(seconds=settings.INBOX_POLL_INTERVAL)
-        if not Task.objects.filter(queue=MANAGE_INBOX_TASK_QUEUE, run_at__lte=dt).exists():
-            raise HealthCheckException("Manage Inbox Task is not responsive.")
-
 
 class PendingMailHealthCheck(BaseHealthCheckBackend):
     def check_status(self):
