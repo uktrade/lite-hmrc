@@ -55,7 +55,7 @@ class TestHealthCheckP1(testcases.TestCase):
         self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
 
     def test_healthcheck_service_unavailable_licence_update_task_not_responsive(self):
-        current_app.tasks.pop(CELERY_SEND_LICENCE_UPDATES_TASK_NAME)
+        del current_app.tasks[CELERY_SEND_LICENCE_UPDATES_TASK_NAME]
         response = self.client.get(self.url)
         self.assertEqual(response.context["message"], "Licences updates queue error")
         self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)

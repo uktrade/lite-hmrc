@@ -6,7 +6,6 @@ from django.conf import settings
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from conf.settings import SPIRE_ADDRESS
 from mail.auth import BasicAuthentication, ModernAuthentication
 from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message
@@ -176,8 +175,6 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
-    from mail.celery_tasks import send_licence_details_to_hmrc
-
     logger.info("Sending Mail [%s] of extract type %s", mail.id, mail.extract_type)
 
     message_to_send_dto = to_email_message_dto_from(mail)
