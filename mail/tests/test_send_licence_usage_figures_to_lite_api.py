@@ -5,8 +5,8 @@ from django.conf import settings
 from django.test import override_settings
 from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED, HTTP_400_BAD_REQUEST
 
-from mail.models import GoodIdMapping, LicenceIdMapping, LicencePayload, Mail, UsageData
 from mail.celery_tasks import send_licence_usage_figures_to_lite_api
+from mail.models import GoodIdMapping, LicenceIdMapping, LicencePayload, Mail, UsageData
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
@@ -247,3 +247,44 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertIsNotNone(usage_data.lite_sent_at)
         self.assertEqual(usage_data.lite_accepted_licences, ["GBSIEL/2020/0000025/P"])
         self.assertEqual(usage_data.lite_rejected_licences, [])
+
+    def test_schedule_usages_for_lite_api_missing_usage_record(self):
+
+        result = send_licence_usage_figures_to_lite_api.delay(str(uuid4()))
+        self.assertRaises(UsageData.DoesNotExist, result.get)
+
+    @mock.patch("mail.celery_tasks.mail_requests.put")
+    def test_empty_payload_ignored(self, mock_put_request):
+        licence = LicenceIdMapping.objects.create(
+            lite_id="5678d9b2-09a9-4e86-840f-236d186e1234", reference="GBSIEL/2020/0000025/P"
+        )
+
+        mail = Mail.objects.create(
+            edi_filename="usage_data",
+            edi_data=("1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\\n" "2\\fileTrailer\\2"),
+        )
+        usage_data = UsageData.objects.create(
+            mail=mail,
+            licence_ids='["GBSIEL/2020/0000025/P"]',
+            hmrc_run_number=0,
+            spire_run_number=0,
+        )
+
+        send_licence_usage_figures_to_lite_api.delay(str(usage_data.id))
+
+        self.assertEquals(mock_put_request.called, False)
+
+    @mock.patch("mail.celery_tasks.mail_requests.put")
+    def test_schedule_usages_for_lite_api_207_malformed_response(self, put_request):
+        put_request.return_value = MockResponse(
+            json={
+                "usage_data_id": "1e5a4fd0-e581-4efd-9770-ac68e04852d2",
+            },
+            status_code=HTTP_207_MULTI_STATUS,
+        )
+
+        result = send_licence_usage_figures_to_lite_api.delay(str(self.usage_data.id))
+
+        self.assertRaises(KeyError, result.get)
+        self.usage_data.refresh_from_db()
+        self.assertIsNone(self.usage_data.lite_sent_at)
