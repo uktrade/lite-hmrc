@@ -4,7 +4,7 @@ from email.mime.text import MIMEText
 from smtplib import SMTPException
 from typing import List, MutableMapping, Tuple
 
-from celery import shared_task
+from celery import Task, shared_task
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.db import transaction
@@ -112,6 +112,20 @@ def notify_users_of_rejected_licences(mail_id, mail_response_subject):
     logger.info("Successfully notified users of rejected licences found in mail with subject %s", mail_response_subject)
 
 
+class BaseTask(Task):
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        message = (
+            """
+        Maximum attempts for send_licence_usage_figures_to_lite_api task exceeded - the task has failed and needs manual inspection.
+        See mail.apps.MailConfig for a potential retry mechanism.
+
+        Args: %s
+        """
+            % args
+        )
+        logger.error(message)
+
+
 @shared_task(
     autoretry_for=(SMTPException,),
     max_retries=MAX_ATTEMPTS,
@@ -169,6 +183,7 @@ def send_licence_details_to_hmrc():
     autoretry_for=(Exception,),
     max_retries=MAX_ATTEMPTS,
     retry_backoff=True,
+    base=BaseTask,
 )
 def send_licence_usage_figures_to_lite_api(lite_usage_data_id):
     """Sends HMRC Usage figure updates to LITE"""
