@@ -71,9 +71,8 @@ def save_response(lite_usage_data: UsageData, accepted_licences, rejected_licenc
     lite_usage_data.save()
 
 
-def _handle_exception(message, lite_usage_data_id):
-    error_message = f"Failed to send LITE UsageData [{lite_usage_data_id}] to LITE API -> {message} "
-    raise Exception(error_message)
+def _log_error(message, lite_usage_data_id):
+    logger.error("Failed to send LITE UsageData [{%s}] to LITE API -> {%s}", lite_usage_data_id, message)
 
 
 MAX_ATTEMPTS = 3
@@ -180,10 +179,11 @@ def send_licence_usage_figures_to_lite_api(lite_usage_data_id):
         lite_usage_data = UsageData.objects.get(id=lite_usage_data_id)
         licences = UsageData.licence_ids
     except UsageData.DoesNotExist:  # noqa
-        _handle_exception(
+        _log_error(
             f"LITE UsageData [{lite_usage_data_id}] does not exist.",
             lite_usage_data_id,
         )
+        raise
 
     # Extract usage details of Licences issued from LITE
     _, data = split_edi_data_by_id(lite_usage_data.mail.edi_data, lite_usage_data)
@@ -209,28 +209,31 @@ def send_licence_usage_figures_to_lite_api(lite_usage_data_id):
             timeout=settings.LITE_API_REQUEST_TIMEOUT,
         )
     except Exception as exc:  # noqa
-        _handle_exception(
+        _log_error(
             f"An unexpected error occurred when sending LITE UsageData [{lite_usage_data_id}] to LITE API -> "
             f"{type(exc).__name__}: {exc}",
             lite_usage_data_id,
         )
+        raise
 
     if response.status_code not in [HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED]:
-        _handle_exception(
+        _log_error(
             f"An unexpected response was received when sending LITE UsageData [{lite_usage_data_id}] to "
             f"LITE API -> status=[{response.status_code}], message=[{response.text}]",
             lite_usage_data_id,
         )
+        raise
 
     if response.status_code == HTTP_207_MULTI_STATUS:
         try:
             response, accepted_licences, rejected_licences = parse_response(response)
         except Exception as exc:  # noqa
-            _handle_exception(
+            _log_error(
                 f"An unexpected error occurred when parsing the response for LITE UsageData "
                 f"[{lite_usage_data_id}] -> {type(exc).__name__}: {exc}",
                 lite_usage_data_id,
             )
+            raise
         save_response(lite_usage_data, accepted_licences, rejected_licences, response)
 
     logger.info("Successfully sent LITE UsageData [%s] to LITE API", lite_usage_data_id)
