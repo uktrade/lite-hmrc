@@ -57,9 +57,22 @@ def is_licence_payloads_processing():
 
 
 def is_lite_licence_update_task_responsive():
-    licence_update_task = current_app.tasks.get(CELERY_SEND_LICENCE_UPDATES_TASK_NAME)
+    """
+    Determines if the task to send LITE lite details to HMRC is responsive or not
 
-    return bool(licence_update_task)
+    Uses beat schedule to determine if a schedule exists for this task.
+    If a schedule exists then based on when it is due to run next it returns responsive status
+    """
+    if CELERY_SEND_LICENCE_UPDATES_TASK_NAME not in current_app.conf.beat_schedule:
+        return False
+
+    task_schedule = current_app.conf.beat_schedule[CELERY_SEND_LICENCE_UPDATES_TASK_NAME]["schedule"]
+
+    ready_to_run, next_time_to_check = task_schedule.is_due(timezone.localtime())
+    if ready_to_run:
+        return ready_to_run
+
+    return next_time_to_check < settings.LITE_LICENCE_DATA_POLL_INTERVAL
 
 
 def is_manage_inbox_task_responsive():
