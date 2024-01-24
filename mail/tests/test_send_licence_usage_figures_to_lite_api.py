@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.test import override_settings
+from parameterized import parameterized
 from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED, HTTP_400_BAD_REQUEST
 
 from mail.celery_tasks import send_licence_usage_figures_to_lite_api
@@ -64,8 +65,14 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
             spire_run_number=0,
         )
 
+    @parameterized.expand(
+        [
+            [True, "pending"],
+            [False, "reply_received"],
+        ]
+    )
     @mock.patch("mail.celery_tasks.mail_requests.put")
-    def test_schedule_usages_for_lite_api_207_ok(self, put_request):
+    def test_schedule_usages_for_lite_api_207_ok(self, has_spire_data, expected_mail_status, put_request):
         put_request.return_value = MockResponse(
             json={
                 "usage_data_id": "1e5a4fd0-e581-4efd-9770-ac68e04852d2",
@@ -96,6 +103,8 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
             },
             status_code=HTTP_207_MULTI_STATUS,
         )
+        self.usage_data.has_spire_data = has_spire_data
+        self.usage_data.save()
 
         send_licence_usage_figures_to_lite_api.delay(str(self.usage_data.id))
 
@@ -110,6 +119,7 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertIsNotNone(self.usage_data.lite_sent_at)
         self.assertEqual(self.usage_data.lite_accepted_licences, ["GBSIEL/2020/0000008/P"])
         self.assertEqual(self.usage_data.lite_rejected_licences, ["GBSIEL/2020/0000009/P"])
+        self.assertEqual(self.usage_data.mail.status, expected_mail_status)
 
     @mock.patch("mail.celery_tasks.mail_requests.put")
     def test_schedule_usages_for_lite_api_208_ok(self, put_request):
@@ -131,6 +141,7 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertEqual(self.usage_data.lite_sent_at, original_sent_at)
         self.assertEqual(self.usage_data.lite_accepted_licences, original_accepted_licences)
         self.assertEqual(self.usage_data.lite_rejected_licences, original_rejected_licences)
+        self.assertEqual(self.usage_data.mail.status, "pending")
 
     @mock.patch("mail.celery_tasks.mail_requests.put")
     def test_schedule_usages_for_lite_api_400_bad_request(self, put_request):
