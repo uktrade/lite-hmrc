@@ -101,7 +101,7 @@ def notify_users_of_rejected_licences(mail_id, mail_response_subject):
 
         smtp_send(multipart_msg)
 
-    except SMTPException:  # noqa
+    except SMTPException:
         logger.exception(
             "An unexpected error occurred when notifying users of rejected licences, Mail Id: %s, subject: %s",
             mail_id,
@@ -178,7 +178,7 @@ def send_licence_usage_figures_to_lite_api(lite_usage_data_id):
     try:
         lite_usage_data = UsageData.objects.get(id=lite_usage_data_id)
         licences = UsageData.licence_ids
-    except UsageData.DoesNotExist:  # noqa
+    except UsageData.DoesNotExist:
         _log_error(
             f"LITE UsageData [{lite_usage_data_id}] does not exist.",
             lite_usage_data_id,
