@@ -3,12 +3,10 @@ import logging
 import poplib
 
 from background_task.models import Task
-from celery import current_app
 from django.conf import settings
 from django.utils import timezone
 
 from mail.enums import ReceptionStatusEnum
-from mail.celery_tasks import CELERY_SEND_LICENCE_UPDATES_TASK_NAME
 from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
 from mail.models import LicencePayload, Mail
 from mail.tasks import MANAGE_INBOX_TASK_QUEUE
@@ -54,25 +52,6 @@ def is_licence_payloads_processing():
         )
 
     return not unprocessed_payloads.exists()
-
-
-def is_lite_licence_update_task_responsive():
-    """
-    Determines if the task to send LITE lite details to HMRC is responsive or not
-
-    Uses beat schedule to determine if a schedule exists for this task.
-    If a schedule exists then based on when it is due to run next it returns responsive status
-    """
-    if CELERY_SEND_LICENCE_UPDATES_TASK_NAME not in current_app.conf.beat_schedule:
-        return False
-
-    task_schedule = current_app.conf.beat_schedule[CELERY_SEND_LICENCE_UPDATES_TASK_NAME]["schedule"]
-
-    ready_to_run, next_time_to_check = task_schedule.is_due(timezone.localtime())
-    if ready_to_run:
-        return ready_to_run
-
-    return next_time_to_check < settings.LITE_LICENCE_DATA_POLL_INTERVAL
 
 
 def is_manage_inbox_task_responsive():

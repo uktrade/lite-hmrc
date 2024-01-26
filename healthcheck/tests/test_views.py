@@ -1,11 +1,9 @@
 import poplib
-import pytest
 import uuid
 from datetime import timedelta
 from unittest.mock import patch
 
 from background_task.models import Task
-from celery.schedules import crontab
 from django.conf import settings
 from django.test import testcases
 from django.urls import reverse
@@ -13,32 +11,9 @@ from django.utils import timezone
 from parameterized import parameterized
 from rest_framework import status
 
-from mail.celery_tasks import CELERY_SEND_LICENCE_UPDATES_TASK_NAME
 from mail.enums import LicenceActionEnum, ReplyStatusEnum
 from mail.models import LicencePayload, Mail
 from mail.tasks import MANAGE_INBOX_TASK_QUEUE
-
-from mail.tests.conftest import celery_app
-
-
-@pytest.fixture(scope="function")
-def celery_app_with_no_periodic_tasks(celery_app):
-    celery_app.conf["beat_schedule"] = {}
-
-    return celery_app
-
-
-@pytest.fixture(scope="function")
-def celery_app_with_periodic_tasks(celery_app):
-    celery_app.conf["beat_schedule"] = {
-        # change the schedule to be outside of polling interval of 10 min
-        CELERY_SEND_LICENCE_UPDATES_TASK_NAME: {
-            "task": CELERY_SEND_LICENCE_UPDATES_TASK_NAME,
-            "schedule": crontab(minute="*/30"),
-        },
-    }
-
-    return celery_app
 
 
 class TestHealthCheckP1(testcases.TestCase):
@@ -68,14 +43,6 @@ class TestHealthCheckP1(testcases.TestCase):
         self.assertEqual(response.context["message"], "OK")
         self.assertEqual(response.context["status"], status.HTTP_200_OK)
 
-    @pytest.mark.usefixtures("celery_app_with_periodic_tasks")
-    @patch.object(crontab, "is_due")
-    def test_healthcheck_service_licence_update_task_responsive_task_ready_to_run(self, mock_is_due):
-        mock_is_due.return_value = (True, 1)
-        response = self.client.get(self.url)
-        self.assertEqual(response.context["message"], "OK")
-        self.assertEqual(response.context["status"], status.HTTP_200_OK)
-
     def test_healthcheck_service_unavailable_inbox_task_not_responsive(self):
         run_at = timezone.now() + timedelta(minutes=settings.INBOX_POLL_INTERVAL)
         task, _ = Task.objects.get_or_create(queue=MANAGE_INBOX_TASK_QUEUE)
@@ -83,18 +50,6 @@ class TestHealthCheckP1(testcases.TestCase):
         task.save()
         response = self.client.get(self.url)
         self.assertEqual(response.context["message"], "Manage inbox queue error")
-        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
-
-    @pytest.mark.usefixtures("celery_app_with_no_periodic_tasks")
-    def test_healthcheck_service_unavailable_licence_update_task_not_responsive_no_periodic_tasks(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.context["message"], "Licences updates queue error")
-        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
-
-    @pytest.mark.usefixtures("celery_app_with_periodic_tasks")
-    def test_healthcheck_service_licence_update_task_not_responsive_with_task_outside_interval(self):
-        response = self.client.get(self.url)
-        self.assertEqual(response.context["message"], "Licences updates queue error")
         self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
 
     @parameterized.expand(MAILSERVERS_TO_PATCH)
