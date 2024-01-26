@@ -8,10 +8,10 @@ from rest_framework.views import APIView
 
 from conf.authentication import HawkOnlyAuthentication
 from mail import icms_serializers
+from mail.celery_tasks import send_licence_details_to_hmrc
 from mail.enums import ChiefSystemEnum, LicenceActionEnum, LicenceTypeEnum, ReceptionStatusEnum
 from mail.models import LicenceData, LicenceIdMapping, LicencePayload, Mail
 from mail.serializers import LiteLicenceDataSerializer, MailSerializer
-from mail.tasks import send_licence_data_to_hmrc
 
 if TYPE_CHECKING:
     from rest_framework.serializers import Serializer  # noqa
@@ -95,7 +95,7 @@ class SendLicenceUpdatesToHmrc(APIView):
     def get(self, _):
         """Force the task of sending licence data to HMRC (I assume for testing?)"""
 
-        success = send_licence_data_to_hmrc.now()
+        success = send_licence_details_to_hmrc.delay()
         if success:
             return JsonResponse({}, status=status.HTTP_200_OK)
         else:

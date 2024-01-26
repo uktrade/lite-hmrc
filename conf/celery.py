@@ -1,11 +1,14 @@
 import os
 
 from celery import Celery
+from celery.schedules import crontab
+
+from django.conf import settings
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "conf.settings")
 
-app = Celery("hmrc")
+app = Celery("lite-hmrc")
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
@@ -16,3 +19,14 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 # Load celery_tasks.py modules from all registered Django apps.
 app.autodiscover_tasks(related_name="celery_tasks")
 app.autodiscover_tasks(["core"], related_name="celery_tasks")
+
+# Define any regular scheduled tasks
+
+licence_update_task_interval_min = int(settings.LITE_LICENCE_DATA_POLL_INTERVAL // 60)
+app.conf.beat_schedule = {
+    # send licence details to hmrc, periodic task every 10min
+    "mail.celery_tasks.send_licence_details_to_hmrc": {
+        "task": "mail.celery_tasks.send_licence_details_to_hmrc",
+        "schedule": crontab(minute=f"*/{licence_update_task_interval_min}"),
+    },
+}

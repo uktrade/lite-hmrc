@@ -4,6 +4,7 @@ jobs:
   tests:
     docker:
       - image: cimg/python:3.8.17
+      - image: circleci/redis:3.2-alpine
       - image: circleci/postgres:12
         environment:
           POSTGRES_USER: postgres

@@ -9,7 +9,7 @@ from django.utils import timezone
 from mail.enums import ReceptionStatusEnum
 from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
 from mail.models import LicencePayload, Mail
-from mail.tasks import LICENCE_DATA_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
+from mail.tasks import MANAGE_INBOX_TASK_QUEUE
 
 logger = logging.getLogger(__name__)
 
@@ -52,12 +52,6 @@ def is_licence_payloads_processing():
         )
 
     return not unprocessed_payloads.exists()
-
-
-def is_lite_licence_update_task_responsive():
-    dt = timezone.now() + datetime.timedelta(seconds=settings.LITE_LICENCE_DATA_POLL_INTERVAL)
-
-    return Task.objects.filter(queue=LICENCE_DATA_TASK_QUEUE, run_at__lte=dt).exists()
 
 
 def is_manage_inbox_task_responsive():

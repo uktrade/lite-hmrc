@@ -7,18 +7,14 @@ from typing import List, MutableMapping, Tuple
 from background_task import background
 from background_task.models import Task
 from django.conf import settings
-from django.db import transaction
 from django.utils import timezone
 from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED
 
 from mail import requests as mail_requests
-from mail.enums import ChiefSystemEnum, ReceptionStatusEnum, SourceEnum
-from mail.libraries.builders import build_licence_data_mail
-from mail.libraries.data_processors import build_request_mail_message_dto
-from mail.libraries.lite_to_edifact_converter import EdifactValidationError
-from mail.libraries.routing_controller import check_and_route_emails, send, update_mail
+from mail.enums import ReceptionStatusEnum
+from mail.libraries.routing_controller import check_and_route_emails
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
-from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
+from mail.models import LicenceIdMapping, UsageData
 
 logger = logging.getLogger(__name__)
 
@@ -196,57 +192,6 @@ def _handle_exception(message, lite_usage_data_id):
     # Raise an exception
     # this will cause the task to be marked as 'Failed' and retried if there are retry attempts left
     raise Exception(error_message)
-
-
-@background(queue=LICENCE_DATA_TASK_QUEUE, schedule=0)
-def send_licence_data_to_hmrc():
-    """Sends LITE (or ICMS) licence updates to HMRC
-
-    Return: True if successful
-    """
-    source = SourceEnum.ICMS if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.ICMS else SourceEnum.LITE
-    logger.info(f"Sending {source} licence updates to HMRC")
-
-    if Mail.objects.exclude(status=ReceptionStatusEnum.REPLY_SENT).count():
-        logger.info(
-            "Currently we are either waiting for a reply or next one is ready to be processed,\n"
-            "so we cannot send this update now and will be picked up in the next cycle"
-        )
-        return
-
-    try:
-        with transaction.atomic():
-            licences = LicencePayload.objects.filter(is_processed=False).select_for_update(nowait=True)
-
-            if not licences.exists():
-                logger.info("There are currently no licences to send")
-                return
-
-            mail = build_licence_data_mail(licences, source)
-            mail_dto = build_request_mail_message_dto(mail)
-            licence_references = [licence.reference for licence in licences]
-            logger.info(
-                "Created Mail [%s] with subject %s from licences [%s]", mail.id, mail_dto.subject, licence_references
-            )
-
-            send(mail_dto)
-            update_mail(mail, mail_dto)
-
-            licences.update(is_processed=True)
-            logger.info("Licence references [%s] marked as processed", licence_references)
-
-    except EdifactValidationError as err:  # noqa
-        raise err
-    except Exception as exc:  # noqa
-        logger.error(
-            "An unexpected error occurred when sending %s licence updates to HMRC -> %s",
-            source,
-            type(exc).__name__,
-            exc_info=True,
-        )
-    else:
-        logger.info("Successfully sent %s licences updates in Mail [%s] to HMRC", source, mail.id)
-        return True
 
 
 # Manage Inbox

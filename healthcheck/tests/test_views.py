@@ -13,7 +13,7 @@ from rest_framework import status
 
 from mail.enums import LicenceActionEnum, ReplyStatusEnum
 from mail.models import LicencePayload, Mail
-from mail.tasks import LICENCE_DATA_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
+from mail.tasks import MANAGE_INBOX_TASK_QUEUE
 
 
 class TestHealthCheckP1(testcases.TestCase):
@@ -50,15 +50,6 @@ class TestHealthCheckP1(testcases.TestCase):
         task.save()
         response = self.client.get(self.url)
         self.assertEqual(response.context["message"], "Manage inbox queue error")
-        self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
-
-    def test_healthcheck_service_unavailable_licence_update_task_not_responsive(self):
-        run_at = timezone.now() + timedelta(minutes=settings.LITE_LICENCE_DATA_POLL_INTERVAL)
-        task, _ = Task.objects.get_or_create(queue=LICENCE_DATA_TASK_QUEUE)
-        task.run_at = run_at
-        task.save()
-        response = self.client.get(self.url)
-        self.assertEqual(response.context["message"], "Licences updates queue error")
         self.assertEqual(response.context["status"], status.HTTP_503_SERVICE_UNAVAILABLE)
 
     @parameterized.expand(MAILSERVERS_TO_PATCH)
