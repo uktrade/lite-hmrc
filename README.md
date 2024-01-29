@@ -82,7 +82,7 @@ on deployment to production.  Our test suite goes some way to building this conf
 but it may be desirable to send sample EDI data emails through to a specific lite-hmrc
 environment.  e.g. sending to an environment that has a feature branch deployed.
 
-To aid this, a management command exists `mail.management.commands.resend_incoming_email`; https://github.com/uktrade/lite-hmrc/blob/master/mail/management/commands/resend_incoming_email.py
+To aid this, a management command exists `mail.management.commands.resend_edi_data_email`; https://github.com/uktrade/lite-hmrc/blob/master/mail/management/commands/resend_edi_data_email.py
 which is capable of sending lite-hmrc formatted emails.  Details of how this should
 be used are present in the help text for the command.
 
