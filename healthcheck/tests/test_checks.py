@@ -49,8 +49,17 @@ class MailboxAuthenticationHealthCheckTest(TestCase):
         mock_mailserver_factory().hostname = f"{mailserver_factory}.example.com"
 
         check = MailboxAuthenticationHealthCheck()
-        with self.assertRaises(HealthCheckException):
-            check.check_status()
+        check.check_status()
+        # Assert that the add_error method was called with a HealthCheckException
+        self.assertEqual(len(check.errors), 1)
+        self.assertIsInstance(check.errors[0], HealthCheckException)
+
+        # Assert the error message
+        error_message = str(check.errors[0])
+        expected_error_message = (
+            f"unknown error: Failed to connect to mailbox: {mailserver_factory}.example.com (Failed to connect)"
+        )
+        self.assertEqual(error_message, expected_error_message)
 
     @parameterized.expand(MAILSERVERS_TO_PATCH)
     def test_mailbox_authentication_success(self, mailserver_factory):
@@ -58,6 +67,8 @@ class MailboxAuthenticationHealthCheckTest(TestCase):
 
         check = MailboxAuthenticationHealthCheck()
         check.check_status()
+
+        self.assertEqual(len(check.errors), 0)
 
     def test_unprocessed_payloads(self):
         LicencePayload.objects.create(

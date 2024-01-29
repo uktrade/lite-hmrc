@@ -23,7 +23,6 @@ class MailboxAuthenticationHealthCheck(BaseHealthCheckBackend):
             get_hmrc_to_dit_mailserver,
             get_spire_to_dit_mailserver,
         )
-        mailbox_results = []
         for mailserver_factory in mailserver_factories:
             mailserver = mailserver_factory()
             try:
@@ -33,14 +32,8 @@ class MailboxAuthenticationHealthCheck(BaseHealthCheckBackend):
                 error_message = f"Failed to connect to mailbox: {mailserver.hostname} ({response})"
                 logger.error(error_message)
                 self.add_error(HealthCheckException(error_message))
-                mailbox_results.append(False)
-            else:
-                mailbox_results.append(True)
             finally:
                 mailserver.quit_pop3_connection()
-
-        if not all(mailbox_results):
-            raise HealthCheckException("One or more mailboxes failed to authenticate.")
 
 
 class LicencePayloadsHealthCheck(BaseHealthCheckBackend):
