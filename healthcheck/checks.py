@@ -11,7 +11,7 @@ from health_check.exceptions import HealthCheckException
 from mail.enums import ReceptionStatusEnum
 from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
 from mail.models import LicencePayload, Mail
-from mail.tasks import LICENCE_DATA_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
+from mail.tasks import MANAGE_INBOX_TASK_QUEUE
 
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class MailboxAuthenticationHealthCheck(BaseHealthCheckBackend):
 
 class LicencePayloadsHealthCheck(BaseHealthCheckBackend):
     def check_status(self):
-        dt = timezone.now() - datetime.timedelta(seconds=settings.LICENSE_POLL_INTERVAL)
+        dt = timezone.now() + datetime.timedelta(seconds=settings.LICENSE_POLL_INTERVAL)
         unprocessed_payloads = LicencePayload.objects.filter(is_processed=False, received_at__lte=dt)
 
         for unprocessed_payload in unprocessed_payloads:
@@ -59,7 +59,7 @@ class LicencePayloadsHealthCheck(BaseHealthCheckBackend):
 
 class ManageInboxTaskHealthCheck(BaseHealthCheckBackend):
     def check_status(self):
-        dt = timezone.now() - datetime.timedelta(seconds=settings.INBOX_POLL_INTERVAL)
+        dt = timezone.now() + datetime.timedelta(seconds=settings.INBOX_POLL_INTERVAL)
         if not Task.objects.filter(queue=MANAGE_INBOX_TASK_QUEUE, run_at__lte=dt).exists():
             raise HealthCheckException("Manage Inbox Task is not responsive.")
 

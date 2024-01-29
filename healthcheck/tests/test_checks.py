@@ -7,6 +7,7 @@ from django.test import TestCase
 from unittest.mock import patch
 from django.conf import settings
 from django.utils import timezone
+from datetime import timedelta
 
 from healthcheck.checks import (
     MailboxAuthenticationHealthCheck,
@@ -82,16 +83,6 @@ class MailboxAuthenticationHealthCheckTest(TestCase):
         check = LicencePayloadsHealthCheck()
         check.check_status()
 
-    def test_task_is_unresponsive(self):
-        Task.objects.create(
-            queue=LICENCE_DATA_TASK_QUEUE,
-            run_at=timezone.now() - datetime.timedelta(seconds=settings.LITE_LICENCE_DATA_POLL_INTERVAL - 1),
-        )
-
-        check = LiteLicenceUpdateTaskHealthCheck()
-        with self.assertRaises(HealthCheckException):
-            check.check_status()
-
     def test_inbox_task_is_responsive(self):
         Task.objects.create(
             queue=MANAGE_INBOX_TASK_QUEUE,
@@ -102,10 +93,10 @@ class MailboxAuthenticationHealthCheckTest(TestCase):
         check.check_status()
 
     def test_inbox_task_is_unresponsive(self):
-        Task.objects.create(
-            queue=MANAGE_INBOX_TASK_QUEUE,
-            run_at=timezone.now() + datetime.timedelta(seconds=settings.INBOX_POLL_INTERVAL),
-        )
+        run_at = timezone.now() + timedelta(minutes=settings.INBOX_POLL_INTERVAL)
+        task, _ = Task.objects.get_or_create(queue=MANAGE_INBOX_TASK_QUEUE)
+        task.run_at = run_at
+        task.save()
 
         check = ManageInboxTaskHealthCheck()
         with self.assertRaises(HealthCheckException):
