@@ -4,7 +4,8 @@ from email.encoders import encode_base64
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 
-from django.core.management.base import BaseCommand
+from django.conf import settings
+from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):
@@ -19,7 +20,7 @@ class Command(BaseCommand):
             type=str,
             nargs="?",
             help="Path to local EDI file that should be sent. Contents can be sourced from a valid Mail ORM record on the lite-hmrc environment; "
-            "Mail.edi_data.",
+            "Mail.edi_data.  NOTE: This has currently only been tested as working for usage data emails and not yet HMRC licence reply emails.",
         )
         parser.add_argument(
             "--edi_file_name",
@@ -53,6 +54,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+
+        if not settings.DEBUG:
+            raise CommandError("Cannot send EDI data from an environment where DEBUG=False")
 
         msg = MIMEMultipart()
         msg["Subject"] = options["edi_file_name"]
