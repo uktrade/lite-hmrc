@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from mail.tasks import get_lite_api_url
+from mail.celery_tasks import get_lite_api_url
 
 
 class GetLiteAPIUrlTests(TestCase):

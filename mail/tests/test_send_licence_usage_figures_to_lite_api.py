@@ -3,10 +3,11 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.test import override_settings
+from parameterized import parameterized
 from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED, HTTP_400_BAD_REQUEST
 
+from mail.celery_tasks import send_licence_usage_figures_to_lite_api
 from mail.models import GoodIdMapping, LicenceIdMapping, LicencePayload, Mail, UsageData
-from mail.tasks import schedule_max_tried_task_as_new_task, send_licence_usage_figures_to_lite_api
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
@@ -64,8 +65,14 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
             spire_run_number=0,
         )
 
-    @mock.patch("mail.tasks.mail_requests.put")
-    def test_schedule_usages_for_lite_api_207_ok(self, put_request):
+    @parameterized.expand(
+        [
+            [True, "pending"],
+            [False, "reply_received"],
+        ]
+    )
+    @mock.patch("mail.celery_tasks.mail_requests.put")
+    def test_schedule_usages_for_lite_api_207_ok(self, has_spire_data, expected_mail_status, put_request):
         put_request.return_value = MockResponse(
             json={
                 "usage_data_id": "1e5a4fd0-e581-4efd-9770-ac68e04852d2",
@@ -96,8 +103,10 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
             },
             status_code=HTTP_207_MULTI_STATUS,
         )
+        self.usage_data.has_spire_data = has_spire_data
+        self.usage_data.save()
 
-        send_licence_usage_figures_to_lite_api.now(str(self.usage_data.id))
+        send_licence_usage_figures_to_lite_api.delay(str(self.usage_data.id))
 
         self.usage_data.refresh_from_db()
         put_request.assert_called_with(
@@ -110,15 +119,16 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertIsNotNone(self.usage_data.lite_sent_at)
         self.assertEqual(self.usage_data.lite_accepted_licences, ["GBSIEL/2020/0000008/P"])
         self.assertEqual(self.usage_data.lite_rejected_licences, ["GBSIEL/2020/0000009/P"])
+        self.assertEqual(self.usage_data.mail.status, expected_mail_status)
 
-    @mock.patch("mail.tasks.mail_requests.put")
+    @mock.patch("mail.celery_tasks.mail_requests.put")
     def test_schedule_usages_for_lite_api_208_ok(self, put_request):
         original_sent_at = self.usage_data.lite_sent_at
         original_accepted_licences = self.usage_data.lite_accepted_licences
         original_rejected_licences = self.usage_data.lite_rejected_licences
         put_request.return_value = MockResponse(status_code=HTTP_208_ALREADY_REPORTED)
 
-        send_licence_usage_figures_to_lite_api.now(str(self.usage_data.id))
+        send_licence_usage_figures_to_lite_api.delay(str(self.usage_data.id))
 
         self.usage_data.refresh_from_db()
         put_request.assert_called_with(
@@ -131,13 +141,13 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertEqual(self.usage_data.lite_sent_at, original_sent_at)
         self.assertEqual(self.usage_data.lite_accepted_licences, original_accepted_licences)
         self.assertEqual(self.usage_data.lite_rejected_licences, original_rejected_licences)
+        self.assertEqual(self.usage_data.mail.status, "pending")
 
-    @mock.patch("mail.tasks.mail_requests.put")
+    @mock.patch("mail.celery_tasks.mail_requests.put")
     def test_schedule_usages_for_lite_api_400_bad_request(self, put_request):
         put_request.return_value = MockResponse(status_code=HTTP_400_BAD_REQUEST)
 
-        with self.assertRaises(Exception) as error:
-            send_licence_usage_figures_to_lite_api.now(str(self.usage_data.id))
+        send_licence_usage_figures_to_lite_api.delay(str(self.usage_data.id))
 
         self.usage_data.refresh_from_db()
         put_request.assert_called_with(
@@ -149,38 +159,7 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.usage_data.refresh_from_db()
         self.assertIsNone(self.usage_data.lite_sent_at)
 
-    @mock.patch("mail.tasks.schedule_max_tried_task_as_new_task")
-    @mock.patch("mail.tasks.Task.objects.get")
-    @mock.patch("mail.tasks.mail_requests.put")
-    def test_schedule_usages_for_lite_api_max_tried_task(self, put_request, get_task, schedule_new_task):
-        put_request.return_value = MockResponse(status_code=HTTP_400_BAD_REQUEST)
-        get_task.return_value = MockTask(settings.MAX_ATTEMPTS - 1)
-        schedule_new_task.return_value = None
-
-        with self.assertRaises(Exception) as error:
-            send_licence_usage_figures_to_lite_api.now(str(self.usage_data.id))
-
-        self.usage_data.refresh_from_db()
-
-        put_request.assert_called_with(
-            f"{settings.LITE_API_URL}/licences/hmrc-integration/",
-            self.usage_data.lite_payload,
-            hawk_credentials=settings.HAWK_LITE_HMRC_INTEGRATION_CREDENTIALS,
-            timeout=settings.LITE_API_REQUEST_TIMEOUT,
-        )
-        schedule_new_task.assert_called_with(str(self.usage_data.id))
-        self.usage_data.refresh_from_db()
-        self.assertIsNone(self.usage_data.lite_sent_at)
-
-    @mock.patch("mail.tasks.send_licence_usage_figures_to_lite_api")
-    def test_schedule_new_task(self, send_licence_usage_figures):
-        send_licence_usage_figures.return_value = None
-
-        schedule_max_tried_task_as_new_task(str(self.usage_data.id))
-
-        send_licence_usage_figures.assert_called_with(str(self.usage_data.id), schedule=mock.ANY)
-
-    @mock.patch("mail.tasks.mail_requests.put")
+    @mock.patch("mail.celery_tasks.mail_requests.put")
     def test_licence_usage_ignore_licence_completion(self, put_request):
         """
         Test that ensures that licenceUsage transaction that has a completion date
@@ -266,7 +245,7 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
             status_code=HTTP_207_MULTI_STATUS,
         )
 
-        send_licence_usage_figures_to_lite_api.now(str(usage_data.id))
+        send_licence_usage_figures_to_lite_api.delay(str(usage_data.id))
 
         usage_data.refresh_from_db()
         put_request.assert_called_with(
@@ -279,3 +258,44 @@ class UpdateUsagesTaskTests(LiteHMRCTestClient):
         self.assertIsNotNone(usage_data.lite_sent_at)
         self.assertEqual(usage_data.lite_accepted_licences, ["GBSIEL/2020/0000025/P"])
         self.assertEqual(usage_data.lite_rejected_licences, [])
+
+    def test_schedule_usages_for_lite_api_missing_usage_record(self):
+
+        result = send_licence_usage_figures_to_lite_api.delay(str(uuid4()))
+        self.assertRaises(UsageData.DoesNotExist, result.get)
+
+    @mock.patch("mail.celery_tasks.mail_requests.put")
+    def test_empty_payload_ignored(self, mock_put_request):
+        licence = LicenceIdMapping.objects.create(
+            lite_id="5678d9b2-09a9-4e86-840f-236d186e1234", reference="GBSIEL/2020/0000025/P"
+        )
+
+        mail = Mail.objects.create(
+            edi_filename="usage_data",
+            edi_data=("1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\\n" "2\\fileTrailer\\2"),
+        )
+        usage_data = UsageData.objects.create(
+            mail=mail,
+            licence_ids='["GBSIEL/2020/0000025/P"]',
+            hmrc_run_number=0,
+            spire_run_number=0,
+        )
+
+        send_licence_usage_figures_to_lite_api.delay(str(usage_data.id))
+
+        self.assertEquals(mock_put_request.called, False)
+
+    @mock.patch("mail.celery_tasks.mail_requests.put")
+    def test_schedule_usages_for_lite_api_207_malformed_response(self, put_request):
+        put_request.return_value = MockResponse(
+            json={
+                "usage_data_id": "1e5a4fd0-e581-4efd-9770-ac68e04852d2",
+            },
+            status_code=HTTP_207_MULTI_STATUS,
+        )
+
+        result = send_licence_usage_figures_to_lite_api.delay(str(self.usage_data.id))
+
+        self.assertRaises(KeyError, result.get)
+        self.usage_data.refresh_from_db()
+        self.assertIsNone(self.usage_data.lite_sent_at)

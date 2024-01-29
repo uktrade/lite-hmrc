@@ -16,8 +16,8 @@ class MailConfig(AppConfig):
             LICENCE_DATA_TASK_QUEUE,
             MANAGE_INBOX_TASK_QUEUE,
             manage_inbox,
-            schedule_licence_usage_figures_for_lite_api,
         )
+        from mail.celery_tasks import send_licence_usage_figures_to_lite_api
 
         Task.objects.filter(queue=MANAGE_INBOX_TASK_QUEUE).delete()
         Task.objects.filter(queue=LICENCE_DATA_TASK_QUEUE).delete()
@@ -29,7 +29,7 @@ class MailConfig(AppConfig):
 
                 usage_updates_not_sent_to_lite = UsageData.objects.filter(has_lite_data=True, lite_sent_at__isnull=True)
                 for obj in usage_updates_not_sent_to_lite:
-                    schedule_licence_usage_figures_for_lite_api(str(obj.id))
+                    send_licence_usage_figures_to_lite_api.delay(str(obj.id))
 
     def ready(self):
         post_migrate.connect(self.initialize_background_tasks, sender=self)
