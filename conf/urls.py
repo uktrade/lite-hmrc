@@ -20,7 +20,7 @@ from django.urls import include, path
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("mail/", include("mail.urls")),
-    path("healthcheck/", include("healthcheck.urls")),
+    path("healthcheck/", include("health_check.urls")),
 ]
 
 if settings.ENABLE_MOCK_HMRC_SERVICE:  # pragma: no cover
