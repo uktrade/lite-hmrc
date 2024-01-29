@@ -17,9 +17,8 @@ from mail.libraries.builders import build_licence_data_mail
 from mail.libraries.data_processors import build_request_mail_message_dto
 from mail.libraries.routing_controller import send, update_mail
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
-from mail.models import LicencePayload, Mail, LicenceIdMapping, UsageData
+from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
 from mail.servers import smtp_send
-
 
 logger = get_task_logger(__name__)
 
@@ -112,7 +111,7 @@ def notify_users_of_rejected_licences(mail_id, mail_response_subject):
     logger.info("Successfully notified users of rejected licences found in mail with subject %s", mail_response_subject)
 
 
-class BaseTask(Task):
+class SendUsageDataBaseTask(Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         message = (
             """
@@ -179,11 +178,12 @@ def send_licence_details_to_hmrc():
     )
     return True
 
+
 @shared_task(
     autoretry_for=(Exception,),
     max_retries=MAX_ATTEMPTS,
     retry_backoff=True,
-    base=BaseTask,
+    base=SendUsageDataBaseTask,
 )
 def send_licence_usage_figures_to_lite_api(lite_usage_data_id):
     """Sends HMRC Usage figure updates to LITE"""
@@ -251,4 +251,4 @@ def send_licence_usage_figures_to_lite_api(lite_usage_data_id):
             raise
         save_response(lite_usage_data, accepted_licences, rejected_licences, response)
 
-    logger.info("Successfully sent LITE UsageData [%s] to LITE API", lite_usage_data_id)
+    logger.info("Successfully sent LITE UsageData [%s] for licences [%s] to LITE API", lite_usage_data_id, licences)
