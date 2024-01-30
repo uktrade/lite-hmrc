@@ -10,7 +10,6 @@ from health_check.exceptions import HealthCheckException
 from mail.enums import ReceptionStatusEnum
 from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
 from mail.models import LicencePayload, Mail
-from mail.tasks import emit_test_file
 
 
 logger = logging.getLogger(__name__)
