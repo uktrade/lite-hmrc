@@ -1,7 +1,5 @@
 import logging
 
-from background_task import background
-
 from mock_hmrc.handler import parse_and_reply_emails
 
 
