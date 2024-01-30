@@ -1,8 +1,8 @@
+from smtplib import SMTPException
 from unittest import mock
 
 from django.test import override_settings
 from parameterized import parameterized
-from smtplib import SMTPException
 
 from mail.celery_tasks import send_licence_details_to_hmrc
 from mail.enums import ReceptionStatusEnum
@@ -10,7 +10,6 @@ from mail.models import LicencePayload, Mail
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
-@override_settings(BACKGROUND_TASK_ENABLED=False)  # Disable task from being run on app initialization
 class TaskTests(LiteHMRCTestClient):
     def setUp(self):
         super().setUp()

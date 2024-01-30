@@ -9,6 +9,6 @@ from mock_hmrc.tasks import handle_replies
 
 class HandleReplies(APIView):
     def get(self, request):
-        handle_replies.now()
+        handle_replies()
 
         return HttpResponse(status=status.HTTP_200_OK)

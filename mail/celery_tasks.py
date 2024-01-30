@@ -15,13 +15,12 @@ from mail import requests as mail_requests
 from mail.enums import ReceptionStatusEnum, SourceEnum
 from mail.libraries.builders import build_licence_data_mail
 from mail.libraries.data_processors import build_request_mail_message_dto
-from mail.libraries.routing_controller import send, update_mail, check_and_route_emails
+from mail.libraries.routing_controller import check_and_route_emails, send, update_mail
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
 from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
 from mail.servers import smtp_send
 
 logger = get_task_logger(__name__)
-
 
 # Send Usage Figures to LITE API
 def get_lite_api_url():

@@ -7,21 +7,13 @@ class MailConfig(AppConfig):
     name = "mail"
 
     @classmethod
-    def initialize_background_tasks(cls, **kwargs):
-        from background_task.models import Task
-
+    def initialize_send_licence_usage_figures_to_lite_api(cls, **kwargs):
         from mail.celery_tasks import send_licence_usage_figures_to_lite_api
-        from mail.enums import ChiefSystemEnum
         from mail.models import UsageData
-        from mail.tasks import LICENCE_DATA_TASK_QUEUE
 
-        Task.objects.filter(queue=LICENCE_DATA_TASK_QUEUE).delete()
-        if settings.BACKGROUND_TASK_ENABLED:
-            # LITE/SPIRE Tasks
-            if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.SPIRE:
-                usage_updates_not_sent_to_lite = UsageData.objects.filter(has_lite_data=True, lite_sent_at__isnull=True)
-                for obj in usage_updates_not_sent_to_lite:
-                    send_licence_usage_figures_to_lite_api.delay(str(obj.id))
+        usage_updates_not_sent_to_lite = UsageData.objects.filter(has_lite_data=True, lite_sent_at__isnull=True)
+        for obj in usage_updates_not_sent_to_lite:
+            send_licence_usage_figures_to_lite_api.delay(str(obj.id))
 
     def ready(self):
-        post_migrate.connect(self.initialize_background_tasks, sender=self)
+        post_migrate.connect(self.initialize_send_licence_usage_figures_to_lite_api, sender=self)

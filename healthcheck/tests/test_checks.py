@@ -1,10 +1,8 @@
 import datetime
 import poplib
 import uuid
-from datetime import timedelta
 from unittest.mock import patch
 
-from background_task.models import Task
 from django.conf import settings
 from django.test import TestCase
 from django.utils import timezone
@@ -14,7 +12,6 @@ from parameterized import parameterized
 from healthcheck.checks import LicencePayloadsHealthCheck, MailboxAuthenticationHealthCheck, PendingMailHealthCheck
 from mail.enums import LicenceActionEnum, ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
-from mail.tasks import LICENCE_DATA_TASK_QUEUE
 
 
 class MailboxAuthenticationHealthCheckTest(TestCase):
