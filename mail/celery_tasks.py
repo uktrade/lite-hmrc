@@ -265,7 +265,6 @@ def manage_inbox():
     """Main task which scans inbox for SPIRE and HMRC emails"""
 
     logger.info("Polling inbox for updates")
-
     try:
         check_and_route_emails()
     except Exception as exc:  # noqa

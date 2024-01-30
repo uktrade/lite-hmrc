@@ -4,13 +4,12 @@ import poplib
 
 from django.conf import settings
 from django.utils import timezone
-
 from health_check.backends import BaseHealthCheckBackend
 from health_check.exceptions import HealthCheckException
+
 from mail.enums import ReceptionStatusEnum
 from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
 from mail.models import LicencePayload, Mail
-
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +45,7 @@ class LicencePayloadsHealthCheck(BaseHealthCheckBackend):
 
         if unprocessed_payloads.exists():
             raise HealthCheckException("There are unprocessed licence payloads.")
+
 
 class PendingMailHealthCheck(BaseHealthCheckBackend):
     def check_status(self):

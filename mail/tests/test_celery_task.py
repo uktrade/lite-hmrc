@@ -39,8 +39,9 @@ class ManageInboxTests(TestCase):
         manage_inbox()
         mock_function.assert_called_once()
 
-    def error_manage_inbox(self, mock_function):
-        mock_function.side_effect = Exception("Test exception")
-        with pytest.raises(Exception, match="Test exception"):
+    @mock.patch("mail.celery_tasks.check_and_route_emails")
+    def test_error_manage_inbox(self, mock_function):
+        mock_function.side_effect = Exception("Test Error")
+        with pytest.raises(Exception) as excinfo:
             manage_inbox()
-        mock_function.assert_called_once()
+        assert str(excinfo.value) == "Test Error"

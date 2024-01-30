@@ -10,12 +10,12 @@ class MailConfig(AppConfig):
     def initialize_background_tasks(cls, **kwargs):
         from background_task.models import Task
 
+        from mail.celery_tasks import send_licence_usage_figures_to_lite_api
         from mail.enums import ChiefSystemEnum
         from mail.models import UsageData
         from mail.tasks import LICENCE_DATA_TASK_QUEUE
-        from mail.celery_tasks import send_licence_usage_figures_to_lite_api
-        Task.objects.filter(queue=LICENCE_DATA_TASK_QUEUE).delete()
 
+        Task.objects.filter(queue=LICENCE_DATA_TASK_QUEUE).delete()
         if settings.BACKGROUND_TASK_ENABLED:
             # LITE/SPIRE Tasks
             if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.SPIRE:

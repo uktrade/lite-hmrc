@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "mail",
     "background_task",
-    "healthcheck",
     "health_check",
     "health_check.db",
     "health_check.cache",

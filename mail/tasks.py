@@ -3,7 +3,12 @@ import os
 
 from background_task import background
 from django.conf import settings
+
 logger = logging.getLogger(__name__)
+
+NOTIFY_USERS_TASK_QUEUE = "notify_users_queue"
+LICENCE_DATA_TASK_QUEUE = "licences_updates_queue"
+
 
 @background(queue="test_queue", schedule=0)
 def emit_test_file():
