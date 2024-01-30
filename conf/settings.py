@@ -35,10 +35,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "mail",
     "background_task",
-    "mail.apps.MailConfig",
-    # This is app custome healthcheck app and health_check is django-health-check
-    "healthcheck",
     "health_check",
     "health_check.db",
     "health_check.cache",
@@ -135,7 +133,7 @@ TIME_TESTS = env.bool("TIME_TESTS", default=False)
 
 LOCK_INTERVAL = env.float("LOCK_INTERVAL", default=120.0)
 
-INBOX_POLL_INTERVAL = env.int("INBOX_POLL_INTERVAL", default=300)
+INBOX_POLL_INTERVAL = env.int("INBOX_POLL_INTERVAL", default=600)
 LITE_LICENCE_DATA_POLL_INTERVAL = env.int("LITE_LICENCE_DATA_POLL_INTERVAL", default=600)
 EMAIL_AWAITING_REPLY_TIME = env.int("EMAIL_AWAITING_REPLY_TIME", default=3600)
 EMAIL_AWAITING_CORRECTIONS_TIME = env.int("EMAIL_AWAITING_CORRECTIONS_TIME", default=3600)

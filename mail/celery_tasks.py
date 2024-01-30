@@ -15,7 +15,7 @@ from mail import requests as mail_requests
 from mail.enums import ReceptionStatusEnum, SourceEnum
 from mail.libraries.builders import build_licence_data_mail
 from mail.libraries.data_processors import build_request_mail_message_dto
-from mail.libraries.routing_controller import send, update_mail
+from mail.libraries.routing_controller import send, update_mail, check_and_route_emails
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
 from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
 from mail.servers import smtp_send
@@ -77,6 +77,7 @@ def _log_error(message, lite_usage_data_id):
 MAX_ATTEMPTS = 3
 RETRY_BACKOFF = 180
 CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_to_hmrc"
+CELERY_MANAGE_INBOX_TASK_NAME = "mail.celery_tasks.manage_inbox"
 
 
 # Notify Users of Rejected Mail
@@ -252,3 +253,24 @@ def send_licence_usage_figures_to_lite_api(lite_usage_data_id):
         save_response(lite_usage_data, accepted_licences, rejected_licences, response)
 
     logger.info("Successfully sent LITE UsageData [%s] for licences [%s] to LITE API", lite_usage_data_id, licences)
+
+
+# Scan Inbox for SPIRE and HMRC Emails
+@shared_task(
+    autoretry_for=(Exception,),
+    max_retries=MAX_ATTEMPTS,
+    retry_backoff=RETRY_BACKOFF,
+)
+def manage_inbox():
+    """Main task which scans inbox for SPIRE and HMRC emails"""
+
+    logger.info("Polling inbox for updates")
+    try:
+        check_and_route_emails()
+    except Exception as exc:  # noqa
+        logger.error(
+            "An unexpected error occurred when polling inbox for updates -> %s",
+            type(exc).__name__,
+            exc_info=True,
+        )
+        raise exc

@@ -1,25 +1,20 @@
+import datetime
 import poplib
 import uuid
-import datetime
-
-from parameterized import parameterized
-from django.test import TestCase
-from unittest.mock import patch
-from django.conf import settings
-from django.utils import timezone
 from datetime import timedelta
+from unittest.mock import patch
 
-from healthcheck.checks import (
-    MailboxAuthenticationHealthCheck,
-    LicencePayloadsHealthCheck,
-    ManageInboxTaskHealthCheck,
-    PendingMailHealthCheck,
-)
+from background_task.models import Task
+from django.conf import settings
+from django.test import TestCase
+from django.utils import timezone
 from health_check.exceptions import HealthCheckException
+from parameterized import parameterized
+
+from healthcheck.checks import LicencePayloadsHealthCheck, MailboxAuthenticationHealthCheck, PendingMailHealthCheck
 from mail.enums import LicenceActionEnum, ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
-from background_task.models import Task
-from mail.tasks import LICENCE_DATA_TASK_QUEUE, MANAGE_INBOX_TASK_QUEUE
+from mail.tasks import LICENCE_DATA_TASK_QUEUE
 
 
 class MailboxAuthenticationHealthCheckTest(TestCase):
@@ -93,25 +88,6 @@ class MailboxAuthenticationHealthCheckTest(TestCase):
 
         check = LicencePayloadsHealthCheck()
         check.check_status()
-
-    def test_inbox_task_is_responsive(self):
-        Task.objects.create(
-            queue=MANAGE_INBOX_TASK_QUEUE,
-            run_at=timezone.now() - datetime.timedelta(seconds=settings.INBOX_POLL_INTERVAL),
-        )
-
-        check = ManageInboxTaskHealthCheck()
-        check.check_status()
-
-    def test_inbox_task_is_unresponsive(self):
-        run_at = timezone.now() + timedelta(minutes=settings.INBOX_POLL_INTERVAL)
-        task, _ = Task.objects.get_or_create(queue=MANAGE_INBOX_TASK_QUEUE)
-        task.run_at = run_at
-        task.save()
-
-        check = ManageInboxTaskHealthCheck()
-        with self.assertRaises(HealthCheckException):
-            check.check_status()
 
     def test_unprocessed_pending_mails(self):
         Mail.objects.create(

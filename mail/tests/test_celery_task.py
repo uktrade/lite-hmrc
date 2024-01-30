@@ -1,13 +1,14 @@
 import email.mime.multipart
 from unittest import mock
 
-from django.test import override_settings, TestCase
+import pytest
+from django.test import TestCase, override_settings
 
-from mail.celery_tasks import notify_users_of_rejected_licences
+from mail.celery_tasks import manage_inbox, notify_users_of_rejected_licences
 
 
 class NotifyUsersOfRejectedMailTests(TestCase):
-    @override_settings(EMAIL_USER="test@example.com", NOTIFY_USERS=["notify@example.com"])
+    @override_settings(EMAIL_USER="test@example.com", NOTIFY_USERS=["notify@example.com"])  # /PS-IGNORE
     @mock.patch("mail.celery_tasks.smtp_send")
     def test_send_success(self, mock_send):
         notify_users_of_rejected_licences("123", "CHIEF_SPIRE_licenceReply_202401180900_42557")
@@ -30,3 +31,17 @@ class NotifyUsersOfRejectedMailTests(TestCase):
         text_payload = message.get_payload(0)
         expected_body = "Mail (Id: 123) with subject CHIEF_SPIRE_licenceReply_202401180900_42557 has rejected licences"
         self.assertEqual(text_payload.get_payload(), expected_body)
+
+
+class ManageInboxTests(TestCase):
+    @mock.patch("mail.celery_tasks.check_and_route_emails")
+    def test_manage_inbox(self, mock_function):
+        manage_inbox()
+        mock_function.assert_called_once()
+
+    @mock.patch("mail.celery_tasks.check_and_route_emails")
+    def test_error_manage_inbox(self, mock_function):
+        mock_function.side_effect = Exception("Test Error")
+        with pytest.raises(Exception) as excinfo:
+            manage_inbox()
+        assert str(excinfo.value) == "Test Error"

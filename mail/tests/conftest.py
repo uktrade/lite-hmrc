@@ -1,10 +1,10 @@
 import os
-import pytest
 
+import pytest
 from celery import Celery
 from celery.schedules import crontab
 
-from mail.celery_tasks import CELERY_SEND_LICENCE_UPDATES_TASK_NAME
+from mail.celery_tasks import CELERY_MANAGE_INBOX_TASK_NAME, CELERY_SEND_LICENCE_UPDATES_TASK_NAME
 
 
 @pytest.fixture(autouse=True)
@@ -22,6 +22,10 @@ def celery_app():
         # send licence details to hmrc, periodic task every 10min
         CELERY_SEND_LICENCE_UPDATES_TASK_NAME: {
             "task": CELERY_SEND_LICENCE_UPDATES_TASK_NAME,
+            "schedule": crontab(minute="*/10"),
+        },
+        CELERY_MANAGE_INBOX_TASK_NAME: {
+            "task": CELERY_MANAGE_INBOX_TASK_NAME,
             "schedule": crontab(minute="*/10"),
         },
     }
