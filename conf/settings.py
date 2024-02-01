@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "mail",
     "background_task",
+    # This is app custome healthcheck app and health_check is django-health-check
+    "healthcheck",
     "health_check",
     "health_check.db",
     "health_check.cache",
