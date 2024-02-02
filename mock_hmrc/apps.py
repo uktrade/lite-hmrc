@@ -6,8 +6,8 @@ class MockHmrcConfig(AppConfig):
     name = "mock_hmrc"
 
     @classmethod
-    def initialize_background_tasks(cls, **kwargs):
+    def initialize_send_licence_usage_figures_to_lite_api(cls, **kwargs):
         pass
 
     def ready(self):
-        post_migrate.connect(self.initialize_background_tasks, sender=self)
+        post_migrate.connect(self.initialize_send_licence_usage_figures_to_lite_api, sender=self)

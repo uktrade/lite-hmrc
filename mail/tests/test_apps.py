@@ -87,7 +87,7 @@ class TestApps(LiteHMRCTestClient):
         )
 
         # We expect our UsageData record to be processed as part of this initialization function
-        MailConfig.initialize_background_tasks()
+        MailConfig.initialize_send_licence_usage_figures_to_lite_api()
 
         self.usage_data.refresh_from_db()
         put_request.assert_called_with(

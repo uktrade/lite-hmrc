@@ -30,7 +30,6 @@ class MockResponse:
         return self.json_data
 
 
-@override_settings(BACKGROUND_TASK_ENABLED=False)  # Disable task from being run on app initialization
 class UpdateUsagesTaskTests(LiteHMRCTestClient):
     def setUp(self):
         super().setUp()
