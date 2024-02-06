@@ -186,7 +186,7 @@ def _collect_and_send(mail: Mail):
 
     if message_to_send_dto:
         if message_to_send_dto.receiver != SourceEnum.LITE and message_to_send_dto.subject:
-            send_email_task(mail_id=mail["id"], message=message_to_send_dto)
+            send_email_task(mail_id=mail.id, message=message_to_send_dto)
             update_mail(mail, message_to_send_dto)
 
             logger.info(

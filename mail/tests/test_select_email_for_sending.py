@@ -104,7 +104,7 @@ class EmailSelectTests(LiteHMRCTestClient):
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.libraries.routing_controller.send_email_task")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
     def test_case1_sending_of_pending_licencedata_mails(
         self,
@@ -164,7 +164,7 @@ class EmailSelectTests(LiteHMRCTestClient):
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.libraries.routing_controller.send_email_task")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
     def test_case2_sending_of_pending_usagedata_mails(
         self,
@@ -229,7 +229,7 @@ class EmailSelectTests(LiteHMRCTestClient):
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.libraries.routing_controller.send_email_task")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
     def test_case3_sending_of_pending_licencedata_and_usagedata_mails_1(
         self,
@@ -319,7 +319,7 @@ class EmailSelectTests(LiteHMRCTestClient):
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.libraries.routing_controller.send_email_task")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
     def test_case3_sending_of_pending_licencedata_and_usagedata_mails_2(
         self,
@@ -395,7 +395,7 @@ class EmailSelectTests(LiteHMRCTestClient):
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.libraries.routing_controller.send_email_task")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
     def test_case4_sending_of_pending_licencedata_when_waiting_for_reply(
         self,

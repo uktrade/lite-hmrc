@@ -1,6 +1,5 @@
 import time
 
-from hashlib import md5
 from smtplib import SMTPException
 from contextlib import contextmanager
 from django.core.cache import cache
