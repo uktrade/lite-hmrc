@@ -1,7 +1,13 @@
 from unittest import mock
 from django.test import TestCase, override_settings
 from django.core.cache import cache
+from datetime import datetime
+import pytz
+
 import email.mime.multipart
+from mail.libraries.email_message_dto import EmailMessageDto
+
+from django.conf import settings
 
 from mail.tasks import send_email_task
 from mail.celery_tasks import get_lite_api_url
@@ -45,6 +51,42 @@ class SendEmailTaskTests(TestCase):
         mock_smtp_send.assert_called_once()
         self.assertEqual(mock_cache.add.call_count, 2)
         mock_cache.delete.assert_called_once_with("global_send_email_lock")
+
+    @mock.patch("mail.tasks.smtp_send")
+    @mock.patch("mail.tasks.cache")
+    def test_send_email_task_with_message(self, mock_cache, mock_smtp_send):
+        mock_cache.add.return_value = True
+        mock_cache.delete.return_value = None
+
+        # Prepare the email_message_dto as a serializable dictionary
+        attachment = "30 \U0001d5c4\U0001d5c6/\U0001d5c1 \u5317\u4EB0"
+        email_message_dto = EmailMessageDto(
+            run_number=1,
+            sender=settings.HMRC_ADDRESS,
+            receiver=settings.SPIRE_ADDRESS,
+            date="Mon, 17 May 2021 14:20:18 +0100",
+            body=None,
+            subject="Some subject",
+            attachment=["some filename", attachment],
+            raw_data="",
+        )
+
+        send_email_task(message=email_message_dto)
+        mock_smtp_send.assert_called_once()
+
+        # Verify the lock was acquired and released
+        mock_cache.add.assert_called_once_with("global_send_email_lock", mock.ANY, 60 * 10)
+        mock_cache.delete.assert_called_once_with("global_send_email_lock")
+
+    @mock.patch("mail.tasks.smtp_send")
+    def test_send_email_task_insufficient_parameters(self, mock_smtp_send):
+        mock_smtp_send.side_effect = lambda *args, **kwargs: None
+
+        with self.assertRaises(ValueError) as context:
+            send_email_task.apply(kwargs={}).get()
+
+        self.assertTrue("Insufficient parameters to build email." in str(context.exception))
+        mock_smtp_send.assert_not_called()
 
 
 class NotifyUsersOfRejectedMailTests(TestCase):
