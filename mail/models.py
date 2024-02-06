@@ -94,7 +94,7 @@ class Mail(models.Model):
 
     @staticmethod
     def notify_users(id, response_subject):
-        from mail.celery_tasks import send_email_task
+        from mail.tasks import send_email_task
 
         send_email_task.delay(mail_id=id, mail_response_subject=response_subject)
 

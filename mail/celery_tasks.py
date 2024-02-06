@@ -1,6 +1,4 @@
 import urllib.parse
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from smtplib import SMTPException
 from typing import List, MutableMapping, Tuple
 
@@ -18,9 +16,9 @@ from mail.libraries.data_processors import build_request_mail_message_dto
 from mail.libraries.routing_controller import check_and_route_emails, send, update_mail
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
 from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
-from mail.servers import smtp_send
 
 logger = get_task_logger(__name__)
+
 
 # Send Usage Figures to LITE API
 def get_lite_api_url():
@@ -77,38 +75,6 @@ MAX_ATTEMPTS = 3
 RETRY_BACKOFF = 180
 CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_to_hmrc"
 CELERY_MANAGE_INBOX_TASK_NAME = "mail.celery_tasks.manage_inbox"
-
-
-# Notify Users of Rejected Mail
-@shared_task(
-    autoretry_for=(SMTPException,),
-    max_retries=MAX_ATTEMPTS,
-    retry_backoff=RETRY_BACKOFF,
-)
-def notify_users_of_rejected_licences(mail_id, mail_response_subject):
-    """If a reply is received with rejected licences this task notifies users of the rejection"""
-
-    logger.info("Notifying users of rejected licences found in mail with subject %s", mail_response_subject)
-
-    try:
-        multipart_msg = MIMEMultipart()
-        multipart_msg["From"] = settings.EMAIL_USER
-        multipart_msg["To"] = ",".join(settings.NOTIFY_USERS)
-        multipart_msg["Subject"] = "Licence rejected by HMRC"
-        body = MIMEText(f"Mail (Id: {mail_id}) with subject {mail_response_subject} has rejected licences")
-        multipart_msg.attach(body)
-
-        smtp_send(multipart_msg)
-
-    except SMTPException:
-        logger.exception(
-            "An unexpected error occurred when notifying users of rejected licences, Mail Id: %s, subject: %s",
-            mail_id,
-            mail_response_subject,
-        )
-        raise
-
-    logger.info("Successfully notified users of rejected licences found in mail with subject %s", mail_response_subject)
 
 
 class SendUsageDataBaseTask(Task):
