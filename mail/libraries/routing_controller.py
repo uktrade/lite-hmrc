@@ -4,6 +4,7 @@ from typing import Callable, List, Optional, Tuple
 
 from django.conf import settings
 from django.utils import timezone
+from mail.tasks import send_email_task
 from rest_framework.exceptions import ValidationError
 
 from mail.auth import BasicAuthentication, ModernAuthentication
@@ -185,7 +186,7 @@ def _collect_and_send(mail: Mail):
 
     if message_to_send_dto:
         if message_to_send_dto.receiver != SourceEnum.LITE and message_to_send_dto.subject:
-            send(message_to_send_dto)
+            send_email_task(mail_id=mail["id"], message=message_to_send_dto)
             update_mail(mail, message_to_send_dto)
 
             logger.info(
