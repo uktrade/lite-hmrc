@@ -25,6 +25,7 @@ from mail.servers import smtp_send
 
 logger = get_task_logger(__name__)
 
+
 # Send Usage Figures to LITE API
 def get_lite_api_url():
     """The URL for the licence usage callback, from the LITE_API_URL setting.
@@ -277,7 +278,6 @@ def manage_inbox():
             exc_info=True,
         )
         raise exc
-    
 
 
 @contextmanager
