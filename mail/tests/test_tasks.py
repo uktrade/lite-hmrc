@@ -1,8 +1,7 @@
 from unittest import mock
 from django.test import TestCase, override_settings
 from django.core.cache import cache
-from datetime import datetime
-import pytz
+from celery.exceptions import Retry
 
 import email.mime.multipart
 from mail.libraries.email_message_dto import EmailMessageDto
@@ -34,6 +33,19 @@ class GetLiteAPIUrlTests(TestCase):
 
 
 class SendEmailTaskTests(TestCase):
+    def setUp(self):
+        attachment = "30 \U0001d5c4\U0001d5c6/\U0001d5c1 \u5317\u4EB0"
+        self.email_message_dto = EmailMessageDto(
+            run_number=1,
+            sender=settings.HMRC_ADDRESS,
+            receiver=settings.SPIRE_ADDRESS,
+            date="Mon, 17 May 2021 14:20:18 +0100",
+            body=None,
+            subject="Some subject",
+            attachment=["some filename", attachment],
+            raw_data="",
+        )
+
     @override_settings(EMAIL_USER="test@example.com", NOTIFY_USERS=["notify@example.com"])
     @mock.patch("mail.tasks.smtp_send")
     @mock.patch("mail.tasks.cache")
@@ -49,7 +61,8 @@ class SendEmailTaskTests(TestCase):
 
         # Assert smtp_send was called once due to locking
         mock_smtp_send.assert_called_once()
-        self.assertEqual(mock_cache.add.call_count, 2)
+        # After locked and being released
+        self.assertEqual(mock_cache.add.call_count, 3)
         mock_cache.delete.assert_called_once_with("global_send_email_lock")
 
     @mock.patch("mail.tasks.smtp_send")
@@ -58,20 +71,7 @@ class SendEmailTaskTests(TestCase):
         mock_cache.add.return_value = True
         mock_cache.delete.return_value = None
 
-        # Prepare the email_message_dto as a serializable dictionary
-        attachment = "30 \U0001d5c4\U0001d5c6/\U0001d5c1 \u5317\u4EB0"
-        email_message_dto = EmailMessageDto(
-            run_number=1,
-            sender=settings.HMRC_ADDRESS,
-            receiver=settings.SPIRE_ADDRESS,
-            date="Mon, 17 May 2021 14:20:18 +0100",
-            body=None,
-            subject="Some subject",
-            attachment=["some filename", attachment],
-            raw_data="",
-        )
-
-        send_email_task(message=email_message_dto)
+        send_email_task(message=self.email_message_dto)
         mock_smtp_send.assert_called_once()
 
         # Verify the lock was acquired and released
@@ -87,6 +87,27 @@ class SendEmailTaskTests(TestCase):
 
         self.assertTrue("Insufficient parameters to build email." in str(context.exception))
         mock_smtp_send.assert_not_called()
+
+    @mock.patch("mail.tasks.send_email_task.retry", side_effect=Retry)
+    @mock.patch("mail.tasks.smtp_send")
+    @mock.patch("mail.tasks.cache")
+    def test_retry_on_lock_failure(self, mock_cache, mock_smtp_send, mock_retry):
+        mock_cache.add.side_effect = [True, False]
+        mock_cache.delete.return_value = None
+
+        send_email_task(message=self.email_message_dto)
+        send_email_task.apply(kwargs={"mail_id": "123", "mail_response_subject": "Test Subject"})
+
+        mock_retry.assert_called_once()
+
+        retry_call_args = mock_retry.call_args
+        self.assertIn("countdown", retry_call_args[1])
+        retry_delay = retry_call_args[1]["countdown"]
+
+        expected_retry_delay = 180  # Assuming it's the first retry attempt
+        self.assertEqual(retry_delay, expected_retry_delay)
+
+        mock_smtp_send.assert_called_once()
 
 
 class NotifyUsersOfRejectedMailTests(TestCase):

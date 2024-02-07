@@ -49,4 +49,7 @@ def send_email_task(self, **kwargs):
                 logger.error(f"Failed to send email: {e}")
                 raise
         else:
-            logger.info("Another send_email_task is currently in progress")
+            logger.info("Another send_email_task is currently in progress, will retry...")
+
+            retry_delay = RETRY_BACKOFF * (2**self.request.retries)
+            raise self.retry(countdown=retry_delay)
