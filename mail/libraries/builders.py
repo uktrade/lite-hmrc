@@ -280,14 +280,3 @@ def _validate_dto(email_message_dto):
 
     if email_message_dto.attachment is None:
         raise TypeError("None file attachment received!")
-
-
-def build_email_rejected_licence_message(mail_id, mail_response_subject):
-    multipart_msg = MIMEMultipart()
-    multipart_msg["From"] = settings.EMAIL_USER
-    multipart_msg["To"] = ",".join(settings.NOTIFY_USERS)
-    multipart_msg["Subject"] = "Licence rejected by HMRC"
-    body = MIMEText(f"Mail (Id: {mail_id}) with subject {mail_response_subject} has rejected licences")
-    multipart_msg.attach(body)
-
-    return multipart_msg

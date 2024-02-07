@@ -1,6 +1,11 @@
 import urllib.parse
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from smtplib import SMTPException
 from typing import List, MutableMapping, Tuple
+import time
+from contextlib import contextmanager
+from django.core.cache import cache
 
 from celery import Task, shared_task
 from celery.utils.log import get_task_logger
@@ -16,9 +21,9 @@ from mail.libraries.data_processors import build_request_mail_message_dto
 from mail.libraries.routing_controller import check_and_route_emails, send, update_mail
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
 from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
+from mail.servers import smtp_send
 
 logger = get_task_logger(__name__)
-
 
 # Send Usage Figures to LITE API
 def get_lite_api_url():
@@ -73,8 +78,41 @@ def _log_error(message, lite_usage_data_id):
 
 MAX_ATTEMPTS = 3
 RETRY_BACKOFF = 180
+LOCK_EXPIRE = 60 * 10  # Lock expires in 10 minutes
 CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_to_hmrc"
 CELERY_MANAGE_INBOX_TASK_NAME = "mail.celery_tasks.manage_inbox"
+
+
+# Notify Users of Rejected Mail
+@shared_task(
+    autoretry_for=(SMTPException,),
+    max_retries=MAX_ATTEMPTS,
+    retry_backoff=RETRY_BACKOFF,
+)
+def notify_users_of_rejected_licences(mail_id, mail_response_subject):
+    """If a reply is received with rejected licences this task notifies users of the rejection"""
+
+    logger.info("Notifying users of rejected licences found in mail with subject %s", mail_response_subject)
+
+    try:
+        multipart_msg = MIMEMultipart()
+        multipart_msg["From"] = settings.EMAIL_USER
+        multipart_msg["To"] = ",".join(settings.NOTIFY_USERS)
+        multipart_msg["Subject"] = "Licence rejected by HMRC"
+        body = MIMEText(f"Mail (Id: {mail_id}) with subject {mail_response_subject} has rejected licences")
+        multipart_msg.attach(body)
+
+        send_smtp_task(multipart_msg)
+
+    except SMTPException:
+        logger.exception(
+            "An unexpected error occurred when notifying users of rejected licences, Mail Id: %s, subject: %s",
+            mail_id,
+            mail_response_subject,
+        )
+        raise
+
+    logger.info("Successfully notified users of rejected licences found in mail with subject %s", mail_response_subject)
 
 
 class SendUsageDataBaseTask(Task):
@@ -239,3 +277,35 @@ def manage_inbox():
             exc_info=True,
         )
         raise exc
+    
+
+
+@contextmanager
+def memcache_lock(lock_id, oid=None):
+    timeout_at = time.monotonic() + LOCK_EXPIRE - 3
+    status = cache.add(lock_id, "locked", LOCK_EXPIRE)
+    try:
+        yield status
+    finally:
+        if time.monotonic() < timeout_at and status:
+            cache.delete(lock_id)
+
+
+@shared_task(bind=True, autoretry_for=(SMTPException,), max_retries=MAX_ATTEMPTS, retry_backoff=RETRY_BACKOFF)
+def send_smtp_task(self, multipart_msg):
+    global_lock_id = "global_send_email_lock"
+
+    with memcache_lock(global_lock_id) as acquired:
+        if acquired:
+            logger.info("Global lock acquired, sending email")
+            try:
+                smtp_send(multipart_msg)
+                logger.info("Successfully sent email.")
+            except SMTPException as e:
+                logger.error(f"Failed to send email: {e}")
+                raise
+        else:
+            logger.info("Another send_smtp_task is currently in progress, will retry...")
+
+            retry_delay = RETRY_BACKOFF * (2**self.request.retries)
+            raise self.retry(countdown=retry_delay)

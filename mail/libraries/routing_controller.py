@@ -4,7 +4,7 @@ from typing import Callable, List, Optional, Tuple
 
 from django.conf import settings
 from django.utils import timezone
-from mail.tasks import send_email_task
+
 from rest_framework.exceptions import ValidationError
 
 from mail.auth import BasicAuthentication, ModernAuthentication
@@ -170,9 +170,13 @@ def update_mail(mail: Mail, mail_dto: EmailMessageDto):
 
 
 def send(email_message_dto: EmailMessageDto):
+    # Needs to be imported here otherwise you will get a circular import errors
+    from mail.celery_tasks import send_smtp_task
+
     logger.info("Preparing to send email")
     message = build_email_message(email_message_dto)
-    smtp_send(message)
+
+    send_smtp_task.apply_async(args=[message])
 
 
 def _collect_and_send(mail: Mail):
@@ -186,7 +190,7 @@ def _collect_and_send(mail: Mail):
 
     if message_to_send_dto:
         if message_to_send_dto.receiver != SourceEnum.LITE and message_to_send_dto.subject:
-            send_email_task(mail_id=mail.id, message=message_to_send_dto)
+            send(message_to_send_dto)
             update_mail(mail, message_to_send_dto)
 
             logger.info(
