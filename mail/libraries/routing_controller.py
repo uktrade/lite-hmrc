@@ -24,7 +24,7 @@ from mail.libraries.helpers import (
 )
 from mail.libraries.mailbox_service import get_message_iterator
 from mail.models import Mail
-from mail.servers import MailServer, smtp_send
+from mail.servers import MailServer
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +176,7 @@ def send(email_message_dto: EmailMessageDto):
     logger.info("Preparing to send email")
     message = build_email_message(email_message_dto)
 
-    send_smtp_task.apply_async(args=[message])
+    send_smtp_task(message)
 
 
 def _collect_and_send(mail: Mail):
