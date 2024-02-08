@@ -169,14 +169,13 @@ def update_mail(mail: Mail, mail_dto: EmailMessageDto):
     mail.save()
 
 
-def send(email_message_dto: EmailMessageDto):
-    # Needs to be imported here otherwise you will get a circular import errors
+def send(email_message_dto: EmailMessageDto, mail=None):
+    # Needs to be imported here otherwise you will get a circular import errors.
     from mail.celery_tasks import send_smtp_task
 
     logger.info("Preparing to send email")
     message = build_email_message(email_message_dto)
-
-    send_smtp_task(message)
+    send_smtp_task(message, mail, email_message_dto)
 
 
 def _collect_and_send(mail: Mail):
@@ -190,8 +189,7 @@ def _collect_and_send(mail: Mail):
 
     if message_to_send_dto:
         if message_to_send_dto.receiver != SourceEnum.LITE and message_to_send_dto.subject:
-            send(message_to_send_dto)
-            update_mail(mail, message_to_send_dto)
+            send(message_to_send_dto, mail)
 
             logger.info(
                 "Mail [%s] routed from [%s] to [%s] with subject %s",

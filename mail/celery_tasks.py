@@ -292,7 +292,7 @@ def memcache_lock(lock_id, oid=None):
 
 
 @shared_task(bind=True, autoretry_for=(SMTPException,), max_retries=MAX_ATTEMPTS, retry_backoff=RETRY_BACKOFF)
-def send_smtp_task(self, multipart_msg):
+def send_smtp_task(self, multipart_msg, mail=None, email_message_dto=None):
     global_lock_id = "global_send_email_lock"
 
     with memcache_lock(global_lock_id) as acquired:
@@ -301,6 +301,8 @@ def send_smtp_task(self, multipart_msg):
             try:
                 smtp_send(multipart_msg)
                 logger.info("Successfully sent email.")
+                if mail and email_message_dto:
+                    update_mail(mail, email_message_dto)
             except SMTPException as e:
                 logger.error(f"Failed to send email: {e}")
                 raise
