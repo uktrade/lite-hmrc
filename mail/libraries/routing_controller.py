@@ -9,7 +9,6 @@ from rest_framework.exceptions import ValidationError
 
 from mail.auth import BasicAuthentication, ModernAuthentication
 from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, SourceEnum
-from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
     lock_db_for_sending_transaction,
     serialize_email_message,
@@ -174,8 +173,11 @@ def send(email_message_dto: EmailMessageDto, mail=None):
     from mail.celery_tasks import send_smtp_task
 
     logger.info("Preparing to send email")
-    message = build_email_message(email_message_dto)
-    send_smtp_task(message, mail, email_message_dto)
+    email_message_data = email_message_dto._asdict()
+    if mail:
+        send_smtp_task.apply_async(kwargs={"mail_id": mail.id, "email_message_data": email_message_data})
+    else:
+        send_smtp_task.apply_async(kwargs={"email_message_data": email_message_data})
 
 
 def _collect_and_send(mail: Mail):
