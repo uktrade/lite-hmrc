@@ -5,6 +5,7 @@ import pytest
 from django.test import TestCase, override_settings
 
 from mail.celery_tasks import manage_inbox, notify_users_of_rejected_licences
+from mail.libraries.email_message_dto import EmailMessageDto
 
 
 class NotifyUsersOfRejectedMailTests(TestCase):

@@ -104,12 +104,14 @@ class EmailSelectTests(LiteHMRCTestClient):
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.celery_tasks.smtp_send")
+    @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
     def test_case1_sending_of_pending_licencedata_mails(
         self,
         email_dtos,
-        send_mail,
+        mock_cache,
+        mock_smtp_send,
         mock_get_hmrc_to_dit_mailserver,
         mock_get_spire_to_dit_mailserver,
     ):
@@ -127,7 +129,8 @@ class EmailSelectTests(LiteHMRCTestClient):
         num_sent_mails = 3
         start_run_number = 78120
         email_dtos.return_value = []
-        send_mail.wraps = lambda x: x
+        mock_cache.add.return_value = True
+        mock_smtp_send.wraps = lambda x: x
         for i in range(num_sent_mails):
             mail = self.get_mail(extract_type=ExtractTypeEnum.LICENCE_DATA, status=ReceptionStatusEnum.REPLY_SENT)
             LicenceData.objects.create(
@@ -159,17 +162,19 @@ class EmailSelectTests(LiteHMRCTestClient):
 
         # assert that the pending mail is sent and status updated
         mail = Mail.objects.get(id=pending_mail.id)
-        send_mail.assert_called_once()
+        mock_smtp_send.assert_called_once()
         self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_PENDING)
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.celery_tasks.smtp_send")
+    @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
     def test_case2_sending_of_pending_usagedata_mails(
         self,
         email_dtos,
-        send_mail,
+        mock_cache,
+        mock_smtp_send,
         mock_get_hmrc_to_dit_mailserver,
         mock_get_spire_to_dit_mailserver,
     ):
@@ -188,7 +193,8 @@ class EmailSelectTests(LiteHMRCTestClient):
         num_sent_mails = 3
         start_run_number = 78120
         email_dtos.return_value = []
-        send_mail.wraps = lambda x: x
+        mock_cache.add.return_value = True
+        mock_smtp_send.wraps = lambda x: x
         for i in range(num_sent_mails):
             mail = self.get_mail(extract_type=ExtractTypeEnum.LICENCE_DATA, status=ReceptionStatusEnum.REPLY_SENT)
             LicenceData.objects.create(
@@ -223,18 +229,20 @@ class EmailSelectTests(LiteHMRCTestClient):
 
             # assert that the pending mail is sent and status updated
             mail = Mail.objects.get(id=pending_mails[i].id)
-            send_mail.assert_called()
-            self.assertEqual(send_mail.call_count, int(i + 1))
+            mock_smtp_send.assert_called()
+            self.assertEqual(mock_smtp_send.call_count, int(i + 1))
             self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_SENT)
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.celery_tasks.smtp_send")
+    @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
     def test_case3_sending_of_pending_licencedata_and_usagedata_mails_1(
         self,
         email_dtos,
-        send_mail,
+        mock_cache,
+        mock_smtp_send,
         mock_get_hmrc_to_dit_mailserver,
         mock_get_spire_to_dit_mailserver,
     ):
@@ -255,7 +263,8 @@ class EmailSelectTests(LiteHMRCTestClient):
         num_sent_mails = 3
         start_run_number = 78120
         email_dtos.return_value = []
-        send_mail.wraps = lambda x: x
+        mock_cache.add.return_value = True
+        mock_smtp_send.wraps = lambda x: x
         for i in range(num_sent_mails):
             mail = self.get_mail(extract_type=ExtractTypeEnum.LICENCE_DATA, status=ReceptionStatusEnum.REPLY_SENT)
             LicenceData.objects.create(
@@ -309,8 +318,8 @@ class EmailSelectTests(LiteHMRCTestClient):
 
             # assert that the pending mail is sent and status updated
             mail = Mail.objects.get(id=pending_mails[i].id)
-            send_mail.assert_called()
-            self.assertEqual(send_mail.call_count, int(i + 1))
+            mock_smtp_send.assert_called()
+            self.assertEqual(mock_smtp_send.call_count, int(i + 1))
 
             if mail.extract_type == ExtractTypeEnum.LICENCE_DATA:
                 self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_PENDING)
@@ -319,12 +328,14 @@ class EmailSelectTests(LiteHMRCTestClient):
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.celery_tasks.smtp_send")
+    @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
     def test_case3_sending_of_pending_licencedata_and_usagedata_mails_2(
         self,
         email_dtos,
-        send_mail,
+        mock_cache,
+        mock_smtp_send,
         mock_get_hmrc_to_dit_mailserver,
         mock_get_spire_to_dit_mailserver,
     ):
@@ -342,7 +353,8 @@ class EmailSelectTests(LiteHMRCTestClient):
         start_run_number = 78120
         usage_run_number = 5050
         email_dtos.return_value = []
-        send_mail.wraps = lambda x: x
+        mock_cache.add.return_value = True
+        mock_smtp_send.wraps = lambda x: x
         for i in range(num_sent_mails):
             mail = self.get_mail(extract_type=ExtractTypeEnum.LICENCE_DATA, status=ReceptionStatusEnum.REPLY_SENT)
             LicenceData.objects.create(
@@ -390,7 +402,7 @@ class EmailSelectTests(LiteHMRCTestClient):
 
         # assert that the pending mail is sent and status updated
         mail = Mail.objects.get(id=pending_mail.id)
-        send_mail.assert_called_once()
+        mock_smtp_send.assert_called_once()
         self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_PENDING)
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")

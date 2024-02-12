@@ -16,9 +16,10 @@ from django.utils import timezone
 from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED
 
 from mail import requests as mail_requests
-from mail.enums import ReceptionStatusEnum, SourceEnum
-from mail.libraries.builders import build_licence_data_mail
+from mail.enums import EmailType, ReceptionStatusEnum, SourceEnum
+from mail.libraries.builders import build_email_message, build_licence_data_mail
 from mail.libraries.data_processors import build_request_mail_message_dto
+from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.routing_controller import check_and_route_emails, send, update_mail
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
 from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
@@ -102,7 +103,18 @@ def cache_lock(lock_id):
             cache.delete(lock_id)
 
 
-class SendEmailFailureTask(Task):
+class SendEmailBaseTask(Task):
+    def on_success(self, retval, task_id, args, kwargs):
+        logger.info("Sending email task successful")
+
+        email_type, mail_id, message_dto = args
+        if email_type == EmailType.LICENCE_DETAILS:
+            message_dto = EmailMessageDto(*message_dto)
+            mail = Mail.objects.get(id=mail_id)
+            update_mail(mail, message_dto)
+
+        return super().on_success(retval, task_id, args, kwargs)
+
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         message = (
             """
@@ -120,16 +132,42 @@ class SendEmailFailureTask(Task):
     autoretry_for=(SMTPConnectionLocked,),
     max_retries=MAX_ATTEMPTS,
     retry_backoff=RETRY_BACKOFF,
-    base=SendEmailFailureTask,
+    base=SendEmailBaseTask,
 )
-def send_email_task(self):
+def send_email_task(email_type, mail_id, message_dto):
+    """
+    Main purpose of this task is to send email based on the type provided.
+
+    We use SMTP to send emails. As we process messages we have a requirement to
+    send emails from multiple places, because of this we may open multiple SMTP connections.
+    This results in error if the number of concurrent connections exceed maximum allowed value.
+
+    To manage this reliably we are restricting access to this shared resource using a lock.
+    This is achieved by deferring all email sending functionality to this task.
+    Before sending email it first tries to acquire a lock.
+      - If there are no active connections then it acquires lock and sends email.
+        In some cases we need to update state which is handled in on_success() callback.
+      - If there is active connection (lock acquisition fails) then it raises an exception
+        which triggers a retry.
+        If all retries fail then manual intervention may be required (unlikely)
+    """
+
+    message = None
     global_lock_id = "global_send_email_lock"
 
-    with cache_lock(global_lock_id) as acquired:
-        if acquired:
-            logger.info("Global lock acquired, preparing to send email")
+    with cache_lock(global_lock_id) as lock_acquired:
+        if lock_acquired:
+            logger.info("Lock acquired, preparing to send email")
+
+            # de-serialize back to required type
+            message_dto = EmailMessageDto(*message_dto)
+
+            if email_type == EmailType.LICENCE_DETAILS:
+                message = build_email_message(message_dto)
+                smtp_send(message)
+
         else:
-            logger.info("Another SMTP connection is active, retry after backing off")
+            logger.info("Another SMTP connection is active, will be retried after backing off")
             raise SMTPConnectionLocked()
 
 
