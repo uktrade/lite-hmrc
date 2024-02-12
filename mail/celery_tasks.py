@@ -106,7 +106,7 @@ class SendEmailBaseTask(Task):
         logger.info("Sending email task successful")
 
         email_type, mail_id, message_dto = args
-        if email_type == EmailType.LICENCE_DETAILS:
+        if email_type == EmailType.SPIRE_LICENCE_DETAILS:
             message_dto = EmailMessageDto(*message_dto)
             mail = Mail.objects.get(id=mail_id)
             update_mail(mail, message_dto)
@@ -157,10 +157,10 @@ def send_email_task(email_type, mail_id, message_dto):
         if lock_acquired:
             logger.info("Lock acquired, preparing to send email")
 
-            # de-serialize back to required type
+            # de-serialize back to original type
             message_dto = EmailMessageDto(*message_dto)
 
-            if email_type == EmailType.LICENCE_DETAILS:
+            if email_type == EmailType.SPIRE_LICENCE_DETAILS:
                 message = build_email_message(message_dto)
                 smtp_send(message)
 

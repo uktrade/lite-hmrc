@@ -188,7 +188,7 @@ def _collect_and_send(mail: Mail):
     if message_to_send_dto:
         if message_to_send_dto.receiver != SourceEnum.LITE and message_to_send_dto.subject:
             # Schedule a task to send email
-            send_email_task.delay(EmailType.LICENCE_DETAILS, mail.id, message_to_send_dto)
+            send_email_task.delay(EmailType.SPIRE_LICENCE_DETAILS, mail.id, message_to_send_dto)
 
             logger.info(
                 "Scheduled sending of mail [%s] from [%s] to [%s] with subject %s",

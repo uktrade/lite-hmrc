@@ -357,6 +357,8 @@ class QuantityCodeEnum(IntegerChoices):
     # Kilogram Raw Sugar = 118, "Kilogram Raw Sugar"
     # KAC: (KG net of Acesulfame Potassium) = 119, "KAC: (KG net of Acesulfame Potassium)"
 
+
 class EmailType:
     LICENCE_REJECTED = "licence_rejected"
-    LICENCE_DETAILS = "licence_details"
+    SPIRE_LICENCE_DETAILS = "spire_licence_details"  # it can be either licence_data or licence_reply
+    LITE_LICENCE_DETAILS = "lite_licence_details"
