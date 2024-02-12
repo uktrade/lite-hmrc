@@ -1,23 +1,25 @@
 import email.mime.multipart
-from unittest import mock
-
 import pytest
+
+from unittest import mock
 from django.test import TestCase, override_settings
 
 from mail.celery_tasks import manage_inbox, notify_users_of_rejected_licences
-from mail.libraries.email_message_dto import EmailMessageDto
 
 
 class NotifyUsersOfRejectedMailTests(TestCase):
     @override_settings(EMAIL_USER="test@example.com", NOTIFY_USERS=["notify@example.com"])  # /PS-IGNORE
     @mock.patch("mail.celery_tasks.smtp_send")
-    def test_send_success(self, mock_send):
-        notify_users_of_rejected_licences("123", "CHIEF_SPIRE_licenceReply_202401180900_42557")
+    @mock.patch("mail.celery_tasks.cache")
+    def test_send_success(self, mock_cache, mock_smtp_send):
+        mock_cache.add.return_value = True
 
-        mock_send.assert_called_once()
+        notify_users_of_rejected_licences.delay("123", "CHIEF_SPIRE_licenceReply_202401180900_42557")
 
-        self.assertEqual(len(mock_send.call_args_list), 1)
-        message = mock_send.call_args[0][0]
+        mock_smtp_send.assert_called_once()
+
+        self.assertEqual(len(mock_smtp_send.call_args_list), 1)
+        message = mock_smtp_send.call_args[0][0]
         self.assertIsInstance(message, email.mime.multipart.MIMEMultipart)
 
         expected_headers = {
@@ -26,6 +28,7 @@ class NotifyUsersOfRejectedMailTests(TestCase):
             "From": "test@example.com",  # /PS-IGNORE
             "To": "notify@example.com",  # /PS-IGNORE
             "Subject": "Licence rejected by HMRC",
+            "name": "Licence rejected by HMRC",
         }
         self.assertDictEqual(dict(message), expected_headers)
 

@@ -1,8 +1,6 @@
 import time
 import urllib.parse
 
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from smtplib import SMTPException
 from typing import List, MutableMapping, Tuple
 
@@ -17,7 +15,7 @@ from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORT
 
 from mail import requests as mail_requests
 from mail.enums import EmailType, ReceptionStatusEnum, SourceEnum
-from mail.libraries.builders import build_email_message, build_licence_data_mail
+from mail.libraries.builders import build_email_message, build_licence_data_mail, build_licence_rejected_email_message
 from mail.libraries.data_processors import build_request_mail_message_dto
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.routing_controller import check_and_route_emails, send, update_mail
@@ -166,39 +164,33 @@ def send_email_task(email_type, mail_id, message_dto):
                 message = build_email_message(message_dto)
                 smtp_send(message)
 
+            elif email_type == EmailType.LICENCE_REJECTED:
+                message = build_licence_rejected_email_message(message_dto)
+                smtp_send(message)
+
         else:
             logger.info("Another SMTP connection is active, will be retried after backing off")
             raise SMTPConnectionLocked()
 
 
 # Notify Users of Rejected Mail
-@shared_task(
-    autoretry_for=(SMTPException,),
-    max_retries=MAX_ATTEMPTS,
-    retry_backoff=RETRY_BACKOFF,
-)
+@shared_task
 def notify_users_of_rejected_licences(mail_id, mail_response_subject):
     """If a reply is received with rejected licences this task notifies users of the rejection"""
 
     logger.info("Notifying users of rejected licences found in mail with subject %s", mail_response_subject)
 
-    try:
-        multipart_msg = MIMEMultipart()
-        multipart_msg["From"] = settings.EMAIL_USER
-        multipart_msg["To"] = ",".join(settings.NOTIFY_USERS)
-        multipart_msg["Subject"] = "Licence rejected by HMRC"
-        body = MIMEText(f"Mail (Id: {mail_id}) with subject {mail_response_subject} has rejected licences")
-        multipart_msg.attach(body)
-
-        smtp_send(multipart_msg)
-
-    except SMTPException:
-        logger.exception(
-            "An unexpected error occurred when notifying users of rejected licences, Mail Id: %s, subject: %s",
-            mail_id,
-            mail_response_subject,
-        )
-        raise
+    message_dto = EmailMessageDto(
+        run_number=None,
+        sender=settings.EMAIL_USER,
+        receiver=",".join(settings.NOTIFY_USERS),
+        date=timezone.now(),
+        subject="Licence rejected by HMRC",
+        body=f"Mail (Id: {mail_id}) with subject {mail_response_subject} has rejected licences",
+        attachment=None,
+        raw_data=None,
+    )
+    send_email_task.delay(EmailType.LICENCE_REJECTED, mail_id, message_dto)
 
     logger.info("Successfully notified users of rejected licences found in mail with subject %s", mail_response_subject)
 
