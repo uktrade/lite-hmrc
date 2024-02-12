@@ -3,6 +3,7 @@ from unittest import mock
 
 from django.conf import settings
 from django.core.management import call_command
+from django.test import override_settings
 
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.libraries.email_message_dto import EmailMessageDto
@@ -70,9 +71,10 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         self.assertEqual(mail.extract_type, ExtractTypeEnum.LICENCE_DATA)
         self.assertEqual(mock_send.call_count, 1)
 
+    @override_settings(SEND_REJECTED_EMAIL=False)
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.libraries.routing_controller.smtp_send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
@@ -81,7 +83,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         email_dtos,
         mock_cache,
         mock_smtp_send,
-        mock_send,
+        mock_routing_smtp_send,
         mock_get_hmrc_to_dit_mailserver,
         mock_get_spire_to_dit_mailserver,
     ):
@@ -141,11 +143,11 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         self.assertEqual(mail.id, pending_mail.id)
         self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_SENT)
         self.assertEqual(mail.extract_type, ExtractTypeEnum.LICENCE_REPLY)
-        mock_send.assert_called_once()
+        mock_routing_smtp_send.assert_called_once()
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.libraries.routing_controller.smtp_send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
@@ -154,7 +156,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         email_dtos,
         mock_cache,
         mock_smtp_send,
-        mock_send,
+        mock_routing_smtp_send,
         mock_get_hmrc_to_dit_mailserver,
         mock_get_spire_to_dit_mailserver,
     ):
@@ -213,4 +215,4 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         self.assertEqual(mail.id, pending_mail.id)
         self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_SENT)
         self.assertEqual(mail.extract_type, ExtractTypeEnum.USAGE_DATA)
-        mock_send.assert_called_once()
+        mock_routing_smtp_send.assert_called_once()

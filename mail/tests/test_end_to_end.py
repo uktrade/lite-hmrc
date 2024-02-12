@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest import mock
 from urllib.parse import quote
 
 import requests
@@ -25,7 +26,9 @@ def get_smtp_body():
 
 
 class EndToEndTests(LiteHMRCTestClient):
-    def test_send_email_to_hmrc_e2e(self):
+    @mock.patch("mail.celery_tasks.cache")
+    def test_send_email_to_hmrc_e2e(self, mock_cache):
+        mock_cache.add.return_value = True
         clear_stmp_mailbox()
         self.client.get(reverse("mail:set_all_to_reply_sent"))
         self.client.post(
@@ -52,7 +55,9 @@ class EndToEndTests(LiteHMRCTestClient):
 
 @override_settings(CHIEF_SOURCE_SYSTEM=ChiefSystemEnum.ICMS)
 class ICMSEndToEndTests(testcases.TestCase):
-    def test_icms_send_email_to_hmrc_fa_oil_e2e(self):
+    @mock.patch("mail.celery_tasks.cache")
+    def test_icms_send_email_to_hmrc_fa_oil_e2e(self, mock_cache):
+        mock_cache.add.return_value = True
         clear_stmp_mailbox()
         self.client.get(reverse("mail:set_all_to_reply_sent"))
 
@@ -113,7 +118,9 @@ class ICMSEndToEndTests(testcases.TestCase):
         licence_payload: LicencePayload = ld.licence_payloads.first()
         assert licence_payload.reference == "IMA/2022/00001"
 
-    def test_icms_send_email_to_hmrc_fa_dfl_e2e(self):
+    @mock.patch("mail.celery_tasks.cache")
+    def test_icms_send_email_to_hmrc_fa_dfl_e2e(self, mock_cache):
+        mock_cache.add.return_value = True
         clear_stmp_mailbox()
         self.client.get(reverse("mail:set_all_to_reply_sent"))
 
@@ -177,7 +184,9 @@ class ICMSEndToEndTests(testcases.TestCase):
             response = self.client.get(f"{reverse('mail:licence')}?id={encoded_reference_code}")
             self.assertEqual(response.json()["status"], "reply_pending", f"{ref} has incorrect status")
 
-    def test_icms_send_email_to_hmrc_fa_sil_e2e(self):
+    @mock.patch("mail.celery_tasks.cache")
+    def test_icms_send_email_to_hmrc_fa_sil_e2e(self, mock_cache):
+        mock_cache.add.return_value = True
         clear_stmp_mailbox()
         self.client.get(reverse("mail:set_all_to_reply_sent"))
 
@@ -198,7 +207,9 @@ class ICMSEndToEndTests(testcases.TestCase):
         response = self.client.get(f"{reverse('mail:licence')}?id={encoded_reference_code}")
         self.assertEqual(response.json()["status"], "reply_pending")
 
-    def test_icms_send_email_to_hmrc_sanctions_e2e(self):
+    @mock.patch("mail.celery_tasks.cache")
+    def test_icms_send_email_to_hmrc_sanctions_e2e(self, mock_cache):
+        mock_cache.add.return_value = True
         clear_stmp_mailbox()
         self.client.get(reverse("mail:set_all_to_reply_sent"))
 

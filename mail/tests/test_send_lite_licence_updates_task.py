@@ -1,19 +1,43 @@
-from smtplib import SMTPException
+import pytest
+
 from unittest import mock
 
-from django.test import override_settings
 from parameterized import parameterized
 
-from mail.celery_tasks import send_licence_details_to_hmrc
+from mail.celery_tasks import send_licence_details_to_hmrc, SMTPConnectionLocked
+from mail.libraries.lite_to_edifact_converter import EdifactValidationError
 from mail.enums import ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
-class TaskTests(LiteHMRCTestClient):
+class SendLiteLicenceDetailsTaskTests(LiteHMRCTestClient):
     def setUp(self):
         super().setUp()
         self.mail = Mail.objects.create(edi_filename="filename", edi_data="1\\fileHeader\\CHIEF\\SPIRE\\")
+
+    @parameterized.expand(
+        [
+            ([True],),
+            ([False, True],),
+        ]
+    )
+    @mock.patch("mail.celery_tasks.cache")
+    @mock.patch("mail.celery_tasks.smtp_send")
+    def test_send_licence_details_success(self, lock_acquired, mock_smtp_send, mock_cache):
+        """Test sending of LITE licence details without and with retry scenario"""
+        mock_cache.add.side_effect = lock_acquired
+        self.mail.status = ReceptionStatusEnum.REPLY_SENT
+        self.mail.save()
+
+        self.assertEqual(LicencePayload.objects.count(), 1)
+        send_licence_details_to_hmrc.delay()
+
+        self.assertEqual(Mail.objects.count(), 2)
+        self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 1)
+
+        assert mock_cache.add.call_count == len(lock_acquired)
+        assert mock_smtp_send.call_count == 1
 
     @parameterized.expand(
         [
@@ -53,8 +77,8 @@ class TaskTests(LiteHMRCTestClient):
 
         assert mock_smtp_send.call_count == num_emails_sent
 
-    @mock.patch("mail.celery_tasks.send")
-    def test_send_licence_details_not_sent_when_there_are_no_payloads(self, mock_send):
+    @mock.patch("mail.celery_tasks.smtp_send")
+    def test_send_licence_details_not_sent_when_there_are_no_payloads(self, mock_smtp_send):
         """Test to ensure no details are sent if there are no payloads to process"""
         self.mail.status = ReceptionStatusEnum.REPLY_SENT
         self.mail.save()
@@ -67,10 +91,10 @@ class TaskTests(LiteHMRCTestClient):
 
         send_licence_details_to_hmrc.delay()
         self.assertEqual(Mail.objects.count(), 1)
-        mock_send.assert_not_called()
+        mock_smtp_send.assert_not_called()
 
-    @mock.patch("mail.celery_tasks.send")
-    def test_send_licence_details_task_payload_not_processed_if_validation_error(self, mock_send):
+    @mock.patch("mail.celery_tasks.smtp_send")
+    def test_send_licence_details_task_payload_not_processed_if_validation_error(self, mock_smtp_send):
         """Test to ensure payload is not processed if there is a validation error"""
         self.mail.status = ReceptionStatusEnum.REPLY_SENT
         self.mail.save()
@@ -85,12 +109,12 @@ class TaskTests(LiteHMRCTestClient):
         send_licence_details_to_hmrc.delay()
 
         self.assertEqual(LicencePayload.objects.filter(is_processed=False).count(), 1)
-        mock_send.assert_not_called()
+        mock_smtp_send.assert_not_called()
 
-    @mock.patch("mail.celery_tasks.send")
-    def test_send_licence_details_raises_exception(self, mock_send):
-        mock_send.side_effect = SMTPException()
-        with self.assertRaises(SMTPException):
+    @mock.patch("mail.libraries.builders.licences_to_edifact")
+    def test_send_licence_details_raises_exception(self, mock_licences_to_edifact):
+        mock_licences_to_edifact.side_effect = EdifactValidationError()
+        with self.assertRaises(EdifactValidationError):
             self.mail.status = ReceptionStatusEnum.REPLY_SENT
             self.mail.save()
             send_licence_details_to_hmrc()
