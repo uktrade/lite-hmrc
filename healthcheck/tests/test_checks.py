@@ -71,8 +71,9 @@ class MailboxAuthenticationHealthCheckTest(TestCase):
             is_processed=False,
         )
         check = LicencePayloadsHealthCheck()
-        with self.assertRaises(HealthCheckException):
-            check.check_status()
+        check.check_status()
+        assert len(check.errors) == 1
+        assert "Payload object has been unprocessed for over" in check.errors[0].message
 
     def test_all_payloads_processed(self):
         LicencePayload.objects.create(
@@ -95,8 +96,9 @@ class MailboxAuthenticationHealthCheckTest(TestCase):
         )
 
         check = PendingMailHealthCheck()
-        with self.assertRaises(HealthCheckException):
-            check.check_status()
+        check.check_status()
+        assert len(check.errors) == 1
+        assert "The following Mail has been pending for over" in check.errors[0].message
 
     def test_no_unprocessed_pending_mails(self):
         Mail.objects.create(
