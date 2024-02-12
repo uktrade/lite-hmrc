@@ -18,7 +18,8 @@ from mail.enums import EmailType, ReceptionStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message, build_licence_data_mail, build_licence_rejected_email_message
 from mail.libraries.data_processors import build_request_mail_message_dto
 from mail.libraries.email_message_dto import EmailMessageDto
-from mail.libraries.routing_controller import check_and_route_emails, send, update_mail
+from mail.libraries.lite_to_edifact_converter import EdifactValidationError
+from mail.libraries.routing_controller import check_and_route_emails, update_mail
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
 from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
 from mail.servers import smtp_send
@@ -106,20 +107,25 @@ class SendEmailBaseTask(Task):
         logger.info("Sending email task successful")
 
         email_type, mail_id, message_dto = args
-        if email_type == EmailType.SPIRE_LICENCE_DETAILS:
+        if email_type == EmailType.LITE_LICENCE_DETAILS or email_type == EmailType.SPIRE_LICENCE_DETAILS:
             message_dto = EmailMessageDto(*message_dto)
             mail = Mail.objects.get(id=mail_id)
             update_mail(mail, message_dto)
 
+        licence_payload_ids = kwargs.get("licence_payload_ids", [])
+        if email_type == EmailType.LITE_LICENCE_DETAILS and licence_payload_ids:
+            # Mark payloads as processed
+            licence_payloads = LicencePayload.objects.filter(id__in=licence_payload_ids)
+            licence_payloads.update(is_processed=True)
+
         return super().on_success(retval, task_id, args, kwargs)
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        message = (
-            """
+        message = """
         Maximum attempts for send_email_task exceeded - the task has failed and needs manual inspection.
         Args: %s
-        """
-            % args
+        """ % (
+            args,
         )
 
         # Log the final failure message
@@ -132,7 +138,7 @@ class SendEmailBaseTask(Task):
     retry_backoff=RETRY_BACKOFF,
     base=SendEmailBaseTask,
 )
-def send_email_task(email_type, mail_id, message_dto):
+def send_email_task(email_type, mail_id, message_dto, licence_payload_ids=None):
     """
     Main purpose of this task is to send email based on the type provided.
 
@@ -160,7 +166,7 @@ def send_email_task(email_type, mail_id, message_dto):
             # de-serialize back to original type
             message_dto = EmailMessageDto(*message_dto)
 
-            if email_type == EmailType.SPIRE_LICENCE_DETAILS:
+            if email_type == EmailType.LITE_LICENCE_DETAILS or email_type == EmailType.SPIRE_LICENCE_DETAILS:
                 message = build_email_message(message_dto)
                 smtp_send(message)
 
@@ -209,10 +215,23 @@ class SendUsageDataBaseTask(Task):
         logger.error(message)
 
 
+class SendLicenceDetailsBaseTask(Task):
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        message = """
+        Maximum attempts for send_licence_details_to_hmrc task exceeded - the task has failed and needs manual inspection.
+
+        Args: %s
+        """ % (
+            args,
+        )
+        logger.error(message)
+
+
 @shared_task(
-    autoretry_for=(SMTPException,),
+    autoretry_for=(EdifactValidationError,),
     max_retries=MAX_ATTEMPTS,
     retry_backoff=RETRY_BACKOFF,
+    base=SendLicenceDetailsBaseTask,
 )
 def send_licence_details_to_hmrc():
     """Sends LITE issued licence details to HMRC"""
@@ -246,14 +265,18 @@ def send_licence_details_to_hmrc():
                 "Created licenceData mail with subject %s for licences [%s]", mail_dto.subject, licence_references
             )
 
-            send(mail_dto)
-            update_mail(mail, mail_dto)
+            # Schedule task to email licence details
+            licence_payload_ids = [str(licence.id) for licence in licences]
+            send_email_task.apply_async(
+                args=(
+                    EmailType.LITE_LICENCE_DETAILS,
+                    mail.id,
+                    mail_dto,
+                ),
+                kwargs={"licence_payload_ids": licence_payload_ids},
+            )
 
-            # Mark the payloads as processed
-            licences.update(is_processed=True)
-            logger.info("Licence references [%s] marked as processed", licence_references)
-
-    except SMTPException:
+    except EdifactValidationError:
         logger.exception("An unexpected error occurred when sending LITE licence updates to HMRC -> %s")
         raise
 

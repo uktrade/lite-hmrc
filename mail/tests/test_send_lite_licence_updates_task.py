@@ -17,15 +17,23 @@ class TaskTests(LiteHMRCTestClient):
 
     @parameterized.expand(
         [
-            (ReceptionStatusEnum.PENDING, 1, 1, 0),
-            (ReceptionStatusEnum.REPLY_PENDING, 1, 1, 0),
-            (ReceptionStatusEnum.REPLY_RECEIVED, 1, 1, 0),
-            (ReceptionStatusEnum.REPLY_SENT, 2, 1, 1),
+            (ReceptionStatusEnum.PENDING, 1, 1, 0, 0),
+            (ReceptionStatusEnum.REPLY_PENDING, 1, 1, 0, 0),
+            (ReceptionStatusEnum.REPLY_RECEIVED, 1, 1, 0, 0),
+            (ReceptionStatusEnum.REPLY_SENT, 2, 1, 1, 1),
         ]
     )
-    @mock.patch("mail.celery_tasks.send")
+    @mock.patch("mail.celery_tasks.cache")
+    @mock.patch("mail.celery_tasks.smtp_send")
     def test_send_licence_details_with_active_mail_status(
-        self, mail_status, expected_mail_count, payload_count, processed_payload_count, mock_send
+        self,
+        mail_status,
+        expected_mail_count,
+        payload_count,
+        processed_payload_count,
+        num_emails_sent,
+        mock_smtp_send,
+        mock_cache,
     ):
         """
         We can only send one message at a time to HMRC so before we send next message the
@@ -33,14 +41,17 @@ class TaskTests(LiteHMRCTestClient):
         details we need to check if there is an active email.
         In this test we ensure payload is only processed where there are no active emails.
         """
+        mock_cache.add.return_value = True
         self.mail.status = mail_status
         self.mail.save()
 
         self.assertEqual(LicencePayload.objects.count(), payload_count)
-
         send_licence_details_to_hmrc.delay()
+
         self.assertEqual(Mail.objects.count(), expected_mail_count)
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), processed_payload_count)
+
+        assert mock_smtp_send.call_count == num_emails_sent
 
     @mock.patch("mail.celery_tasks.send")
     def test_send_licence_details_not_sent_when_there_are_no_payloads(self, mock_send):
