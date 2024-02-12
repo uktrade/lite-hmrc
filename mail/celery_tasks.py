@@ -1,4 +1,6 @@
+import time
 import urllib.parse
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from smtplib import SMTPException
@@ -6,7 +8,9 @@ from typing import List, MutableMapping, Tuple
 
 from celery import Task, shared_task
 from celery.utils.log import get_task_logger
+from contextlib import contextmanager
 from django.conf import settings
+from django.core import cache
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED
@@ -21,6 +25,7 @@ from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
 from mail.servers import smtp_send
 
 logger = get_task_logger(__name__)
+
 
 # Send Usage Figures to LITE API
 def get_lite_api_url():
@@ -75,8 +80,22 @@ def _log_error(message, lite_usage_data_id):
 
 MAX_ATTEMPTS = 3
 RETRY_BACKOFF = 180
+LOCK_EXPIRE = 60 * 10  # secs (10 min)
 CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_to_hmrc"
 CELERY_MANAGE_INBOX_TASK_NAME = "mail.celery_tasks.manage_inbox"
+
+
+@contextmanager
+def cache_lock(lock_id):
+    timeout_at = time.monotonic() + LOCK_EXPIRE - 3
+    # cache.add fails if the key already
+    # return True if lock is acquired, False otherwise
+    status = cache.add(lock_id, "lock_acquired", LOCK_EXPIRE)
+    try:
+        yield status
+    finally:
+        if time.monotonic() < timeout_at and status:
+            cache.delete(lock_id)
 
 
 # Notify Users of Rejected Mail
