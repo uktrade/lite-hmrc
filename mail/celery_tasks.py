@@ -85,6 +85,10 @@ CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_
 CELERY_MANAGE_INBOX_TASK_NAME = "mail.celery_tasks.manage_inbox"
 
 
+class SMTPConnectionLocked(SMTPException):
+    pass
+
+
 @contextmanager
 def cache_lock(lock_id):
     timeout_at = time.monotonic() + LOCK_EXPIRE - 3
@@ -96,6 +100,37 @@ def cache_lock(lock_id):
     finally:
         if time.monotonic() < timeout_at and status:
             cache.delete(lock_id)
+
+
+class SendEmailFailureTask(Task):
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        message = (
+            """
+        Maximum attempts for send_email_task exceeded - the task has failed and needs manual inspection.
+        Args: %s
+        """
+            % args
+        )
+
+        # Log the final failure message
+        logger.critical(message)
+
+
+@shared_task(
+    autoretry_for=(SMTPConnectionLocked,),
+    max_retries=MAX_ATTEMPTS,
+    retry_backoff=RETRY_BACKOFF,
+    base=SendEmailFailureTask,
+)
+def send_email_task(self):
+    global_lock_id = "global_send_email_lock"
+
+    with cache_lock(global_lock_id) as acquired:
+        if acquired:
+            logger.info("Global lock acquired, preparing to send email")
+        else:
+            logger.info("Another SMTP connection is active, retry after backing off")
+            raise SMTPConnectionLocked()
 
 
 # Notify Users of Rejected Mail
