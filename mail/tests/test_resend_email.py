@@ -74,7 +74,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
     @override_settings(SEND_REJECTED_EMAIL=False)
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.smtp_send")
+    @mock.patch("mail.management.commands.resend_email.send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
@@ -83,7 +83,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         email_dtos,
         mock_cache,
         mock_smtp_send,
-        mock_routing_smtp_send,
+        mock_send,
         mock_get_hmrc_to_dit_mailserver,
         mock_get_spire_to_dit_mailserver,
     ):
@@ -143,11 +143,11 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         self.assertEqual(mail.id, pending_mail.id)
         self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_SENT)
         self.assertEqual(mail.extract_type, ExtractTypeEnum.LICENCE_REPLY)
-        mock_routing_smtp_send.assert_called_once()
+        mock_send.assert_called_once()
 
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.smtp_send")
+    @mock.patch("mail.management.commands.resend_email.send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
@@ -156,7 +156,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         email_dtos,
         mock_cache,
         mock_smtp_send,
-        mock_routing_smtp_send,
+        mock_send,
         mock_get_hmrc_to_dit_mailserver,
         mock_get_spire_to_dit_mailserver,
     ):
@@ -215,4 +215,4 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         self.assertEqual(mail.id, pending_mail.id)
         self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_SENT)
         self.assertEqual(mail.extract_type, ExtractTypeEnum.USAGE_DATA)
-        mock_routing_smtp_send.assert_called_once()
+        mock_send.assert_called_once()
