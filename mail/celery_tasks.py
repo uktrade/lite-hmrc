@@ -8,7 +8,7 @@ from celery import Task, shared_task
 from celery.utils.log import get_task_logger
 from contextlib import contextmanager
 from django.conf import settings
-from django.core import cache
+from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED
