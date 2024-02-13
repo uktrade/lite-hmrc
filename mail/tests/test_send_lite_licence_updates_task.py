@@ -1,10 +1,8 @@
-import pytest
-
 from unittest import mock
 
 from parameterized import parameterized
 
-from mail.celery_tasks import send_licence_details_to_hmrc, SMTPConnectionLocked
+from mail.celery_tasks import send_licence_details_to_hmrc
 from mail.libraries.lite_to_edifact_converter import EdifactValidationError
 from mail.enums import ReceptionStatusEnum
 from mail.models import LicencePayload, Mail

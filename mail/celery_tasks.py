@@ -85,14 +85,14 @@ CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_
 CELERY_MANAGE_INBOX_TASK_NAME = "mail.celery_tasks.manage_inbox"
 
 
-class SMTPConnectionLocked(SMTPException):
+class SMTPConnectionBusy(SMTPException):
     pass
 
 
 @contextmanager
 def cache_lock(lock_id):
     timeout_at = time.monotonic() + LOCK_EXPIRE - 3
-    # cache.add fails if the key already
+    # cache.add fails if the key already exists.
     # return True if lock is acquired, False otherwise
     status = cache.add(lock_id, "lock_acquired", LOCK_EXPIRE)
     try:
@@ -111,12 +111,16 @@ class SendEmailBaseTask(Task):
             message_dto = EmailMessageDto(*message_dto)
             mail = Mail.objects.get(id=mail_id)
             update_mail(mail, message_dto)
+            logger.info("Mail %s status updated to %s", mail.edi_filename, mail.status)
 
         licence_payload_ids = kwargs.get("licence_payload_ids", [])
         if email_type == EmailType.LITE_LICENCE_DETAILS and licence_payload_ids:
             # Mark payloads as processed
             licence_payloads = LicencePayload.objects.filter(id__in=licence_payload_ids)
             licence_payloads.update(is_processed=True)
+
+            references = licence_payloads.values_list("reference", flat=True)
+            logger.info("Licence payloads of references %s marked as processed", references)
 
         return super().on_success(retval, task_id, args, kwargs)
 
@@ -133,7 +137,7 @@ class SendEmailBaseTask(Task):
 
 
 @shared_task(
-    autoretry_for=(SMTPConnectionLocked,),
+    autoretry_for=(SMTPConnectionBusy, SMTPException),
     max_retries=MAX_ATTEMPTS,
     retry_backoff=RETRY_BACKOFF,
     base=SendEmailBaseTask,
@@ -156,27 +160,32 @@ def send_email_task(email_type, mail_id, message_dto, licence_payload_ids=None):
         If all retries fail then manual intervention may be required (unlikely)
     """
 
-    message = None
     global_lock_id = "global_send_email_lock"
 
     with cache_lock(global_lock_id) as lock_acquired:
-        if lock_acquired:
-            logger.info("Lock acquired, preparing to send email")
+        if not lock_acquired:
+            logger.exception("Another SMTP connection is active, will be retried after backing off")
+            raise SMTPConnectionBusy()
 
-            # de-serialize back to original type
-            message_dto = EmailMessageDto(*message_dto)
+        logger.info("Lock acquired, proceeding to send email")
 
-            if email_type == EmailType.LITE_LICENCE_DETAILS or email_type == EmailType.SPIRE_LICENCE_DETAILS:
-                message = build_email_message(message_dto)
+        # de-serialize back to original type
+        message_dto = EmailMessageDto(*message_dto)
+
+        message = None
+        if email_type == EmailType.LITE_LICENCE_DETAILS or email_type == EmailType.SPIRE_LICENCE_DETAILS:
+            message = build_email_message(message_dto)
+        elif email_type == EmailType.LICENCE_REJECTED:
+            message = build_licence_rejected_email_message(message_dto)
+
+        try:
+            if message:
                 smtp_send(message)
+        except SMTPException:
+            logger.exception("An unexpected error occurred when sending email -> %s")
+            raise
 
-            elif email_type == EmailType.LICENCE_REJECTED:
-                message = build_licence_rejected_email_message(message_dto)
-                smtp_send(message)
-
-        else:
-            logger.info("Another SMTP connection is active, will be retried after backing off")
-            raise SMTPConnectionLocked()
+        logger.info("Email sent successfully")
 
 
 # Notify Users of Rejected Mail
