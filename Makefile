@@ -34,9 +34,6 @@ cov-report:
 run-icms:
 	docker-compose -f docker-compose.yml -f docker-compose-icms.yml up --build -d
 
-process-tasks:
-	docker exec -it lite-hmrc-intg pipenv run ./manage.py process_tasks --log-std
-
 # e.g. make pipenv COMMAND="install --dev requests-mock"
 pipenv:
 	docker exec -it lite-hmrc-intg pipenv ${COMMAND}
