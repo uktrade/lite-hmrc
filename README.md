@@ -32,7 +32,6 @@ To run in docker do the following
 - Initial setup (run once):
   - Run migrations: `make migrate`
   - Create super user: `make createsuperuser`
-- Start the task runner: `make process-tasks`
 
 
 ### Running locally
