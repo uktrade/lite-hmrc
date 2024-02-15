@@ -14,7 +14,7 @@ from django.utils import timezone
 from rest_framework.status import HTTP_207_MULTI_STATUS, HTTP_208_ALREADY_REPORTED
 
 from mail import requests as mail_requests
-from mail.enums import EmailType, ReceptionStatusEnum, SourceEnum
+from mail.enums import ReceptionStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message, build_licence_data_mail, build_licence_rejected_email_message
 from mail.libraries.data_processors import build_request_mail_message_dto
 from mail.libraries.email_message_dto import EmailMessageDto
@@ -103,27 +103,6 @@ def cache_lock(lock_id):
 
 
 class SendEmailBaseTask(Task):
-    def on_success(self, retval, task_id, args, kwargs):
-        logger.info("Sending email task successful")
-
-        email_type, mail_id, message_dto = args
-        if email_type == EmailType.LITE_LICENCE_DETAILS or email_type == EmailType.SPIRE_LICENCE_DETAILS:
-            message_dto = EmailMessageDto(*message_dto)
-            mail = Mail.objects.get(id=mail_id)
-            update_mail(mail, message_dto)
-            logger.info("Mail %s status updated to %s", mail.edi_filename, mail.status)
-
-        licence_payload_ids = kwargs.get("licence_payload_ids", [])
-        if email_type == EmailType.LITE_LICENCE_DETAILS and licence_payload_ids:
-            # Mark payloads as processed
-            licence_payloads = LicencePayload.objects.filter(id__in=licence_payload_ids)
-            licence_payloads.update(is_processed=True)
-
-            references = licence_payloads.values_list("reference", flat=True)
-            logger.info("Licence payloads of references %s marked as processed", references)
-
-        return super().on_success(retval, task_id, args, kwargs)
-
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         message = """
         Maximum attempts for send_email_task exceeded - the task has failed and needs manual inspection.
@@ -142,9 +121,9 @@ class SendEmailBaseTask(Task):
     retry_backoff=RETRY_BACKOFF,
     base=SendEmailBaseTask,
 )
-def send_email_task(email_type, mail_id, message_dto, licence_payload_ids=None):
+def send_email_task(message):
     """
-    Main purpose of this task is to send email based on the type provided.
+    Main purpose of this task is to send email.
 
     We use SMTP to send emails. As we process messages we have a requirement to
     send emails from multiple places, because of this we may open multiple SMTP connections.
@@ -154,7 +133,7 @@ def send_email_task(email_type, mail_id, message_dto, licence_payload_ids=None):
     This is achieved by deferring all email sending functionality to this task.
     Before sending email it first tries to acquire a lock.
       - If there are no active connections then it acquires lock and sends email.
-        In some cases we need to update state which is handled in on_success() callback.
+        In some cases we need to update state which is handled in subtask linked to this task.
       - If there is active connection (lock acquisition fails) then it raises an exception
         which triggers a retry.
         If all retries fail then manual intervention may be required (unlikely)
@@ -169,18 +148,8 @@ def send_email_task(email_type, mail_id, message_dto, licence_payload_ids=None):
 
         logger.info("Lock acquired, proceeding to send email")
 
-        # de-serialize back to original type
-        message_dto = EmailMessageDto(*message_dto)
-
-        message = None
-        if email_type == EmailType.LITE_LICENCE_DETAILS or email_type == EmailType.SPIRE_LICENCE_DETAILS:
-            message = build_email_message(message_dto)
-        elif email_type == EmailType.LICENCE_REJECTED:
-            message = build_licence_rejected_email_message(message_dto)
-
         try:
-            if message:
-                smtp_send(message)
+            smtp_send(message)
         except SMTPException:
             logger.exception("An unexpected error occurred when sending email -> %s")
             raise
@@ -205,7 +174,12 @@ def notify_users_of_rejected_licences(mail_id, mail_response_subject):
         attachment=None,
         raw_data=None,
     )
-    send_email_task.delay(EmailType.LICENCE_REJECTED, mail_id, message_dto)
+    message = build_licence_rejected_email_message(message_dto)
+
+    send_email_task.apply_async(
+        args=(message,),
+        serializer="pickle",
+    )
 
     logger.info("Successfully notified users of rejected licences found in mail with subject %s", mail_response_subject)
 
@@ -222,6 +196,35 @@ class SendUsageDataBaseTask(Task):
             % args
         )
         logger.error(message)
+
+
+@shared_task
+def finalise_sending_spire_licence_details(mail_id, message_dto):
+    """Subtask that performs follow-up tasks after completing the primary purpose
+    of sending an email"""
+
+    mail = Mail.objects.get(id=mail_id)
+    message_dto = EmailMessageDto(*message_dto)
+
+    update_mail(mail, message_dto)
+
+
+@shared_task
+def finalise_sending_lite_licence_details(mail_id, message_dto, licence_payload_ids):
+    """Subtask that performs follow-up tasks after completing the primary purpose
+    of sending an email"""
+
+    mail = Mail.objects.get(id=mail_id)
+    message_dto = EmailMessageDto(*message_dto)
+
+    update_mail(mail, message_dto)
+
+    licence_payloads = LicencePayload.objects.filter(id__in=licence_payload_ids, is_processed=False)
+    if licence_payloads:
+        licence_payloads.update(is_processed=True)
+
+        references = licence_payloads.values_list("reference", flat=True)
+        logger.info("Licence payloads of references %s marked as processed", references)
 
 
 class SendLicenceDetailsBaseTask(Task):
@@ -274,15 +277,12 @@ def send_licence_details_to_hmrc():
                 "Created licenceData mail with subject %s for licences [%s]", mail_dto.subject, licence_references
             )
 
-            # Schedule task to email licence details
+            message = build_email_message(mail_dto)
             licence_payload_ids = [str(licence.id) for licence in licences]
             send_email_task.apply_async(
-                args=(
-                    EmailType.LITE_LICENCE_DETAILS,
-                    mail.id,
-                    mail_dto,
-                ),
-                kwargs={"licence_payload_ids": licence_payload_ids},
+                args=(message,),
+                serializer="pickle",
+                link=finalise_sending_lite_licence_details.si(mail.id, mail_dto, licence_payload_ids),
             )
 
     except EdifactValidationError:

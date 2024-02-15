@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from mail.auth import BasicAuthentication, ModernAuthentication
-from mail.enums import EmailType, ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, SourceEnum
+from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
     lock_db_for_sending_transaction,
@@ -175,7 +175,7 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
-    from mail.celery_tasks import send_email_task
+    from mail.celery_tasks import send_email_task, finalise_sending_spire_licence_details
 
     logger.info("Sending Mail [%s] of extract type %s", mail.id, mail.extract_type)
 
@@ -187,8 +187,13 @@ def _collect_and_send(mail: Mail):
 
     if message_to_send_dto:
         if message_to_send_dto.receiver != SourceEnum.LITE and message_to_send_dto.subject:
+            message = build_email_message(message_to_send_dto)
             # Schedule a task to send email
-            send_email_task.delay(EmailType.SPIRE_LICENCE_DETAILS, mail.id, message_to_send_dto)
+            send_email_task.apply_async(
+                args=(message,),
+                serializer="pickle",
+                link=finalise_sending_spire_licence_details.si(mail.id, message_to_send_dto),
+            )
 
             logger.info(
                 "Scheduled sending of mail [%s] from [%s] to [%s] with subject %s",
