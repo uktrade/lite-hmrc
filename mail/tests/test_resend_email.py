@@ -15,7 +15,7 @@ from mail.tests.libraries.client import LiteHMRCTestClient
 class LITEHMRCResendEmailTests(LiteHMRCTestClient):
     @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.send")
+    @mock.patch("mail.management.commands.resend_email.send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
@@ -216,3 +216,36 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_SENT)
         self.assertEqual(mail.extract_type, ExtractTypeEnum.USAGE_DATA)
         mock_send.assert_called_once()
+
+    @mock.patch("mail.libraries.routing_controller.smtp_send")
+    def test_resend_licence_data_mail_success(self, mock_smtp_send):
+        source_run_number = 49530
+        hmrc_run_number = 49543
+        filename = self.licence_data_file_name
+        mail_body = self.licence_data_file_body.decode("utf-8")
+        reply_pending_mail = Mail.objects.create(
+            extract_type=ExtractTypeEnum.LICENCE_DATA,
+            edi_filename=filename,
+            edi_data=mail_body,
+            status=ReceptionStatusEnum.REPLY_PENDING,
+            sent_at=datetime.now(timezone.utc),
+            sent_filename=filename,
+            sent_data=mail_body,
+        )
+        LicenceData.objects.create(
+            mail=reply_pending_mail,
+            source_run_number=source_run_number,
+            hmrc_run_number=hmrc_run_number,
+            source=SourceEnum.SPIRE,
+            licence_ids=f"{source_run_number},{hmrc_run_number}",
+        )
+
+        call_command("resend_email", "--hmrc_run_number", 49543)
+
+        mail_qs = Mail.objects.filter(status=ReceptionStatusEnum.REPLY_PENDING)
+        self.assertEqual(mail_qs.count(), 1)
+        mail = mail_qs.first()
+        self.assertEqual(mail.id, reply_pending_mail.id)
+        self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_PENDING)
+        self.assertEqual(mail.extract_type, ExtractTypeEnum.LICENCE_DATA)
+        self.assertEqual(mock_smtp_send.call_count, 1)
