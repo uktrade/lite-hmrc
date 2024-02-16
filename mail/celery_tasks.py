@@ -220,11 +220,11 @@ def finalise_sending_lite_licence_details(mail_id, message_dto, licence_payload_
     update_mail(mail, message_dto)
 
     licence_payloads = LicencePayload.objects.filter(id__in=licence_payload_ids, is_processed=False)
-    if licence_payloads:
-        licence_payloads.update(is_processed=True)
+    references = [item.reference for item in licence_payloads]
 
-        references = licence_payloads.values_list("reference", flat=True)
-        logger.info("Licence payloads of references %s marked as processed", references)
+    licence_payloads.update(is_processed=True)
+
+    logger.info("Licence payloads with references %s marked as processed", references)
 
 
 class SendLicenceDetailsBaseTask(Task):
