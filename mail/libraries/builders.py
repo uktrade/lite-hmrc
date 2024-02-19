@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -271,6 +272,19 @@ def build_email_message(email_message_dto: EmailMessageDto) -> MIMEMultipart:
     payload.add_header("name", email_message_dto.subject)
     multipart_msg.attach(payload)
     logger.info("Message headers: %s, Payload headers: %s", multipart_msg.items(), payload.items())
+    return multipart_msg
+
+
+def build_licence_rejected_email_message(email_message_dto: EmailMessageDto) -> MIMEMultipart:
+    logger.info("Building licences rejected notification email message")
+    multipart_msg = MIMEMultipart()
+    multipart_msg["From"] = settings.EMAIL_USER
+    multipart_msg["To"] = ",".join(settings.NOTIFY_USERS)
+    multipart_msg["Subject"] = email_message_dto.subject
+    multipart_msg["name"] = email_message_dto.subject
+    body = MIMEText(email_message_dto.body)
+    multipart_msg.attach(body)
+    logger.info("Message headers: %s", multipart_msg.items())
     return multipart_msg
 
 

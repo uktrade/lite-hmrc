@@ -175,6 +175,8 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
+    from mail.celery_tasks import send_email_task, finalise_sending_spire_licence_details
+
     logger.info("Sending Mail [%s] of extract type %s", mail.id, mail.extract_type)
 
     message_to_send_dto = to_email_message_dto_from(mail)
@@ -185,11 +187,16 @@ def _collect_and_send(mail: Mail):
 
     if message_to_send_dto:
         if message_to_send_dto.receiver != SourceEnum.LITE and message_to_send_dto.subject:
-            send(message_to_send_dto)
-            update_mail(mail, message_to_send_dto)
+            message = build_email_message(message_to_send_dto)
+            # Schedule a task to send email
+            send_email_task.apply_async(
+                args=(message,),
+                serializer="pickle",
+                link=finalise_sending_spire_licence_details.si(mail.id, message_to_send_dto),
+            )
 
             logger.info(
-                "Mail [%s] routed from [%s] to [%s] with subject %s",
+                "Scheduled sending of mail [%s] from [%s] to [%s] with subject %s",
                 mail.id,
                 message_to_send_dto.sender,
                 message_to_send_dto.receiver,

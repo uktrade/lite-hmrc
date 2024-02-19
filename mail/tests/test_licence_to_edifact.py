@@ -53,9 +53,11 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
 
         self.assertEqual(result, expected)
 
-    @mock.patch("mail.celery_tasks.send")
-    def test_licence_is_marked_as_processed_after_sending(self, send):
-        send.return_value = None
+    @mock.patch("mail.celery_tasks.smtp_send")
+    @mock.patch("mail.celery_tasks.cache")
+    def test_licence_is_marked_as_processed_after_sending(self, mock_cache, mock_smtp_send):
+        mock_cache.add.return_value = True
+        mock_smtp_send.return_value = None
         send_licence_details_to_hmrc.delay()
 
         self.assertEqual(Mail.objects.count(), 1)

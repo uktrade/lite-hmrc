@@ -19,6 +19,8 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks(related_name="celery_tasks")
 app.autodiscover_tasks(["core"], related_name="celery_tasks")
 
+# Also allow messages that are serialized/deserialized using pickle
+app.conf.accept_content = ["json", "pickle"]
 
 # Define any regular scheduled tasks
 
