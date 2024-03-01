@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "health_check.contrib.migrations",
     "health_check.contrib.celery",
     "health_check.contrib.celery_ping",
+    "django_db_anonymiser.db_anonymiser",
 ]
 
 MIDDLEWARE = [
