@@ -38,6 +38,7 @@ setuptools = "~=65.5.1"
 celery = "~=5.2.7"
 redis = "~=4.0.2"
 django-health-check = "~=3.17.0"
+database-sanitizer = ">=1.1.0"
 
 [requires]
 python_version = "3.8"
