@@ -1,0 +1,11 @@
+config:
+  addons:
+    - django_db_anonymiser.db_anonymiser
+
+strategy:
+  mail:
+    raw_data: fake_hmrc.raw_data
+    edi_data: fake_hmrc.edi_data
+    sent_data: fake_hmrc.sent_data
+  mail_licencepayload:
+    data: fake_hmrc.payload_data
