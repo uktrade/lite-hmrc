@@ -19,7 +19,11 @@ jobs:
 
     steps:
       - checkout
-
+      - run:
+          name: Git Submodule Checkout
+          command: |
+            git submodule sync
+            git submodule update --init
       - run:
           name: Set Environment File
           command: cp local.env .env
