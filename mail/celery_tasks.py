@@ -120,6 +120,7 @@ class SendEmailBaseTask(Task):
     max_retries=MAX_ATTEMPTS,
     retry_backoff=RETRY_BACKOFF,
     base=SendEmailBaseTask,
+    serializer="pickle",
 )
 def send_email_task(message):
     """
@@ -146,7 +147,7 @@ def send_email_task(message):
             logger.exception("Another SMTP connection is active, will be retried after backing off")
             raise SMTPConnectionBusy()
 
-        logger.info("Lock acquired, proceeding to send email")
+        logger.info("Lock acquired, proceeding to send email from %s to %s", message["From"], message["To"])
 
         try:
             smtp_send(message)
@@ -154,7 +155,7 @@ def send_email_task(message):
             logger.exception("An unexpected error occurred when sending email -> %s")
             raise
 
-        logger.info("Email sent successfully")
+        logger.info("Email sent successfully to %s", message["To"])
 
 
 # Notify Users of Rejected Mail
@@ -176,10 +177,7 @@ def notify_users_of_rejected_licences(mail_id, mail_response_subject):
     )
     message = build_licence_rejected_email_message(message_dto)
 
-    send_email_task.apply_async(
-        args=(message,),
-        serializer="pickle",
-    )
+    send_email_task.apply_async(args=(message,))
 
     logger.info("Successfully notified users of rejected licences found in mail with subject %s", mail_response_subject)
 
@@ -281,7 +279,6 @@ def send_licence_details_to_hmrc():
             licence_payload_ids = [str(licence.id) for licence in licences]
             send_email_task.apply_async(
                 args=(message,),
-                serializer="pickle",
                 link=finalise_sending_lite_licence_details.si(mail.id, mail_dto, licence_payload_ids),
             )
 

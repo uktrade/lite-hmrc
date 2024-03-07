@@ -193,7 +193,6 @@ def _collect_and_send(mail: Mail):
             # Schedule a task to send email
             send_email_task.apply_async(
                 args=(message,),
-                serializer="pickle",
                 link=finalise_sending_spire_licence_details.si(mail.id, message_to_send_dto),
             )
 
