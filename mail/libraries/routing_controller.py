@@ -226,4 +226,4 @@ def check_and_notify_rejected_licences(mail):
         return
 
     if mail.response_data and ReplyStatusEnum.REJECTED in mail.response_data:
-        notify_users_of_rejected_licences.delay(str(mail.id), mail.response_subject)
+        notify_users_of_rejected_licences(str(mail.id), mail.response_subject)

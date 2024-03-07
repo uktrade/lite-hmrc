@@ -28,7 +28,7 @@ class NotifyUsersOfRejectedMailTests(TestCase):
         """Test sending of licence rejected emails without and with retry scenario"""
         mock_cache.add.side_effect = lock_acquired
 
-        notify_users_of_rejected_licences.delay("123", "CHIEF_SPIRE_licenceReply_202401180900_42557")
+        notify_users_of_rejected_licences("123", "CHIEF_SPIRE_licenceReply_202401180900_42557")
 
         assert mock_cache.add.call_count == len(lock_acquired)
         mock_smtp_send.assert_called_once()

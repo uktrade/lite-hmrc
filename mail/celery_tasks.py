@@ -159,7 +159,6 @@ def send_email_task(message):
 
 
 # Notify Users of Rejected Mail
-@shared_task
 def notify_users_of_rejected_licences(mail_id, mail_response_subject):
     """If a reply is received with rejected licences this task notifies users of the rejection"""
 
