@@ -301,9 +301,6 @@ S3_BUCKET_TAG_ANONYMISER_DESTINATION = "anonymiser"
 AWS_ENDPOINT_URL = env("AWS_ENDPOINT_URL", default=None)
 
 if VCAP_SERVICES:
-    if "aws-s3-bucket" not in VCAP_SERVICES:
-        raise Exception("S3 Bucket not bound to environment")
-
     for bucket_details in VCAP_SERVICES["aws-s3-bucket"]:
         if S3_BUCKET_TAG_ANONYMISER_DESTINATION in bucket_details["tags"]:
             aws_credentials = bucket_details["credentials"]
