@@ -15,7 +15,6 @@ from mail.enums import (
     LicenceActionEnum,
     MailReadStatuses,
     ReceptionStatusEnum,
-    ReplyStatusEnum,
     SourceEnum,
 )
 
@@ -76,10 +75,6 @@ class Mail(models.Model):
 
         super(Mail, self).save(*args, **kwargs)
 
-        if settings.SEND_REJECTED_EMAIL:
-            if self.response_data and ReplyStatusEnum.REJECTED in self.response_data:
-                self.notify_users(self.id, self.response_subject)
-
     def set_locking_time(self, offset: int = 0):
         self.currently_processing_at = timezone.now() + timedelta(seconds=offset)
         self.save()
@@ -91,12 +86,6 @@ class Mail(models.Model):
     def set_response_date_time(self, offset: int = 0):
         self.response_date = timezone.now() + timedelta(seconds=offset)
         self.save()
-
-    @staticmethod
-    def notify_users(id, response_subject):
-        from mail.celery_tasks import notify_users_of_rejected_licences
-
-        notify_users_of_rejected_licences.delay(str(id), response_subject)
 
 
 class LicenceData(models.Model):

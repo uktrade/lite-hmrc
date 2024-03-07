@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from mail.auth import BasicAuthentication, ModernAuthentication
-from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, SourceEnum
+from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
     lock_db_for_sending_transaction,
@@ -138,6 +138,8 @@ def check_and_route_emails():
         )
         _collect_and_send(mail)
 
+        check_and_notify_rejected_licences(mail)
+
     publish_queue_status()
 
 
@@ -216,3 +218,13 @@ def get_email_message_dtos(server: MailServer, number: Optional[int] = 3) -> Lis
     # emails = read_last_three_emails(pop3_connection)
     server.quit_pop3_connection()
     return emails
+
+
+def check_and_notify_rejected_licences(mail):
+    from mail.celery_tasks import notify_users_of_rejected_licences
+
+    if not settings.SEND_REJECTED_EMAIL:
+        return
+
+    if mail.response_data and ReplyStatusEnum.REJECTED in mail.response_data:
+        notify_users_of_rejected_licences.delay(str(mail.id), mail.response_subject)
