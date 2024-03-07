@@ -1,15 +1,25 @@
-import json
 import os
+import subprocess
 
 from django.conf import settings
 from django.core.management import call_command
+from django.db import connection
 from django.test import TransactionTestCase
 
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
+from mail.models import LicencePayload, Mail
 from mail.tests.factories import LicencePayloadFactory, MailFactory
 
 
 class TestAnonymiseDumps(TransactionTestCase):
+    def _fixture_teardown(self):
+        # NOTE: TransactionTestCase will truncate all tables by default
+        # before the run of each test case.  By overriding this method,
+        # we prevent this truncation from happening.  It would be nice if Django
+        # supplied some configurable way to do this, but that does not seem to be
+        # the case.
+        return
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -24,6 +34,37 @@ class TestAnonymiseDumps(TransactionTestCase):
 
         with open(cls.dump_location, "r") as f:
             cls.anonymised_sql = f.read()
+
+        # Drop the existing test DB
+        connection.close()
+        db_details = settings.DATABASES["default"]
+        postgres_url_base = (
+            f"postgresql://{db_details['USER']}:{db_details['PASSWORD']}@{db_details['HOST']}:{db_details['PORT']}"
+        )
+        postgres_db_url = f"{postgres_url_base}/postgres"
+        subprocess.run(
+            (
+                "psql",
+                "--dbname",
+                postgres_db_url,
+            ),
+            input=f"DROP DATABASE \"{db_details['NAME']}\"; CREATE DATABASE \"{db_details['NAME']}\";",
+            encoding="utf-8",
+            stdout=subprocess.PIPE,
+        )
+
+        # Load the dumped data in to the test DB
+        lite_hmrc_db_url = f"{postgres_url_base}/{db_details['NAME']}"
+        subprocess.run(
+            (
+                "psql",
+                "--dbname",
+                lite_hmrc_db_url,
+            ),
+            input=cls.anonymised_sql,
+            encoding="utf-8",
+            stdout=subprocess.PIPE,
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -46,16 +87,14 @@ class TestAnonymiseDumps(TransactionTestCase):
         cls.mail.delete()
 
     def test_mail_anonymised(self):
-        assert str(self.mail.id) in self.anonymised_sql
-        assert self.mail.edi_data not in self.anonymised_sql
-        assert self.mail.raw_data not in self.anonymised_sql
-        assert self.mail.sent_data not in self.anonymised_sql
-        assert "The content of the field edi_data is replaced with this static text" in self.anonymised_sql
-        assert "The content of the field raw_data is replaced with this static text" in self.anonymised_sql
-        assert "The content of the field sent_data is replaced with this static text" in self.anonymised_sql
+        anonymised_mail = Mail.objects.get(id=self.mail.id)
+        assert anonymised_mail.edi_filename == self.mail.edi_filename
+        assert anonymised_mail.edi_data == "The content of the field edi_data is replaced with this static text"
+        assert anonymised_mail.raw_data == "The content of the field raw_data is replaced with this static text"
+        assert anonymised_mail.sent_data == "The content of the field sent_data is replaced with this static text"
 
     def test_licence_payload_anonymised(self):
-        assert str(self.licence_payload.id) in self.anonymised_sql
-        assert str(self.licence_payload.lite_id) in self.anonymised_sql
-        assert str(self.licence_payload.action) in self.anonymised_sql
-        assert json.dumps(self.licence_payload.data) not in self.anonymised_sql
+        anonymised_licence_payload = LicencePayload.objects.get(id=self.licence_payload.id)
+        assert anonymised_licence_payload.lite_id == self.licence_payload.lite_id
+        assert anonymised_licence_payload.action == self.licence_payload.action
+        assert anonymised_licence_payload.data != self.licence_payload.data
