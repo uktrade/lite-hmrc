@@ -13,6 +13,7 @@ from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.routing_controller import check_and_route_emails
 from mail.models import LicenceData, Mail
+from mail.tests.factories import LicenceDataFactory, MailFactory
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
@@ -178,20 +179,13 @@ class ManageInboxTests(LiteHMRCTestClient):
         mock_cache.add.return_value = True
 
         run_number = 78120
-        mail = Mail.objects.create(
+        mail = MailFactory(
             extract_type=ExtractTypeEnum.LICENCE_DATA,
             edi_filename=self.licence_data_file_name,
             edi_data=self.licence_data_file_body.decode("utf-8"),
             status=ReceptionStatusEnum.REPLY_PENDING,
-            sent_at=datetime.now(timezone.utc),
         )
-        LicenceData.objects.create(
-            mail=mail,
-            source_run_number=run_number,
-            hmrc_run_number=run_number,
-            source=SourceEnum.SPIRE,
-            licence_ids=f"{run_number}",
-        )
+        LicenceDataFactory(mail=mail, source_run_number=run_number, hmrc_run_number=run_number)
 
         licence_reply_filename = f"ILBDOTI_live_CHIEF_licenceReply_{run_number}_202403060300"
         file_lines = "\n".join(
