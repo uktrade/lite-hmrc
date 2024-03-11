@@ -11,6 +11,7 @@ omit =
     mail/management/commands/check_mailserver_connections.py
     **/resend_edi_data_email.py
     mail/admin.py
+    ./django_db_anonymiser/*
 
 branch = True
 

@@ -1,0 +1,12 @@
+config:
+  addons:
+    - django_db_anonymiser.db_anonymiser
+    - mail
+
+strategy:
+  mail:
+    raw_data: anonymisers.raw_data
+    edi_data: anonymisers.edi_data
+    sent_data: anonymisers.sent_data
+  mail_licencepayload:
+    data: anonymisers.payload_data
