@@ -1,12 +1,14 @@
 import os
 import sys
 import uuid
-from urllib.parse import urlencode
-
 import sentry_sdk
+
 from django_log_formatter_ecs import ECSFormatter
 from environ import Env
+from pathlib import Path
 from sentry_sdk.integrations.django import DjangoIntegration
+from urllib.parse import urlencode
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -45,6 +47,7 @@ INSTALLED_APPS = [
     "health_check.contrib.migrations",
     "health_check.contrib.celery",
     "health_check.contrib.celery_ping",
+    "django_db_anonymiser.db_anonymiser",
 ]
 
 MIDDLEWARE = [
@@ -291,3 +294,27 @@ CACHES = {
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", False)
 CELERY_TASK_STORE_EAGER_RESULT = env.bool("CELERY_TASK_STORE_EAGER_RESULT", False)
 CELERY_TASK_SEND_SENT_EVENT = env.bool("CELERY_TASK_SEND_SENT_EVENT", True)
+
+
+S3_BUCKET_TAG_ANONYMISER_DESTINATION = "anonymiser"
+
+AWS_ENDPOINT_URL = env("AWS_ENDPOINT_URL", default=None)
+
+if VCAP_SERVICES:
+    for bucket_details in VCAP_SERVICES["aws-s3-bucket"]:
+        if S3_BUCKET_TAG_ANONYMISER_DESTINATION in bucket_details["tags"]:
+            aws_credentials = bucket_details["credentials"]
+            DB_ANONYMISER_AWS_ENDPOINT_URL = None
+            DB_ANONYMISER_AWS_ACCESS_KEY_ID = aws_credentials["aws_access_key_id"]
+            DB_ANONYMISER_AWS_SECRET_ACCESS_KEY = aws_credentials["aws_secret_access_key"]
+            DB_ANONYMISER_AWS_REGION = aws_credentials["aws_region"]
+            DB_ANONYMISER_AWS_STORAGE_BUCKET_NAME = aws_credentials["bucket_name"]
+else:
+    DB_ANONYMISER_AWS_ENDPOINT_URL = AWS_ENDPOINT_URL
+    DB_ANONYMISER_AWS_ACCESS_KEY_ID = env("DB_ANONYMISER_AWS_ACCESS_KEY_ID", default=None)
+    DB_ANONYMISER_AWS_SECRET_ACCESS_KEY = env("DB_ANONYMISER_AWS_SECRET_ACCESS_KEY", default=None)
+    DB_ANONYMISER_AWS_REGION = env("DB_ANONYMISER_AWS_REGION", default=None)
+    DB_ANONYMISER_AWS_STORAGE_BUCKET_NAME = env("DB_ANONYMISER_AWS_STORAGE_BUCKET_NAME", default=None)
+
+DB_ANONYMISER_CONFIG_LOCATION = Path(BASE_DIR) / "conf" / "anonymise_model_config.yaml"
+DB_ANONYMISER_DUMP_FILE_NAME = env.str("DB_ANONYMISER_DUMP_FILE_NAME", "anonymised.sql")

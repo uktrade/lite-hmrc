@@ -1,0 +1,3 @@
+[submodule "django-db-anonymiser"]
+	path = django_db_anonymiser
+	url = git@github.com:uktrade/django-db-anonymiser.git

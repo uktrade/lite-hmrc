@@ -1,5 +1,6 @@
 applications:
   - buildpacks:
+      - https://github.com/cloudfoundry/apt-buildpack.git
       - python_buildpack
     memory: 256M
     disk_quota: 512M
