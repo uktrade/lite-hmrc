@@ -2,8 +2,8 @@ import factory
 
 from uuid import uuid4
 
-from mail.enums import LicenceActionEnum
-from mail.models import LicencePayload, Mail
+from mail.enums import LicenceActionEnum, SourceEnum
+from mail.models import LicenceData, LicencePayload, Mail
 
 
 class MailFactory(factory.django.DjangoModelFactory):
@@ -14,6 +14,15 @@ class MailFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Mail
+
+
+class LicenceDataFactory(factory.django.DjangoModelFactory):
+    source = SourceEnum.SPIRE
+    mail = factory.SubFactory(Mail)
+    licence_ids = ""
+
+    class Meta:
+        model = LicenceData
 
 
 class LicencePayloadFactory(factory.django.DjangoModelFactory):
