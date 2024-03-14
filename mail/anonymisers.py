@@ -48,26 +48,26 @@ def sanitize_product_line(line):
     return format_line(line_item)
 
 
-def sanitize_raw_data(value):
-    return "The content of the field raw_data is replaced with this static text"
+edi_data_sanitizer = {
+    "trader": sanitize_trader,
+    "foreignTrader": sanitize_foreign_trader,
+    "line": sanitize_product_line,
+}
 
 
 def sanitize_edi_data(lines):
     output_lines = []
     for line in lines.split("\n"):
         line_type = line.split("\\")[1]
-        if line_type == "trader":
-            line = sanitize_trader(line)
+        output_line = edi_data_sanitizer.get(line_type, lambda x: x)(line)
 
-        if line_type == "foreignTrader":
-            line = sanitize_foreign_trader(line)
-
-        if line_type == "line":
-            line = sanitize_product_line(line)
-
-        output_lines.append(line)
+        output_lines.append(output_line)
 
     return "\n".join(output_lines)
+
+
+def sanitize_raw_data(value):
+    return "The content of the field raw_data is replaced with this static text"
 
 
 def sanitize_sent_data(value):
