@@ -105,6 +105,12 @@ class TestAnonymiseDumps(TransactionTestCase):
                     == f"{index}\\trader\\\\GB123456789000\\\\\\Exporter name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode"
                 )
 
+            if line_type == "foreignTrader":
+                assert (
+                    line
+                    == f"{index}\\foreignTrader\\End-user name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode\\AU"
+                )
+
     def test_licence_payload_anonymised(self):
         anonymised_licence_payload = LicencePayload.objects.get(id=self.licence_payload.id)
         assert anonymised_licence_payload.lite_id == self.licence_payload.lite_id
