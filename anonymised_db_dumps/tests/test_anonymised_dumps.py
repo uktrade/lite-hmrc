@@ -91,7 +91,7 @@ class TestAnonymiseDumps(TransactionTestCase):
     def delete_test_data(cls):
         cls.spire_mail.delete()
 
-    def test_spire_mail_anonymised(self):
+    def test_spire_mail_with_siels_anonymised(self):
         anonymised_mail = Mail.objects.get(id=self.spire_mail.id)
         assert anonymised_mail.edi_filename == self.spire_mail.edi_filename
         assert anonymised_mail.raw_data == "The content of the field raw_data is replaced with this static text"
@@ -110,6 +110,9 @@ class TestAnonymiseDumps(TransactionTestCase):
                     line
                     == f"{index}\\foreignTrader\\End-user name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode\\AU"
                 )
+
+            if line_type == "line":
+                assert line == f"{index}\\line\\1\\\\\\\\\\PRODUCT NAME\\Q\\\\030\\\\1\\\\\\\\\\\\"
 
     def test_licence_payload_anonymised(self):
         anonymised_licence_payload = LicencePayload.objects.get(id=self.licence_payload.id)

@@ -1,7 +1,7 @@
 import json
 
 from mail.libraries.chiefprotocol import format_line
-from mail.libraries.chieftypes import Trader, ForeignTrader
+from mail.libraries.chieftypes import LicenceDataLine, ForeignTrader, Trader
 
 # Methods to anonymise fields specified in model config yaml file
 #
@@ -40,6 +40,14 @@ def sanitize_foreign_trader(line):
     return format_line(foreign_trader)
 
 
+def sanitize_product_line(line):
+    tokens = line.split("\\")
+    line_item = LicenceDataLine(*tokens)
+    line_item.goods_description = "PRODUCT NAME"
+
+    return format_line(line_item)
+
+
 def sanitize_raw_data(value):
     return "The content of the field raw_data is replaced with this static text"
 
@@ -53,6 +61,9 @@ def sanitize_edi_data(lines):
 
         if line_type == "foreignTrader":
             line = sanitize_foreign_trader(line)
+
+        if line_type == "line":
+            line = sanitize_product_line(line)
 
         output_lines.append(line)
 
