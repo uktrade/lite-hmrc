@@ -73,10 +73,15 @@ class TestAnonymiseDumps(TransactionTestCase):
 
     @classmethod
     def create_test_data(cls):
-        cls.mail = MailFactory(
-            extract_type=ExtractTypeEnum.LICENCE_DATA,
-            status=ReceptionStatusEnum.REPLY_SENT,
+        licence_data_file = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "CHIEF_LIVE_SPIRE_licenceData_78859_202109101531"
         )
+        with open(licence_data_file) as f:
+            cls.spire_mail = MailFactory(
+                edi_data=f.read(),
+                extract_type=ExtractTypeEnum.LICENCE_DATA,
+                status=ReceptionStatusEnum.REPLY_SENT,
+            )
         cls.licence_payload = LicencePayloadFactory(
             reference="GBSIEL/2024/0000001/P",
             data={"details": "organisation address"},
@@ -84,14 +89,21 @@ class TestAnonymiseDumps(TransactionTestCase):
 
     @classmethod
     def delete_test_data(cls):
-        cls.mail.delete()
+        cls.spire_mail.delete()
 
-    def test_mail_anonymised(self):
-        anonymised_mail = Mail.objects.get(id=self.mail.id)
-        assert anonymised_mail.edi_filename == self.mail.edi_filename
-        assert anonymised_mail.edi_data == "The content of the field edi_data is replaced with this static text"
+    def test_spire_mail_anonymised(self):
+        anonymised_mail = Mail.objects.get(id=self.spire_mail.id)
+        assert anonymised_mail.edi_filename == self.spire_mail.edi_filename
         assert anonymised_mail.raw_data == "The content of the field raw_data is replaced with this static text"
         assert anonymised_mail.sent_data == "The content of the field sent_data is replaced with this static text"
+
+        for index, line in enumerate(anonymised_mail.edi_data.split("\n"), start=1):
+            line_type = line.split("\\")[1]
+            if line_type == "trader":
+                assert (
+                    line
+                    == f"{index}\\trader\\\\GB123456789000\\\\\\Exporter name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode"
+                )
 
     def test_licence_payload_anonymised(self):
         anonymised_licence_payload = LicencePayload.objects.get(id=self.licence_payload.id)
