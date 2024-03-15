@@ -1,13 +1,15 @@
 import os
 import subprocess
 
+from datetime import datetime
+
 from django.conf import settings
 from django.core.management import call_command
 from django.db import connection
 from django.test import TransactionTestCase
 from parameterized import parameterized
 
-from mail.enums import ExtractTypeEnum, LicenceTypeEnum, ReceptionStatusEnum
+from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
 from mail.tests.factories import LicencePayloadFactory, MailFactory
 
@@ -89,7 +91,7 @@ class TestAnonymiseDumps(TransactionTestCase):
         cls.open_licences_mail = cls.load_edi_data_from_file("CHIEF_LIVE_SPIRE_licenceData_78861_202109101531")
         cls.licence_payload = LicencePayloadFactory(
             reference="GBSIEL/2024/0000001/P",
-            data={"details": "organisation address"},
+            data={"reference": "GBSIEL/2024/0000001/P", "action": "insert"},
         )
 
     def get_licences_in_message(self, edi_data):
@@ -140,8 +142,9 @@ class TestAnonymiseDumps(TransactionTestCase):
         """
         anonymised_mail = Mail.objects.get(id=self.siel_mail_nar.id)
         assert anonymised_mail.edi_filename == self.siel_mail_nar.edi_filename
-        assert anonymised_mail.raw_data == "The content of the field raw_data is replaced with this static text"
-        assert anonymised_mail.sent_data == "The content of the field sent_data is replaced with this static text"
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
+        assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
 
         licences = self.get_licences_in_message(anonymised_mail.edi_data)
         assert len(licences) == 2
@@ -180,8 +183,9 @@ class TestAnonymiseDumps(TransactionTestCase):
         """
         anonymised_mail = Mail.objects.get(id=self.siel_mail_kgm.id)
         assert anonymised_mail.edi_filename == self.siel_mail_kgm.edi_filename
-        assert anonymised_mail.raw_data == "The content of the field raw_data is replaced with this static text"
-        assert anonymised_mail.sent_data == "The content of the field sent_data is replaced with this static text"
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
+        assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
 
         licences = self.get_licences_in_message(anonymised_mail.edi_data)
         assert len(licences) == 1
@@ -219,8 +223,9 @@ class TestAnonymiseDumps(TransactionTestCase):
         """
         anonymised_mail = Mail.objects.get(id=self.open_licences_mail.id)
         assert anonymised_mail.edi_filename == self.open_licences_mail.edi_filename
-        assert anonymised_mail.raw_data == "The content of the field raw_data is replaced with this static text"
-        assert anonymised_mail.sent_data == "The content of the field sent_data is replaced with this static text"
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
+        assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
 
         licences = self.get_licences_in_message(anonymised_mail.edi_data)
         assert len(licences) == 2
@@ -239,4 +244,10 @@ class TestAnonymiseDumps(TransactionTestCase):
         anonymised_licence_payload = LicencePayload.objects.get(id=self.licence_payload.id)
         assert anonymised_licence_payload.lite_id == self.licence_payload.lite_id
         assert anonymised_licence_payload.action == self.licence_payload.action
-        assert anonymised_licence_payload.data != self.licence_payload.data
+
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_licence_payload.data == {
+            "reference": "GBSIEL/2024/0000001/P",
+            "action": "insert",
+            "details": f"{today}, other details anonymised",
+        }

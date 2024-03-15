@@ -1,5 +1,7 @@
 import json
 
+from datetime import datetime
+
 from mail.libraries.chiefprotocol import format_line
 from mail.libraries.chieftypes import LicenceDataLine, ForeignTrader, Trader
 
@@ -67,12 +69,21 @@ def sanitize_edi_data(lines):
 
 
 def sanitize_raw_data(value):
-    return "The content of the field raw_data is replaced with this static text"
+    today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+    return f"{today}: raw_data contents anonymised"
 
 
 def sanitize_sent_data(value):
-    return "The content of the field sent_data is replaced with this static text"
+    today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+    return f"{today}: sent_data contents anonymised"
 
 
 def sanitize_payload_data(value):
-    return json.dumps({"data": "The licence payload json is replaced with this static text"})
+    today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+    data = json.loads(value)
+    anonymised = {
+        "reference": data.get("reference", "reference not available"),
+        "action": data.get("action", "action not available"),
+        "details": f"{today}, other details anonymised",
+    }
+    return json.dumps(anonymised)
