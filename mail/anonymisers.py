@@ -9,6 +9,10 @@ from mail.libraries.chieftypes import LicenceDataLine, ForeignTrader, Trader
 #
 
 
+def today():
+    return datetime.strftime(datetime.today().date(), "%d %B %Y")
+
+
 def sanitize_trader(line):
     tokens = line.split("\\")
     trader = Trader(*tokens)
@@ -58,9 +62,14 @@ edi_data_sanitizer = {
 
 
 def sanitize_edi_data(lines):
+
+    if "fileHeader" not in lines:
+        return f"{today()}: invalid edi data"
+
     output_lines = []
     for line in lines.split("\n"):
-        line_type = line.split("\\")[1]
+        tokens = line.split("\\")
+        line_type = tokens[1]
         output_line = edi_data_sanitizer.get(line_type, lambda x: x)(line)
 
         output_lines.append(output_line)
@@ -69,21 +78,18 @@ def sanitize_edi_data(lines):
 
 
 def sanitize_raw_data(value):
-    today = datetime.strftime(datetime.today().date(), "%d %B %Y")
-    return f"{today}: raw_data contents anonymised"
+    return f"{today()}: raw_data contents anonymised"
 
 
 def sanitize_sent_data(value):
-    today = datetime.strftime(datetime.today().date(), "%d %B %Y")
-    return f"{today}: sent_data contents anonymised"
+    return f"{today()}: sent_data contents anonymised"
 
 
 def sanitize_payload_data(value):
-    today = datetime.strftime(datetime.today().date(), "%d %B %Y")
     data = json.loads(value)
     anonymised = {
         "reference": data.get("reference", "reference not available"),
         "action": data.get("action", "action not available"),
-        "details": f"{today}, other details anonymised",
+        "details": f"{today()}, other details anonymised",
     }
     return json.dumps(anonymised)

@@ -93,6 +93,7 @@ class TestAnonymiseDumps(TransactionTestCase):
             reference="GBSIEL/2024/0000001/P",
             data={"reference": "GBSIEL/2024/0000001/P", "action": "insert"},
         )
+        cls.mail_invalid = MailFactory(edi_data="invalid edi data")
 
     def get_licences_in_message(self, edi_data):
         message_lines = edi_data.split("\n")
@@ -116,6 +117,7 @@ class TestAnonymiseDumps(TransactionTestCase):
     def delete_test_data(cls):
         cls.siel_mail_nar.delete()
         cls.siel_mail_kgm.delete()
+        cls.mail_invalid.delete()
         cls.open_licences_mail.delete()
 
     @parameterized.expand(
@@ -239,6 +241,14 @@ class TestAnonymiseDumps(TransactionTestCase):
                     # format line to populate line index as per current line
                     expected_line = expected_line_format % index
                     assert line == expected_line
+
+    def test_mail_with_invalid_edi_data_anonymised(self):
+        anonymised_mail = Mail.objects.get(id=self.mail_invalid.id)
+        assert anonymised_mail.edi_filename == self.mail_invalid.edi_filename
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
+        assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
+        assert anonymised_mail.edi_data == f"{today}: invalid edi data"
 
     def test_licence_payload_anonymised(self):
         anonymised_licence_payload = LicencePayload.objects.get(id=self.licence_payload.id)
