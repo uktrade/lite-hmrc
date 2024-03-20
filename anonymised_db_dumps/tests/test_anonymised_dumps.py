@@ -1,10 +1,13 @@
 import os
 import subprocess
 
+from datetime import datetime
+
 from django.conf import settings
 from django.core.management import call_command
 from django.db import connection
 from django.test import TransactionTestCase
+from parameterized import parameterized
 
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
@@ -72,29 +75,189 @@ class TestAnonymiseDumps(TransactionTestCase):
         cls.delete_test_data()
 
     @classmethod
+    def load_edi_data_from_file(cls, filename):
+        licence_data_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+        with open(licence_data_file) as f:
+            return MailFactory(
+                edi_data=f.read(),
+                extract_type=ExtractTypeEnum.LICENCE_DATA,
+                status=ReceptionStatusEnum.REPLY_SENT,
+            )
+
+    @classmethod
     def create_test_data(cls):
-        cls.mail = MailFactory(
-            extract_type=ExtractTypeEnum.LICENCE_DATA,
-            status=ReceptionStatusEnum.REPLY_SENT,
-        )
+        cls.siel_mail_nar = cls.load_edi_data_from_file("CHIEF_LIVE_SPIRE_licenceData_78859_unitNAR")
+        cls.siel_mail_kgm = cls.load_edi_data_from_file("CHIEF_LIVE_SPIRE_licenceData_78860_unitKGM")
+        cls.open_licences_mail = cls.load_edi_data_from_file("CHIEF_LIVE_SPIRE_licenceData_78861_202109101531")
         cls.licence_payload = LicencePayloadFactory(
             reference="GBSIEL/2024/0000001/P",
-            data={"details": "organisation address"},
+            data={"reference": "GBSIEL/2024/0000001/P", "action": "insert"},
         )
+        cls.mail_invalid = MailFactory(edi_data="invalid edi data")
+
+    def get_licences_in_message(self, edi_data):
+        message_lines = edi_data.split("\n")
+
+        # In a given message there can be multiple licences of different types
+        # so extract all licences details along with their line positions in the file
+        start = 0
+        licences = []
+        for index in range(len(message_lines)):
+            line_type = message_lines[index].split("\\")[1]
+            if line_type == "licence":
+                start = index
+            if line_type == "end":
+                licence_lines = message_lines[start : index + 1]
+                licence_type = licence_lines[0].split("\\")[5]
+                licences.append({"licence_type": licence_type, "start": start, "lines": licence_lines})
+
+        return licences
 
     @classmethod
     def delete_test_data(cls):
-        cls.mail.delete()
+        cls.siel_mail_nar.delete()
+        cls.siel_mail_kgm.delete()
+        cls.mail_invalid.delete()
+        cls.open_licences_mail.delete()
 
-    def test_mail_anonymised(self):
-        anonymised_mail = Mail.objects.get(id=self.mail.id)
-        assert anonymised_mail.edi_filename == self.mail.edi_filename
-        assert anonymised_mail.edi_data == "The content of the field edi_data is replaced with this static text"
-        assert anonymised_mail.raw_data == "The content of the field raw_data is replaced with this static text"
-        assert anonymised_mail.sent_data == "The content of the field sent_data is replaced with this static text"
+    @parameterized.expand(
+        [
+            ## chief_line_type, expected_line_format
+            (
+                "trader",
+                "%s\\trader\\\\GB123456789000\\\\\\Exporter name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode",
+            ),
+            (
+                "foreignTrader",
+                "%s\\foreignTrader\\End-user name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode\\AU",
+            ),
+            (
+                "line",
+                "%s\\line\\1\\\\\\\\\\PRODUCT NAME\\Q\\\\030\\\\1\\\\\\\\\\\\",
+            ),
+        ]
+    )
+    def test_mail_with_siels_unit_NAR_anonymised(self, chief_line_type, expected_line_format):
+        """
+        Test to verify line types that have PI data are correctly anonymised for SIEL licences
+        Product lines are defined by quantity with number of items as unit.
+        """
+        anonymised_mail = Mail.objects.get(id=self.siel_mail_nar.id)
+        assert anonymised_mail.edi_filename == self.siel_mail_nar.edi_filename
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
+        assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
+
+        licences = self.get_licences_in_message(anonymised_mail.edi_data)
+        assert len(licences) == 2
+
+        # For each licence ensure given line type fields are correctly anonymised
+        for licence in licences:
+            for index, line in enumerate(licence["lines"], start=licence["start"] + 1):
+                line_type = line.split("\\")[1]
+
+                if line_type == chief_line_type:
+                    # format line to populate line index as per current line
+                    expected_line = expected_line_format % index
+                    assert line == expected_line
+
+    @parameterized.expand(
+        [
+            ## chief_line_type, expected_line_format
+            (
+                "trader",
+                "%s\\trader\\\\GB123456789000\\\\\\Exporter name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode",
+            ),
+            (
+                "foreignTrader",
+                "%s\\foreignTrader\\End-user name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode\\AU",
+            ),
+            (
+                "line",
+                "%s\\line\\1\\\\\\\\\\PRODUCT NAME\\Q\\\\023\\\\15.0\\\\\\\\\\\\",
+            ),
+        ]
+    )
+    def test_mail_with_siels_unit_KGM_anonymised(self, chief_line_type, expected_line_format):
+        """
+        Test to verify line types that have PI data are correctly anonymised for SIEL licences
+        Product lines are defined by quantity with Kilogram as unit.
+        """
+        anonymised_mail = Mail.objects.get(id=self.siel_mail_kgm.id)
+        assert anonymised_mail.edi_filename == self.siel_mail_kgm.edi_filename
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
+        assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
+
+        licences = self.get_licences_in_message(anonymised_mail.edi_data)
+        assert len(licences) == 1
+
+        # For each licence ensure given line type fields are correctly anonymised
+        for licence in licences:
+            for index, line in enumerate(licence["lines"], start=licence["start"] + 1):
+                line_type = line.split("\\")[1]
+
+                if line_type == chief_line_type:
+                    # format line to populate line index as per current line
+                    expected_line = expected_line_format % index
+                    assert line == expected_line
+
+    @parameterized.expand(
+        [
+            ## chief_line_type, expected_line_format
+            (
+                "trader",
+                "%s\\trader\\\\GB123456789000\\\\\\Exporter name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode",
+            ),
+            (
+                "foreignTrader",
+                "%s\\foreignTrader\\End-user name\\address line1\\address line2\\address line3\\address line4\\address line5\\postcode\\AU",
+            ),
+            (
+                "line",
+                "%s\\line\\1\\\\\\\\\\PRODUCT NAME\\O\\\\\\\\\\\\\\\\\\\\",
+            ),
+        ]
+    )
+    def test_mail_with_open_licences_anonymised(self, chief_line_type, expected_line_format):
+        """
+        Test to verify line types that have PI data are correctly anonymised for Open licences
+        """
+        anonymised_mail = Mail.objects.get(id=self.open_licences_mail.id)
+        assert anonymised_mail.edi_filename == self.open_licences_mail.edi_filename
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
+        assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
+
+        licences = self.get_licences_in_message(anonymised_mail.edi_data)
+        assert len(licences) == 2
+
+        # For each licence ensure given line type fields are correctly anonymised
+        for licence in licences:
+            for index, line in enumerate(licence["lines"], start=licence["start"] + 1):
+                line_type = line.split("\\")[1]
+
+                if line_type == chief_line_type:
+                    # format line to populate line index as per current line
+                    expected_line = expected_line_format % index
+                    assert line == expected_line
+
+    def test_mail_with_invalid_edi_data_anonymised(self):
+        anonymised_mail = Mail.objects.get(id=self.mail_invalid.id)
+        assert anonymised_mail.edi_filename == self.mail_invalid.edi_filename
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
+        assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
+        assert anonymised_mail.edi_data == f"{today}: invalid edi data"
 
     def test_licence_payload_anonymised(self):
         anonymised_licence_payload = LicencePayload.objects.get(id=self.licence_payload.id)
         assert anonymised_licence_payload.lite_id == self.licence_payload.lite_id
         assert anonymised_licence_payload.action == self.licence_payload.action
-        assert anonymised_licence_payload.data != self.licence_payload.data
+
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_licence_payload.data == {
+            "reference": "GBSIEL/2024/0000001/P",
+            "action": "insert",
+            "details": f"{today}, other details anonymised",
+        }
