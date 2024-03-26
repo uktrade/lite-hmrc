@@ -63,12 +63,15 @@ edi_data_sanitizer = {
 
 def sanitize_edi_data(lines):
 
-    if "fileHeader" not in lines:
+    if "fileHeader" not in lines and "fileTrailer" not in lines:
         return f"{today()}: invalid edi data"
 
     output_lines = []
     for line in lines.split("\n"):
         tokens = line.split("\\")
+        # skip empty or invalid lines
+        if len(tokens) < 2:
+            continue
         line_type = tokens[1]
         output_line = edi_data_sanitizer.get(line_type, lambda x: x)(line)
 
