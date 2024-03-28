@@ -94,6 +94,7 @@ class TestAnonymiseDumps(TransactionTestCase):
             data={"reference": "GBSIEL/2024/0000001/P", "action": "insert"},
         )
         cls.mail_invalid = MailFactory(edi_data="invalid edi data")
+        cls.mail_invalid_lines = cls.load_edi_data_from_file("CHIEF_LIVE_SPIRE_licenceData_78859_invalid")
 
     def get_licences_in_message(self, edi_data):
         message_lines = edi_data.split("\n")
@@ -103,7 +104,10 @@ class TestAnonymiseDumps(TransactionTestCase):
         start = 0
         licences = []
         for index in range(len(message_lines)):
-            line_type = message_lines[index].split("\\")[1]
+            tokens = message_lines[index].split("\\")
+            if len(tokens) < 2:
+                continue
+            line_type = tokens[1]
             if line_type == "licence":
                 start = index
             if line_type == "end":
@@ -118,6 +122,7 @@ class TestAnonymiseDumps(TransactionTestCase):
         cls.siel_mail_nar.delete()
         cls.siel_mail_kgm.delete()
         cls.mail_invalid.delete()
+        cls.mail_invalid_lines.delete()
         cls.open_licences_mail.delete()
 
     @parameterized.expand(
@@ -249,6 +254,20 @@ class TestAnonymiseDumps(TransactionTestCase):
         assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
         assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
         assert anonymised_mail.edi_data == f"{today}: invalid edi data"
+
+    def test_mail_with_valid_header_footer_invalid_lines_anonymised(self):
+        anonymised_mail = Mail.objects.get(id=self.mail_invalid_lines.id)
+        assert anonymised_mail.edi_filename == self.mail_invalid_lines.edi_filename
+        today = datetime.strftime(datetime.today().date(), "%d %B %Y")
+        assert anonymised_mail.raw_data == f"{today}: raw_data contents anonymised"
+        assert anonymised_mail.sent_data == f"{today}: sent_data contents anonymised"
+        licences = self.get_licences_in_message(anonymised_mail.edi_data)
+        assert len(licences) == 0
+
+        assert (
+            anonymised_mail.edi_data
+            == "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\202008101531\\71859\\N\n5\\fileTrailer\\0"
+        )
 
     def test_licence_payload_anonymised(self):
         anonymised_licence_payload = LicencePayload.objects.get(id=self.licence_payload.id)
