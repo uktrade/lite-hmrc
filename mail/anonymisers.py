@@ -63,6 +63,9 @@ edi_data_sanitizer = {
 
 def sanitize_edi_data(lines):
 
+    if not lines:
+        return f"{today()}: empty edi data"
+
     if "fileHeader" not in lines and "fileTrailer" not in lines:
         return f"{today()}: invalid edi data"
 
