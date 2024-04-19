@@ -12,7 +12,7 @@ class Authenticator(Protocol):
     user: str
 
     def authenticate(self, connection: poplib.POP3_SSL):
-        ...
+        ...  # fmt: skip
 
 
 class BasicAuthentication:

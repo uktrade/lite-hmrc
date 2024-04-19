@@ -1,4 +1,5 @@
 """ICMS tasks that get periodically ran via django management commands."""
+
 import email
 import logging
 from email.headerregistry import Address, UniqueAddressHeader
