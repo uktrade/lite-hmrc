@@ -13,7 +13,9 @@ class UnitMappingTests(unittest.TestCase):
             ("MTR", 57),
             ("LTR", 94),
             ("MTQ", 2),
+            ("MIR", 74),
             ("ITG", 30),
+            ("MIM", 111),
         ]
 
         for code, value in data:
@@ -26,6 +28,6 @@ class UnitMappingTests(unittest.TestCase):
 
     def test_serializer_choices(self):
         choices = UnitMapping.serializer_choices()
-        expected = ["NAR", "GRM", "KGM", "MTK", "MTR", "LTR", "MTQ", "MIR", "ITG"]
+        expected = ["NAR", "GRM", "KGM", "MTK", "MTR", "LTR", "MTQ", "MIR", "ITG", "MIM"]
 
         self.assertEqual(choices, expected)
