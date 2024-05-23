@@ -47,8 +47,9 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
             + "\n5\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB"
             + "\n6\\restrictions\\Provisos may apply please see licence"
             + "\n7\\line\\1\\\\\\\\\\Sporting shotgun\\Q\\\\030\\\\10\\\\\\\\\\\\"
-            + "\n8\\end\\licence\\7"
-            + "\n9\\fileTrailer\\1\n"
+            + "\n8\\line\\2\\\\\\\\\\Stock\\Q\\\\111\\\\11.0\\\\\\\\\\\\"
+            + "\n9\\end\\licence\\8"
+            + "\n10\\fileTrailer\\1\n"
         )
 
         self.assertEqual(result, expected)
@@ -110,8 +111,9 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
             + "\n7\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB"
             + "\n8\\restrictions\\Provisos may apply please see licence"
             + "\n9\\line\\1\\\\\\\\\\Sporting shotgun\\Q\\\\030\\\\15\\\\\\\\\\\\"
-            + "\n10\\end\\licence\\7"
-            + "\n11\\fileTrailer\\2\n"
+            + "\n10\\line\\2\\\\\\\\\\Stock\\Q\\\\111\\\\11.0\\\\\\\\\\\\"
+            + "\n11\\end\\licence\\8"
+            + "\n12\\fileTrailer\\2\n"
         )
 
         self.assertEqual(result, expected)
