@@ -54,7 +54,7 @@ jobs:
 
       - run:
           name: Run tests
-          command: pipenv run pytest --cov=. --cov-report xml --cov-config=.coveragerc
+          command: pipenv run pytest --circleci-parallelize --cov=. --cov-report xml --cov-config=.coveragerc
       - store_test_results:
           path: test-results
       - run:
@@ -113,8 +113,8 @@ jobs:
           command: pipenv run ./manage.py makemigrations --check
 
       - run:
-          name: Run tests
-          command: pipenv run pytest --cov=. --cov-report xml --cov-config=.coveragerc
+          name: Run tests on Postgres 13
+          command: pipenv run pytest --circleci-parallelize --cov=. --cov-report xml --cov-config=.coveragerc
       - store_test_results:
           path: test-results
       - run:
