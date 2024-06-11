@@ -1,12 +1,12 @@
 version: 2.1
 
-image_postgres:
+image_postgres: &image_postgres
   image: circleci/postgres:12
   environment:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: password
 
-image_pg13:
+image_pg13: &image_pg13
   image: circleci/postgres:13
   environment:
     POSTGRES_USER: postgres
