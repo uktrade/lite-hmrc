@@ -1,14 +1,80 @@
 version: 2.1
 
+image_postgres:
+  image: circleci/postgres:12
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: password
+
+image_pg13:
+  image: circleci/postgres:13
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: password
+
 jobs:
   tests:
     docker:
+      - <<: *image_postgres
       - image: cimg/python:3.8.17
       - image: circleci/redis:3.2-alpine
-      - image: circleci/postgres:12
-        environment:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
+      - image: mailhog/mailhog
+
+    environment:
+      DEBUG: True
+      PIPENV_VENV_IN_PROJECT: 'enabled'
+
+    working_directory: ~/lite-hmrc
+
+    steps:
+      - checkout
+      - run:
+          name: Git Submodule Checkout
+          command: |
+            git submodule sync
+            git submodule update --init
+      - run:
+          name: Set Environment File
+          command: cp local.env .env
+
+      # Download and cache dependencies
+      # ensure this step occurs *before* installing dependencies
+      - restore_cache:
+          key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+
+      - run:
+          name: Install Dependencies
+          command: pipenv sync --dev
+
+      - run:
+          name: Install code coverage
+          command: |
+            curl -Os https://uploader.codecov.io/latest/linux/codecov
+            chmod +x codecov
+
+      - save_cache:
+          paths:
+            - ./venv
+          key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+
+      - run:
+          name: Check migrations are made
+          command: pipenv run ./manage.py makemigrations --check
+
+      - run:
+          name: Run tests
+          command: pipenv run pytest --cov=. --cov-report xml --cov-config=.coveragerc
+      - store_test_results:
+          path: test-results
+      - run:
+          name: Upload code coverage
+          command: ./codecov
+  
+  tests_pg13:
+    docker:
+      - <<: *image_pg13
+      - image: cimg/python:3.8.17
+      - image: circleci/redis:3.2-alpine
       - image: mailhog/mailhog
 
     environment:
@@ -101,4 +167,5 @@ workflows:
   test:
     jobs:
       - tests
+      - tests_pg13
       - linting
