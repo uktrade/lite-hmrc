@@ -61,7 +61,7 @@ jobs:
           name: Upload code coverage
           command: ./codecov
   
-  tests_pg13:
+  tests_postgres13:
     docker:
       - image: cimg/python:3.8.17
       - image: circleci/redis:3.2-alpine
@@ -161,5 +161,5 @@ workflows:
   test:
     jobs:
       - tests
-      - tests_pg13
+      - tests_postgres13
       - linting
