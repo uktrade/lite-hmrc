@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   tests:
     docker:
-      - image: cimg/python:3.8.17
+      - image: cimg/python:3.9.18
       - image: circleci/redis:3.2-alpine
       - image: circleci/postgres:12
         environment:
@@ -63,7 +63,7 @@ jobs:
   
   tests_postgres13:
     docker:
-      - image: cimg/python:3.8.17
+      - image: cimg/python:3.9.18
       - image: circleci/redis:3.2-alpine
       - image: circleci/postgres:13
         environment:
@@ -123,7 +123,7 @@ jobs:
 
   linting:
     docker:
-      - image: cimg/python:3.8.17
+      - image: cimg/python:3.9.18
     steps:
       - checkout
 
