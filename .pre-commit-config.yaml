@@ -1,6 +1,6 @@
 exclude: (exporter/assets/built/|caseworker/assets/built/)
 repos:
-  # ruff-pre-commit docs recommend running ruff before black
+    # ruff-pre-commit docs recommend running ruff before black
     - repo: https://github.com/astral-sh/ruff-pre-commit
       rev: v0.1.4
       hooks:

@@ -45,7 +45,7 @@ jobs:
 
       - save_cache:
           paths:
-            - ./.venv
+            - ./venv
           key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
 
       - run:
@@ -105,7 +105,7 @@ jobs:
 
       - save_cache:
           paths:
-            - ./.venv
+            - ./venv
           key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
 
       - run:
@@ -159,7 +159,7 @@ jobs:
 
       - save_cache:
           paths:
-            - ./.venv
+            - ./venv
             - ~/.cache/pre-commit
           # the cache key changes whenever any of the branch name, Pipfile.lock checksum, or .pre-commit-config.yaml checksum change
           key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}-{{ checksum ".pre-commit-config.yaml" }}
