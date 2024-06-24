@@ -48,16 +48,10 @@ jobs:
 
       - run:
           name: Run tests
-          command: pipenv run pytest --cov=. --cov-config=.coveragerc
+          command: pipenv run pytest --cov=. --cov-report xml --cov-config=.coveragerc
 
-      - run:
-          name: Rename coverage file
-          command: mkdir coverage-output && cp .coverage coverage-output/.coverage
-
-      - persist_to_workspace:
-          root: coverage-output
-          paths:
-            - .coverage
+      - store_test_results:
+          path: test-results
 
   tests_postgres13:
     docker:
