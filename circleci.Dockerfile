@@ -1,4 +1,4 @@
-FROM python:3.8.17-slim-bullseye
+FROM python:3.9.18-slim-bullseye
 ENV DOCKERIZE_VERSION v0.6.1
 RUN apt-get update --fix-missing
 RUN apt-get install libpq-dev gcc wget -y
