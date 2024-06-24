@@ -18,10 +18,13 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
+from healthcheck.views import HealthCheckPingdomView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("mail/", include("mail.urls")),
     path("healthcheck/", include("health_check.urls")),
+    path("pingdom/ping.xml", HealthCheckPingdomView.as_view(), name="healthcheck-pingdom"),
 ]
 
 if settings.ENABLE_MOCK_HMRC_SERVICE:  # pragma: no cover
