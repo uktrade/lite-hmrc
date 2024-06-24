@@ -37,12 +37,6 @@ jobs:
           name: Install Dependencies
           command: pipenv sync --dev
 
-      - run:
-          name: Install code coverage
-          command: |
-            curl -Os https://uploader.codecov.io/latest/linux/codecov
-            chmod +x codecov
-
       - save_cache:
           paths:
             - ./venv
@@ -55,11 +49,9 @@ jobs:
       - run:
           name: Run tests
           command: pipenv run pytest --cov=. --cov-report xml --cov-config=.coveragerc
+
       - store_test_results:
           path: test-results
-      - run:
-          name: Upload code coverage
-          command: ./codecov
 
   tests_postgres13:
     docker:
@@ -97,12 +89,6 @@ jobs:
           name: Install Dependencies
           command: pipenv sync --dev
 
-      - run:
-          name: Install code coverage
-          command: |
-            curl -Os https://uploader.codecov.io/latest/linux/codecov
-            chmod +x codecov
-
       - save_cache:
           paths:
             - ./venv
@@ -114,12 +100,7 @@ jobs:
 
       - run:
           name: Run tests on Postgres 13
-          command: pipenv run pytest --cov=. --cov-report xml --cov-config=.coveragerc
-      - store_test_results:
-          path: test-results
-      - run:
-          name: Upload code coverage
-          command: ./codecov
+          command: pipenv run pytest
 
   linting:
     docker:
