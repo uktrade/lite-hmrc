@@ -60,7 +60,7 @@ jobs:
       - run:
           name: Upload code coverage
           command: ./codecov
-  
+
   tests_postgres13:
     docker:
       - image: cimg/python:3.9.18
@@ -127,17 +127,14 @@ jobs:
     steps:
       - checkout
 
+      - run: pipenv install pre-commit
+
       - restore_cache:
-          key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+          key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}-{{ checksum ".pre-commit-config.yaml" }}
 
       - run:
           name: Install Dependencies
           command: pipenv sync --dev
-
-      - save_cache:
-          paths:
-            - ./venv
-          key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
 
       - run:
           name: Prospector
@@ -155,6 +152,18 @@ jobs:
           name: Bandit
           command: |
             pipenv run bandit -c bandit.yaml -r .
+
+      - run:
+          name: Ruff
+          command: pipenv run pre-commit run ruff --from-ref origin/HEAD --to-ref HEAD
+
+      - save_cache:
+          paths:
+            - ./venv
+            - ~/.cache/pre-commit
+          # the cache key changes whenever any of the branch name, Pipfile.lock checksum, or .pre-commit-config.yaml checksum change
+          key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}-{{ checksum ".pre-commit-config.yaml" }}
+
 
 workflows:
   version: 2
