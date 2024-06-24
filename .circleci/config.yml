@@ -48,10 +48,16 @@ jobs:
 
       - run:
           name: Run tests
-          command: pipenv run pytest --cov=. --cov-report xml --cov-config=.coveragerc
+          command: pipenv run pytest --cov=. --cov-config=.coveragerc
 
-      - store_test_results:
-          path: test-results
+      - run:
+          name: Rename coverage file
+          command: mkdir coverage-output && cp .coverage coverage-output/.coverage
+
+      - persist_to_workspace:
+          root: coverage-output
+          paths:
+            - .coverage
 
   tests_postgres13:
     docker:
@@ -145,6 +151,39 @@ jobs:
           # the cache key changes whenever any of the branch name, Pipfile.lock checksum, or .pre-commit-config.yaml checksum change
           key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}-{{ checksum ".pre-commit-config.yaml" }}
 
+  check_coverage:
+    working_directory: ~/lite-hmrc
+    docker:
+      - image: cimg/python:3.9.18
+    steps:
+      - checkout
+
+      - attach_workspace:
+          at: ~/lite-hmrc/tmp
+
+      - run: pip install coverage diff_cover
+
+      - run: cp tmp/.coverage .
+
+      - run: coverage xml
+
+      - run: coverage html
+
+      - store_artifacts:
+          path: htmlcov
+
+      - run: diff-cover coverage.xml --compare-branch=origin/master --html-report coverage-report.html
+
+      - store_artifacts:
+          path: coverage-report.html
+
+      - run: zip -r coverage.zip htmlcov coverage-report.html
+
+      - store_artifacts:
+          path: coverage.zip
+
+      - run: diff-cover coverage.xml --compare-branch=origin/master --fail-under=100
+
 
 workflows:
   version: 2
@@ -153,3 +192,6 @@ workflows:
       - tests
       - tests_postgres13
       - linting
+      - check_coverage:
+          requires:
+            - tests
