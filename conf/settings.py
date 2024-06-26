@@ -11,6 +11,11 @@ from urllib.parse import urlencode
 from django_log_formatter_asim import ASIMFormatter
 from dbt_copilot_python.utility import is_copilot
 
+from dbt_copilot_python.network import setup_allowed_hosts
+from dbt_copilot_python.database import database_url_from_env
+from dbt_copilot_python.utility import is_copilot
+
+import dj_database_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,6 +25,11 @@ if os.path.exists(ENV_FILE):
     Env.read_env(ENV_FILE)
 
 env = Env()
+
+VCAP_SERVICES = env.json("VCAP_SERVICES", {})
+
+IS_ENV_DBT_PLATFORM = is_copilot()
+IS_ENV_GOV_PAAS = bool(VCAP_SERVICES)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("DJANGO_SECRET_KEY")
@@ -84,11 +94,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "conf.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-
-DATABASES = {"default": env.db()}
 
 ENABLE_MOCK_HMRC_SERVICE = env.bool("ENABLE_MOCK_HMRC_SERVICE", default=False)
 if ENABLE_MOCK_HMRC_SERVICE:
@@ -185,25 +190,6 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
 }
-ENVIRONMENT = env.str("ENVIRONMENT", "")
-
-if "test" in sys.argv:
-    LOGGING.update({"disable_existing_loggers": True})
-
-elif ENVIRONMENT == "local":
-    LOGGING.update({"formatters": {"simple": {"format": "{asctime} {levelname} {message}", "style": "{"}}})
-    LOGGING.update({"handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "simple"}}})
-    LOGGING.update({"root": {"handlers": ["stdout"], "level": _log_level.upper()}})
-
-elif not is_copilot():
-    LOGGING.update({"formatters": {"ecs_formatter": {"()": ECSFormatter}}})
-    LOGGING.update({"handlers": {"ecs": {"class": "logging.StreamHandler", "formatter": "ecs_formatter"}}})
-    LOGGING.update({"root": {"handlers": ["ecs"], "level": _log_level.upper()}})
-
-else:
-    LOGGING.update({"formatters": {"asim_formatter": {"()": ASIMFormatter}}})
-    LOGGING.update({"handlers": {"asim": {"class": "logging.StreamHandler", "formatter": "asim_formatter"}}})
-    LOGGING.update({"root": {"handlers": ["asim"], "level": _log_level.upper()}})
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
@@ -250,16 +236,6 @@ if env.str("SENTRY_DSN", ""):
 else:
     SENTRY_ENABLED = False
 
-# Application Performance Monitoring
-if env.str("ELASTIC_APM_SERVER_URL", ""):
-    ELASTIC_APM = {
-        "SERVICE_NAME": env.str("ELASTIC_APM_SERVICE_NAME", default="lite-hmrc"),
-        "SECRET_TOKEN": env.str("ELASTIC_APM_SECRET_TOKEN"),
-        "SERVER_URL": env.str("ELASTIC_APM_SERVER_URL"),
-        "ENVIRONMENT": env.str("SENTRY_ENVIRONMENT"),
-        "DEBUG": DEBUG,
-    }
-    INSTALLED_APPS.append("elasticapm.contrib.django")
 
 DEFAULT_ENCODING = "iso-8859-1"
 
@@ -271,36 +247,6 @@ SEND_REJECTED_EMAIL = env.bool("SEND_REJECTED_EMAIL", default=True)
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-VCAP_SERVICES = env.json("VCAP_SERVICES", {})
-
-if "redis" in VCAP_SERVICES:
-    REDIS_BASE_URL = VCAP_SERVICES["redis"][0]["credentials"]["uri"]
-else:
-    REDIS_BASE_URL = env("REDIS_BASE_URL", default=None)
-
-
-def _build_redis_url(base_url, db_number, **query_args):
-    encoded_query_args = urlencode(query_args)
-    return f"{base_url}/{db_number}?{encoded_query_args}"
-
-
-if REDIS_BASE_URL:
-    # Give celery tasks their own redis DB - future uses of redis should use a different DB
-    REDIS_CELERY_DB = env("REDIS_CELERY_DB", default=0)
-    is_redis_ssl = REDIS_BASE_URL.startswith("rediss://")
-    url_args = {"ssl_cert_reqs": "CERT_REQUIRED"} if is_redis_ssl else {}
-
-    CELERY_BROKER_URL = _build_redis_url(REDIS_BASE_URL, REDIS_CELERY_DB, **url_args)
-    CELERY_RESULT_BACKEND = CELERY_BROKER_URL
-
-
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": REDIS_BASE_URL,
-    }
-}
-
 CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", False)
 CELERY_TASK_STORE_EAGER_RESULT = env.bool("CELERY_TASK_STORE_EAGER_RESULT", False)
 CELERY_TASK_SEND_SENT_EVENT = env.bool("CELERY_TASK_SEND_SENT_EVENT", True)
@@ -310,7 +256,19 @@ S3_BUCKET_TAG_ANONYMISER_DESTINATION = "anonymiser"
 
 AWS_ENDPOINT_URL = env("AWS_ENDPOINT_URL", default=None)
 
-if VCAP_SERVICES:
+DB_ANONYMISER_CONFIG_LOCATION = Path(BASE_DIR) / "conf" / "anonymise_model_config.yaml"
+DB_ANONYMISER_DUMP_FILE_NAME = env.str("DB_ANONYMISER_DUMP_FILE_NAME", "anonymised.sql")
+
+
+def _build_redis_url(base_url, db_number, **query_args):
+    encoded_query_args = urlencode(query_args)
+    return f"{base_url}/{db_number}?{encoded_query_args}"
+
+
+if IS_ENV_GOV_PAAS:
+    # Database
+    # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
+    DATABASES = {"default": env.db()}
     for bucket_details in VCAP_SERVICES["aws-s3-bucket"]:
         if S3_BUCKET_TAG_ANONYMISER_DESTINATION in bucket_details["tags"]:
             aws_credentials = bucket_details["credentials"]
@@ -319,12 +277,113 @@ if VCAP_SERVICES:
             DB_ANONYMISER_AWS_SECRET_ACCESS_KEY = aws_credentials["aws_secret_access_key"]
             DB_ANONYMISER_AWS_REGION = aws_credentials["aws_region"]
             DB_ANONYMISER_AWS_STORAGE_BUCKET_NAME = aws_credentials["bucket_name"]
-else:
+    REDIS_BASE_URL = VCAP_SERVICES["redis"][0]["credentials"]["uri"]
+    # Application Performance Monitoring
+    if env.str("ELASTIC_APM_SERVER_URL", ""):
+        ELASTIC_APM = {
+            "SERVICE_NAME": env.str("ELASTIC_APM_SERVICE_NAME", default="lite-hmrc"),
+            "SECRET_TOKEN": env.str("ELASTIC_APM_SECRET_TOKEN"),
+            "SERVER_URL": env.str("ELASTIC_APM_SERVER_URL"),
+            "ENVIRONMENT": env.str("SENTRY_ENVIRONMENT"),
+            "DEBUG": DEBUG,
+        }
+        INSTALLED_APPS.append("elasticapm.contrib.django")
+
+        if REDIS_BASE_URL:
+            # Give celery tasks their own redis DB - future uses of redis should use a different DB
+            REDIS_CELERY_DB = env("REDIS_CELERY_DB", default=0)
+            is_redis_ssl = REDIS_BASE_URL.startswith("rediss://")
+            url_args = {"ssl_cert_reqs": "CERT_REQUIRED"} if is_redis_ssl else {}
+
+            CELERY_BROKER_URL = _build_redis_url(REDIS_BASE_URL, REDIS_CELERY_DB, **url_args)
+            CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+        CACHES = {
+            "default": {
+                "BACKEND": "django.core.cache.backends.redis.RedisCache",
+                "LOCATION": REDIS_BASE_URL,
+            }
+        }
+
+        LOGGING.update({"formatters": {"ecs_formatter": {"()": ECSFormatter}}})
+        LOGGING.update({"handlers": {"ecs": {"class": "logging.StreamHandler", "formatter": "ecs_formatter"}}})
+        LOGGING.update({"root": {"handlers": ["ecs"], "level": _log_level.upper()}})
+
+elif IS_ENV_DBT_PLATFORM:
+    ALLOWED_HOSTS = setup_allowed_hosts(ALLOWED_HOSTS)
+    DATABASES = {"default": dj_database_url.config(default=database_url_from_env("DATABASE_CREDENTIALS"))}
+    # Application Performance Monitoring
+    if env.str("OPENSEARCH_APM_SERVER_URL", ""):
+        ELASTIC_APM = {
+            "SERVICE_NAME": env.str("OPENSEARCH_APM_SERVICE_NAME", default="lite-hmrc"),
+            "SECRET_TOKEN": env.str("OPENSEARCH_APM_SECRET_TOKEN"),
+            "SERVER_URL": env.str("ELASTIC_APM_SERVER_URL"),
+            "ENVIRONMENT": env.str("SENTRY_ENVIRONMENT"),
+            "DEBUG": DEBUG,
+        }
+
+    REDIS_BASE_URL = env("REDIS_BASE_URL", default=None)
+    CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=None)
+    CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_BASE_URL,
+        }
+    }
+
     DB_ANONYMISER_AWS_ENDPOINT_URL = AWS_ENDPOINT_URL
     DB_ANONYMISER_AWS_ACCESS_KEY_ID = env("DB_ANONYMISER_AWS_ACCESS_KEY_ID", default=None)
     DB_ANONYMISER_AWS_SECRET_ACCESS_KEY = env("DB_ANONYMISER_AWS_SECRET_ACCESS_KEY", default=None)
     DB_ANONYMISER_AWS_REGION = env("DB_ANONYMISER_AWS_REGION", default=None)
     DB_ANONYMISER_AWS_STORAGE_BUCKET_NAME = env("DB_ANONYMISER_AWS_STORAGE_BUCKET_NAME", default=None)
 
-DB_ANONYMISER_CONFIG_LOCATION = Path(BASE_DIR) / "conf" / "anonymise_model_config.yaml"
-DB_ANONYMISER_DUMP_FILE_NAME = env.str("DB_ANONYMISER_DUMP_FILE_NAME", "anonymised.sql")
+    LOGGING.update({"formatters": {"asim_formatter": {"()": ASIMFormatter}}})
+    LOGGING.update({"handlers": {"asim": {"class": "logging.StreamHandler", "formatter": "asim_formatter"}}})
+    LOGGING.update({"root": {"handlers": ["asim"], "level": _log_level.upper()}})
+
+else:
+    # Database
+    # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
+    DATABASES = {"default": env.db()}
+    REDIS_BASE_URL = env("REDIS_BASE_URL", default=None)
+    INSTALLED_APPS.append("elasticapm.contrib.django")
+    DB_ANONYMISER_AWS_ENDPOINT_URL = AWS_ENDPOINT_URL
+    DB_ANONYMISER_AWS_ACCESS_KEY_ID = env("DB_ANONYMISER_AWS_ACCESS_KEY_ID", default=None)
+    DB_ANONYMISER_AWS_SECRET_ACCESS_KEY = env("DB_ANONYMISER_AWS_SECRET_ACCESS_KEY", default=None)
+    DB_ANONYMISER_AWS_REGION = env("DB_ANONYMISER_AWS_REGION", default=None)
+    DB_ANONYMISER_AWS_STORAGE_BUCKET_NAME = env("DB_ANONYMISER_AWS_STORAGE_BUCKET_NAME", default=None)
+    # Application Performance Monitoring
+    if env.str("ELASTIC_APM_SERVER_URL", ""):
+        ELASTIC_APM = {
+            "SERVICE_NAME": env.str("ELASTIC_APM_SERVICE_NAME", default="lite-hmrc"),
+            "SECRET_TOKEN": env.str("ELASTIC_APM_SECRET_TOKEN"),
+            "SERVER_URL": env.str("ELASTIC_APM_SERVER_URL"),
+            "ENVIRONMENT": env.str("SENTRY_ENVIRONMENT"),
+            "DEBUG": DEBUG,
+        }
+        INSTALLED_APPS.append("elasticapm.contrib.django")
+
+    if REDIS_BASE_URL:
+        # Give celery tasks their own redis DB - future uses of redis should use a different DB
+        REDIS_CELERY_DB = env("REDIS_CELERY_DB", default=0)
+        is_redis_ssl = REDIS_BASE_URL.startswith("rediss://")
+        url_args = {"ssl_cert_reqs": "CERT_REQUIRED"} if is_redis_ssl else {}
+
+        CELERY_BROKER_URL = _build_redis_url(REDIS_BASE_URL, REDIS_CELERY_DB, **url_args)
+        CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
+        CACHES = {
+            "default": {
+                "BACKEND": "django.core.cache.backends.redis.RedisCache",
+                "LOCATION": REDIS_BASE_URL,
+            }
+        }
+
+    if "test" in sys.argv:
+        LOGGING.update({"disable_existing_loggers": True})
+
+    else:
+        LOGGING.update({"formatters": {"simple": {"format": "{asctime} {levelname} {message}", "style": "{"}}})
+        LOGGING.update({"handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "simple"}}})
+        LOGGING.update({"root": {"handlers": ["stdout"], "level": _log_level.upper()}})
