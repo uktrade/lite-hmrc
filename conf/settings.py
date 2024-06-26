@@ -8,6 +8,8 @@ from environ import Env
 from pathlib import Path
 from sentry_sdk.integrations.django import DjangoIntegration
 from urllib.parse import urlencode
+from django_log_formatter_asim import ASIMFormatter
+from dbt_copilot_python.utility import is_copilot
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -178,22 +180,30 @@ USE_L10N = True
 USE_TZ = env.bool("USE_TZ", default=True)
 
 _log_level = env.str("LOG_LEVEL", default="INFO")
-if "test" not in sys.argv:
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "simple": {"format": "{asctime} {levelname} {message}", "style": "{"},
-            "ecs_formatter": {"()": ECSFormatter},
-        },
-        "handlers": {
-            "stdout": {"class": "logging.StreamHandler", "formatter": "simple"},
-            "ecs": {"class": "logging.StreamHandler", "formatter": "ecs_formatter"},
-        },
-        "root": {"handlers": ["stdout", "ecs"], "level": _log_level.upper()},
-    }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+}
+ENVIRONMENT = env.str("ENVIRONMENT", "")
+
+if "test" in sys.argv:
+    LOGGING.update({"disable_existing_loggers": True})
+
+elif ENVIRONMENT == "local":
+    LOGGING.update({"formatters": {"simple": {"format": "{asctime} {levelname} {message}", "style": "{"}}})
+    LOGGING.update({"handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "simple"}}})
+    LOGGING.update({"root": {"handlers": ["stdout"], "level": _log_level.upper()}})
+
+elif not is_copilot():
+    LOGGING.update({"formatters": {"ecs_formatter": {"()": ECSFormatter}}})
+    LOGGING.update({"handlers": {"ecs": {"class": "logging.StreamHandler", "formatter": "ecs_formatter"}}})
+    LOGGING.update({"root": {"handlers": ["ecs"], "level": _log_level.upper()}})
+
 else:
-    LOGGING = {"version": 1, "disable_existing_loggers": True}
+    LOGGING.update({"formatters": {"asim_formatter": {"()": ASIMFormatter}}})
+    LOGGING.update({"handlers": {"asim": {"class": "logging.StreamHandler", "formatter": "asim_formatter"}}})
+    LOGGING.update({"root": {"handlers": ["asim"], "level": _log_level.upper()}})
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
