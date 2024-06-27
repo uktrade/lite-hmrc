@@ -12,6 +12,7 @@ omit =
     **/resend_edi_data_email.py
     mail/admin.py
     ./django_db_anonymiser/*
+    ./conf/celery.py
 
 branch = True
 
