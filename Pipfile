@@ -44,6 +44,7 @@ boto3 = "~=1.26.17"
 typing-extensions ="~=4.3.0"
 django-log-formatter-asim = "~=0.0.5"
 dbt-copilot-python = "~=0.2.1"
+dj-database-url = "~=2.2.0"
 
 [requires]
 python_version = "3.9"

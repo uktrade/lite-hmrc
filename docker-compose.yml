@@ -59,6 +59,13 @@ services:
       - redis
     command:  pipenv run watchmedo auto-restart -d . -R -p '*.py' -- celery -A conf beat
 
+  healthcheck:
+    test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
+    interval: 10s
+    timeout: 5s
+    retries: 2
+    start_period: 5s
+
   redis:
     image: "redis:5-alpine"
     container_name: hmrc-redis
