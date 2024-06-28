@@ -193,9 +193,12 @@ class UnitMapping(enum.Enum):
     MTR = 57  # meters
     LTR = 94  # litre
     MTQ = 2  # meters_cubed
-    MIR = 74  # millilitre
+    MLT = 74  # millilitre
     ITG = 30  # intangible
-    MIM = 111  # milligram
+    MGM = 111  # milligram
+    TON = 25  # tonne
+    MCG = 116  # microgram
+    MCL = 110  # microlitre
 
     @classmethod
     def serializer_choices(cls):
