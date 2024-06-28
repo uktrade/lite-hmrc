@@ -46,11 +46,11 @@ class EndToEndTests(LiteHMRCTestClient):
 6\restrictions\Provisos may apply please see licence
 7\line\1\\\\\Sporting shotgun\Q\\030\\10\\\\\\
 8\line\2\\\\\Stock\Q\\111\\11.0\\\\\\
-9\n11\\line\\3\\\\\\\\\\Metal\\Q\\\\025\\\\1.0\\\\\\\\\\\\
-10\n12\\line\\4\\\\\\\\\\Chemical\\Q\\\\116\\\\20.0\\\\\\\\\\\\
-11\n13\\line\\5\\\\\\\\\\Chemical\\Q\\\\110\\\\20.0\\\\\\\\\\\\
-12\n14\\line\\6\\\\\\\\\\Chemical\\Q\\\\074\\\\20.0\\\\\\\\\\\\
-139\end\licence\12
+9\line\3\\\\\Metal\Q\\025\\1.0\\\\\\
+10\line\4\\\\\Chemical\Q\\116\\20.0\\\\\\
+11\line\5\\\\\Chemical\Q\\110\\20.0\\\\\\
+12\line\6\\\\\Chemical\Q\\074\\20.0\\\\\\
+13\end\licence\12
 14\fileTrailer\1"""
         assert body == expected_mail_body  # nosec
         encoded_reference_code = quote("GBSIEL/2020/0000001/P", safe="")
