@@ -49,17 +49,20 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "mail",
-    # healthcheck app is for custom healthchecks in this app, health_check is django-health-check
-    "healthcheck",
     "health_check",
-    "health_check.db",
-    "health_check.cache",
-    "health_check.storage",
-    "health_check.contrib.migrations",
-    "health_check.contrib.celery",
-    "health_check.contrib.celery_ping",
     "django_db_anonymiser.db_anonymiser",
 ]
+
+if not IS_ENV_DBT_PLATFORM:
+    INSTALLED_APPS += [
+        "healthcheck",
+        "health_check.db",
+        "health_check.cache",
+        "health_check.storage",
+        "health_check.contrib.migrations",
+        "health_check.contrib.celery",
+        "health_check.contrib.celery_ping",
+    ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -230,6 +233,7 @@ if env.str("SENTRY_DSN", ""):
         environment=env.str("SENTRY_ENVIRONMENT"),
         integrations=[DjangoIntegration()],
         send_default_pii=True,
+        traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", 1.0),
     )
     SENTRY_ENABLED = True
 else:
@@ -322,8 +326,15 @@ elif IS_ENV_DBT_PLATFORM:
         }
 
     REDIS_BASE_URL = env("REDIS_BASE_URL", default=None)
-    CELERY_BROKER_URL = env("CELERY_BROKER_URL", default=None)
-    CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+    REDIS_CELERY_DB = env("REDIS_CELERY_DB", default=0)
+
+    if REDIS_BASE_URL:
+        is_redis_ssl = REDIS_BASE_URL.startswith("rediss://")
+        url_args = {"ssl_cert_reqs": "CERT_REQUIRED"} if is_redis_ssl else {}
+
+        CELERY_BROKER_URL = _build_redis_url(REDIS_BASE_URL, REDIS_CELERY_DB, **url_args)
+        CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
