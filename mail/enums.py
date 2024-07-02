@@ -205,6 +205,13 @@ class UnitMapping(enum.Enum):
         # Used by the API serializer for validation.
         return list(cls.__members__.keys())
 
+class LegacyUnitCodeMapping(enum.Enum):
+    # These units below are the old values that are not used going forward
+    # They are kept here for backwards compatibility
+    MIM = 111  # milligram
+    MCM = 116  # microgram
+    MIR = 74  # millilitre
+    MCR = 110  # microlitre
 
 class MailReadStatuses(TextChoices):
     READ = "READ"
