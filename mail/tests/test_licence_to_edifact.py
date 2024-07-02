@@ -53,8 +53,9 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
             + "\n10\\line\\4\\\\\\\\\\Chemical\\Q\\\\116\\\\20.0\\\\\\\\\\\\"
             + "\n11\\line\\5\\\\\\\\\\Chemical\\Q\\\\110\\\\20.0\\\\\\\\\\\\"
             + "\n12\\line\\6\\\\\\\\\\Chemical\\Q\\\\074\\\\20.0\\\\\\\\\\\\"
-            + "\n13\\end\\licence\\12"
-            + "\n14\\fileTrailer\\1\n"
+            + "\n13\\line\\7\\\\\\\\\\Old Chemical\\Q\\\\111\\\\20.0\\\\\\\\\\\\"
+            + "\n14\\end\\licence\\13"
+            + "\n15\\fileTrailer\\1\n"
         )
 
         self.assertEqual(result, expected)
@@ -122,8 +123,9 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
             + "\n12\\line\\4\\\\\\\\\\Chemical\\Q\\\\116\\\\20.0\\\\\\\\\\\\"
             + "\n13\\line\\5\\\\\\\\\\Chemical\\Q\\\\110\\\\20.0\\\\\\\\\\\\"
             + "\n14\\line\\6\\\\\\\\\\Chemical\\Q\\\\074\\\\20.0\\\\\\\\\\\\"
-            + "\n15\\end\\licence\\12"
-            + "\n16\\fileTrailer\\2\n"
+            + "\n15\\line\\7\\\\\\\\\\Old Chemical\\Q\\\\111\\\\20.0\\\\\\\\\\\\"
+            + "\n16\\end\\licence\\13"
+            + "\n17\\fileTrailer\\2\n"
         )
 
         self.assertEqual(result, expected)

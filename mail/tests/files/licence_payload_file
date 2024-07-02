@@ -69,6 +69,13 @@
             "description": "",
             "unit": "MLT",
             "quantity": 20.0
+          },
+          {
+            "id": "f95ded2a-354f-46f1-a572-c7f97d63bed7",
+            "name": "Old Chemical",
+            "description": "",
+            "unit": "MIM",
+            "quantity": 20.0
           }
       ]
   }
