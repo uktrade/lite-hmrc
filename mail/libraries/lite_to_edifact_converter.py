@@ -13,7 +13,7 @@ from mail.enums import (
     LicenceActionEnum,
     LicenceTypeEnum,
     UnitMapping,
-    LegacyUnitCodeMapping
+    LegacyUnitCodeMapping,
 )
 from mail.libraries import chiefprotocol, chieftypes
 from mail.libraries.edifact_validator import (

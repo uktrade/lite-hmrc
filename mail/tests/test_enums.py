@@ -56,3 +56,4 @@ class UnitMappingTests(unittest.TestCase):
         expected = ["MIM", "MCM", "MIR", "MCR"]
 
         self.assertEqual(choices, expected)
+
