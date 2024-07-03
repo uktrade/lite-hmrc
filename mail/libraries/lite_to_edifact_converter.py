@@ -137,11 +137,11 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
                 controlled_by = "Q"  # usage is controlled by quantity only
                 quantity = commodity.get("quantity")
 
-                try:
-                    qunit = UnitMapping[commodity["unit"]]
-                except KeyError:
+                if commodity["unit"] in LegacyUnitCodeMapping:
                     qunit = LegacyUnitCodeMapping[commodity["unit"]]
-                    
+                else:
+                    qunit = UnitMapping[commodity["unit"]]
+
                 if qunit == UnitMapping.NAR:
                     quantity = int(quantity)
                 yield chieftypes.LicenceDataLine(
