@@ -31,6 +31,8 @@ if TYPE_CHECKING:
 class EdifactValidationError(Exception):
     pass
 
+def get_class_attributes(cls):
+    return [str(attr) for attr in dir(cls)]
 
 def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._Record]:
     """Yield line tuples for a single licence, to use in a CHIEF message.
@@ -136,8 +138,8 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
                 )
                 controlled_by = "Q"  # usage is controlled by quantity only
                 quantity = commodity.get("quantity")
-
-                if commodity["unit"] in LegacyUnitCodeMapping:
+                
+                if commodity["unit"] in get_class_attributes(LegacyUnitCodeMapping):
                     qunit = LegacyUnitCodeMapping[commodity["unit"]]
                 else:
                     qunit = UnitMapping[commodity["unit"]]
