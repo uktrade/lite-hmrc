@@ -17,3 +17,5 @@ EOF
 git submodule update --init --remote --recursive
 
 echo "done"
+
+pipenv install --deploy
