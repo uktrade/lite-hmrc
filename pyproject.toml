@@ -3,7 +3,7 @@
 # verbose regular expressions by Black.  Use [ ] to denote a significant space
 # character.
 [project]
-requires-python = "==3.8.17"
+requires-python = '==3.8.17'
 
 [tool.black]
 line-length = 120
