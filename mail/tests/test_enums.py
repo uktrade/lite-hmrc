@@ -52,7 +52,7 @@ class UnitMappingTests(unittest.TestCase):
         self.assertEqual(choices, expected)
 
     def test_serializer_choices_old(self):
-        choices = list(LegacyUnitCodeMapping.__members__.keys())
+        choices = LegacyUnitCodeMapping.serializer_choices()
         expected = ["MIM", "MCM", "MIR", "MCR"]
 
         self.assertEqual(choices, expected)

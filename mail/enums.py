@@ -214,6 +214,11 @@ class LegacyUnitCodeMapping(enum.Enum):
     MIR = 74  # millilitre
     MCR = 110  # microlitre
 
+    @classmethod
+    def serializer_choices(cls):
+        # Used by the API serializer for validation.
+        return list(cls.__members__.keys())
+
 
 class MailReadStatuses(TextChoices):
     READ = "READ"
