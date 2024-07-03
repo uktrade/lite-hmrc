@@ -24,7 +24,7 @@ class UnitMappingTests(unittest.TestCase):
         for code, value in data:
             with self.subTest(code=code, value=value):
                 self.assertEqual(value, UnitMapping[code].value)
-    
+
     def test_convert_legacy_code(self):
         data = [
             ("MIM", 111),
@@ -40,7 +40,7 @@ class UnitMappingTests(unittest.TestCase):
     def test_convert_none(self):
         with self.assertRaises(KeyError):
             UnitMapping[None]
-    
+
     def test_convert_none_old(self):
         with self.assertRaises(KeyError):
             LegacyUnitCodeMapping[None]
@@ -50,10 +50,9 @@ class UnitMappingTests(unittest.TestCase):
         expected = ["NAR", "GRM", "KGM", "MTK", "MTR", "LTR", "MTQ", "MLT", "ITG", "MGM", "TON", "MCG", "MCL"]
 
         self.assertEqual(choices, expected)
-    
+
     def test_serializer_choices_old(self):
         choices = list(LegacyUnitCodeMapping.__members__.keys())
         expected = ["MIM", "MCM", "MIR", "MCR"]
 
         self.assertEqual(choices, expected)
-
