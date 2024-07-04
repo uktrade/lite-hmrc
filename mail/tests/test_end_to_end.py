@@ -46,8 +46,13 @@ class EndToEndTests(LiteHMRCTestClient):
 6\restrictions\Provisos may apply please see licence
 7\line\1\\\\\Sporting shotgun\Q\\030\\10\\\\\\
 8\line\2\\\\\Stock\Q\\111\\11.0\\\\\\
-9\end\licence\8
-10\fileTrailer\1"""
+9\line\3\\\\\Metal\Q\\025\\1.0\\\\\\
+10\line\4\\\\\Chemical\Q\\116\\20.0\\\\\\
+11\line\5\\\\\Chemical\Q\\110\\20.0\\\\\\
+12\line\6\\\\\Chemical\Q\\074\\20.0\\\\\\
+13\line\7\\\\\Old Chemical\Q\\111\\20.0\\\\\\
+14\end\licence\13
+15\fileTrailer\1"""
         assert body == expected_mail_body  # nosec
         encoded_reference_code = quote("GBSIEL/2020/0000001/P", safe="")
         response = self.client.get(f"{reverse('mail:licence')}?id={encoded_reference_code}")

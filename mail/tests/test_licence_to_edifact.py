@@ -48,8 +48,13 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
             + "\n6\\restrictions\\Provisos may apply please see licence"
             + "\n7\\line\\1\\\\\\\\\\Sporting shotgun\\Q\\\\030\\\\10\\\\\\\\\\\\"
             + "\n8\\line\\2\\\\\\\\\\Stock\\Q\\\\111\\\\11.0\\\\\\\\\\\\"
-            + "\n9\\end\\licence\\8"
-            + "\n10\\fileTrailer\\1\n"
+            + "\n9\\line\\3\\\\\\\\\\Metal\\Q\\\\025\\\\1.0\\\\\\\\\\\\"
+            + "\n10\\line\\4\\\\\\\\\\Chemical\\Q\\\\116\\\\20.0\\\\\\\\\\\\"
+            + "\n11\\line\\5\\\\\\\\\\Chemical\\Q\\\\110\\\\20.0\\\\\\\\\\\\"
+            + "\n12\\line\\6\\\\\\\\\\Chemical\\Q\\\\074\\\\20.0\\\\\\\\\\\\"
+            + "\n13\\line\\7\\\\\\\\\\Old Chemical\\Q\\\\111\\\\20.0\\\\\\\\\\\\"
+            + "\n14\\end\\licence\\13"
+            + "\n15\\fileTrailer\\1\n"
         )
 
         self.assertEqual(result, expected)
@@ -112,8 +117,13 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
             + "\n8\\restrictions\\Provisos may apply please see licence"
             + "\n9\\line\\1\\\\\\\\\\Sporting shotgun\\Q\\\\030\\\\15\\\\\\\\\\\\"
             + "\n10\\line\\2\\\\\\\\\\Stock\\Q\\\\111\\\\11.0\\\\\\\\\\\\"
-            + "\n11\\end\\licence\\8"
-            + "\n12\\fileTrailer\\2\n"
+            + "\n11\\line\\3\\\\\\\\\\Metal\\Q\\\\025\\\\1.0\\\\\\\\\\\\"
+            + "\n12\\line\\4\\\\\\\\\\Chemical\\Q\\\\116\\\\20.0\\\\\\\\\\\\"
+            + "\n13\\line\\5\\\\\\\\\\Chemical\\Q\\\\110\\\\20.0\\\\\\\\\\\\"
+            + "\n14\\line\\6\\\\\\\\\\Chemical\\Q\\\\074\\\\20.0\\\\\\\\\\\\"
+            + "\n15\\line\\7\\\\\\\\\\Old Chemical\\Q\\\\111\\\\20.0\\\\\\\\\\\\"
+            + "\n16\\end\\licence\\13"
+            + "\n17\\fileTrailer\\2\n"
         )
 
         self.assertEqual(result, expected)

@@ -39,8 +39,43 @@
               "id": "f95ded2a-354f-46f1-a572-c7f97d63bed2",
               "name": "Stock",
               "description": "",
-              "unit": "MIM",
+              "unit": "MGM",
               "quantity": 11.0
+          },
+          {
+            "id": "f95ded2a-354f-46f1-a572-c7f97d63bed3",
+            "name": "Metal",
+            "description": "",
+            "unit": "TON",
+            "quantity": 1.0
+          },
+          {
+            "id": "f95ded2a-354f-46f1-a572-c7f97d63bed4",
+            "name": "Chemical",
+            "description": "",
+            "unit": "MCG",
+            "quantity": 20.0
+          },
+          {
+            "id": "f95ded2a-354f-46f1-a572-c7f97d63bed5",
+            "name": "Chemical",
+            "description": "",
+            "unit": "MCL",
+            "quantity": 20.0
+          },
+          {
+            "id": "f95ded2a-354f-46f1-a572-c7f97d63bed6",
+            "name": "Chemical",
+            "description": "",
+            "unit": "MLT",
+            "quantity": 20.0
+          },
+          {
+            "id": "f95ded2a-354f-46f1-a572-c7f97d63bed7",
+            "name": "Old Chemical",
+            "description": "",
+            "unit": "MIM",
+            "quantity": 20.0
           }
       ]
   }
