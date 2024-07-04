@@ -1,6 +1,6 @@
 import unittest
 
-from mail.enums import UnitMapping, LegacyUnitCodeMapping
+from mail.enums import UnitMapping, LegacyUnitMapping
 
 
 class UnitMappingTests(unittest.TestCase):
@@ -35,7 +35,7 @@ class UnitMappingTests(unittest.TestCase):
 
         for code, value in data:
             with self.subTest(code=code, value=value):
-                self.assertEqual(value, LegacyUnitCodeMapping[code].value)
+                self.assertEqual(value, LegacyUnitMapping[code].value)
 
     def test_convert_none(self):
         with self.assertRaises(KeyError):
@@ -43,7 +43,7 @@ class UnitMappingTests(unittest.TestCase):
 
     def test_convert_none_old(self):
         with self.assertRaises(KeyError):
-            LegacyUnitCodeMapping[None]
+            LegacyUnitMapping[None]
 
     def test_serializer_choices(self):
         choices = UnitMapping.serializer_choices()
@@ -52,7 +52,7 @@ class UnitMappingTests(unittest.TestCase):
         self.assertEqual(choices, expected)
 
     def test_serializer_choices_old(self):
-        choices = LegacyUnitCodeMapping.serializer_choices()
+        choices = LegacyUnitMapping.serializer_choices()
         expected = ["MIM", "MCM", "MIR", "MCR"]
 
         self.assertEqual(choices, expected)

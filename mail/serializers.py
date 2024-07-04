@@ -147,7 +147,7 @@ class GoodSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=2000, allow_blank=True)
     quantity = serializers.DecimalField(decimal_places=3, max_digits=13)
     combined_unit_mapping_choices = (
-        enums.UnitMapping.serializer_choices() + enums.LegacyUnitCodeMapping.serializer_choices()
+        enums.UnitMapping.serializer_choices() + enums.LegacyUnitMapping.serializer_choices()
     )
     unit = serializers.ChoiceField(choices=combined_unit_mapping_choices)
 

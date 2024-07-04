@@ -13,7 +13,7 @@ from mail.enums import (
     LicenceActionEnum,
     LicenceTypeEnum,
     UnitMapping,
-    LegacyUnitCodeMapping,
+    LegacyUnitMapping,
 )
 from mail.libraries import chiefprotocol, chieftypes
 from mail.libraries.edifact_validator import (
@@ -141,8 +141,8 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
                 controlled_by = "Q"  # usage is controlled by quantity only
                 quantity = commodity.get("quantity")
 
-                if commodity["unit"] in get_class_attributes(LegacyUnitCodeMapping):
-                    qunit = LegacyUnitCodeMapping[commodity["unit"]]
+                if commodity["unit"] in get_class_attributes(LegacyUnitMapping):
+                    qunit = LegacyUnitMapping[commodity["unit"]]
                 else:
                     qunit = UnitMapping[commodity["unit"]]
 

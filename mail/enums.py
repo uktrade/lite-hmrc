@@ -206,7 +206,7 @@ class UnitMapping(enum.Enum):
         return list(cls.__members__.keys())
 
 
-class LegacyUnitCodeMapping(enum.Enum):
+class LegacyUnitMapping(enum.Enum):
     # These units below are the old values that are not used going forward
     # They are kept here for backwards compatibility
     MIM = 111  # milligram
