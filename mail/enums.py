@@ -200,15 +200,8 @@ class UnitMapping(enum.Enum):
     MCG = 116  # microgram
     MCL = 110  # microlitre
 
-    @classmethod
-    def serializer_choices(cls):
-        # Used by the API serializer for validation.
-        return list(cls.__members__.keys())
-
-
-class LegacyUnitMapping(enum.Enum):
-    # These units below are the old values that are not used going forward
-    # They are kept here for backwards compatibility
+    # These units below are the old values or LegacyUnitMapping that are
+    # not used going forward. They are kept here for backwards compatibility
     MIM = 111  # milligram
     MCM = 116  # microgram
     MIR = 74  # millilitre
@@ -218,9 +211,6 @@ class LegacyUnitMapping(enum.Enum):
     def serializer_choices(cls):
         # Used by the API serializer for validation.
         return list(cls.__members__.keys())
-
-    def get_class_attributes(cls):
-        return [attr for attr in dir(cls)]
 
 
 class MailReadStatuses(TextChoices):
