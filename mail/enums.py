@@ -222,6 +222,7 @@ class LegacyUnitMapping(enum.Enum):
     def get_class_attributes(cls):
         return [attr for attr in dir(cls)]
 
+
 class MailReadStatuses(TextChoices):
     READ = "READ"
     UNREAD = "UNREAD"

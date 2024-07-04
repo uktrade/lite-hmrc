@@ -32,8 +32,6 @@ class EdifactValidationError(Exception):
     pass
 
 
-
-
 def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._Record]:
     """Yield line tuples for a single licence, to use in a CHIEF message.
 
