@@ -139,7 +139,7 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
 
                 if qunit == UnitMapping.NAR:
                     quantity = int(quantity)
-                    
+
                 yield chieftypes.LicenceDataLine(
                     line_num=g,
                     goods_description=commodity.get("name"),
