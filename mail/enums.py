@@ -219,6 +219,8 @@ class LegacyUnitMapping(enum.Enum):
         # Used by the API serializer for validation.
         return list(cls.__members__.keys())
 
+    def get_class_attributes(cls):
+        return [attr for attr in dir(cls)]
 
 class MailReadStatuses(TextChoices):
     READ = "READ"

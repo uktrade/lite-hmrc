@@ -32,8 +32,6 @@ class EdifactValidationError(Exception):
     pass
 
 
-def get_class_attributes(cls):
-    return [str(attr) for attr in dir(cls)]
 
 
 def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._Record]:
@@ -141,7 +139,7 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
                 controlled_by = "Q"  # usage is controlled by quantity only
                 quantity = commodity.get("quantity")
 
-                if commodity["unit"] in get_class_attributes(LegacyUnitMapping):
+                if commodity["unit"] in LegacyUnitMapping.get_class_attributes(LegacyUnitMapping):
                     qunit = LegacyUnitMapping[commodity["unit"]]
                 else:
                     qunit = UnitMapping[commodity["unit"]]
