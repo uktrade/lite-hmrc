@@ -46,5 +46,5 @@ dbt-copilot-python = "~=0.2.1"
 dj-database-url = "~=2.2.0"
 
 [requires]
-python_version = "3.9"
-# python_full_version = "3.9.18"
+# python_version = "3.9"
+python_full_version = "3.9.18"
