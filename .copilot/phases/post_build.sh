@@ -4,5 +4,3 @@
 set -x
 
 # Add commands below to run as part of the post_build phase
-
-which pack
