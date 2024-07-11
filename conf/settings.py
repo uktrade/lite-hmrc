@@ -50,14 +50,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "mail",
     # healthcheck app is for custom healthchecks in this app, health_check is django-health-check
-    "healthcheck",
+    # "healthcheck",
     "health_check",
     # "health_check.db",
     # "health_check.cache",
     # "health_check.storage",
     # "health_check.contrib.migrations",
-    # "health_check.contrib.celery",
-    # "health_check.contrib.celery_ping",
+    "health_check.contrib.celery",
+    "health_check.contrib.celery_ping",
     "django_db_anonymiser.db_anonymiser",
 ]
 
