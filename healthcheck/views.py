@@ -5,7 +5,6 @@ class HealthCheckPingdomView(MainView):
     template_name = "pingdom.xml"
 
     def render_to_response(self, context, status):
-        print(context["plugins"])
         context["errored_plugins"] = [plugin for plugin in context["plugins"] if plugin.errors]
         print(context["errored_plugins"])
         context["total_response_time"] = sum([plugin.time_taken for plugin in context["plugins"]])
