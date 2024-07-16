@@ -323,12 +323,6 @@ elif IS_ENV_DBT_PLATFORM:
 
     REDIS_BASE_URL = env("REDIS_BASE_URL", default=None)
     REDIS_CELERY_DB = env("REDIS_CELERY_DB", default=0)
-    #if REDIS_BASE_URL:
-    #    is_redis_ssl = REDIS_BASE_URL.startswith("rediss://")
-    #    url_args = {"ssl_cert_reqs": "CERT_REQUIRED"} if is_redis_ssl else {}
-
-    #    CELERY_BROKER_URL = _build_redis_url(REDIS_BASE_URL, REDIS_CELERY_DB, **url_args)
-    #    CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
     CACHES = {
         "default": {
