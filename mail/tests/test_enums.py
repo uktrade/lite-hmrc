@@ -12,7 +12,7 @@ class UnitMappingTests(unittest.TestCase):
             ("MTK", 45),
             ("MTR", 57),
             ("LTR", 76),
-            ("MTQ", 2),
+            ("MTQ", 87),
             ("MLT", 74),
             ("ITG", 30),
             ("MGM", 111),

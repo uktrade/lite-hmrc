@@ -192,7 +192,7 @@ class UnitMapping(enum.Enum):
     MTK = 45  # meters_squared
     MTR = 57  # meters
     LTR = 76  # litre
-    MTQ = 2  # meters_cubed
+    MTQ = 87  # meters_cubed
     MLT = 74  # millilitre
     ITG = 30  # intangible
     MGM = 111  # milligram
