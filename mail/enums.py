@@ -191,7 +191,7 @@ class UnitMapping(enum.Enum):
     KGM = 23  # kilogram
     MTK = 45  # meters_squared
     MTR = 57  # meters
-    LTR = 94  # litre
+    LTR = 76  # litre
     MTQ = 2  # meters_cubed
     MLT = 74  # millilitre
     ITG = 30  # intangible
