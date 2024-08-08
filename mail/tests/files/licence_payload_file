@@ -76,6 +76,13 @@
             "description": "",
             "unit": "MIM",
             "quantity": 20.0
+          },
+          {
+            "id": "b642b709-36c7-4010-8e43-e7b8813fbde9",
+            "name": "A bottle of water",
+            "description": "",
+            "unit": "LTR",
+            "quantity": 1.0
           }
       ]
   }
