@@ -8,6 +8,10 @@ from typing_extensions import Protocol
 logger = logging.getLogger(__name__)
 
 
+class AuthenticationError(Exception):
+    pass
+
+
 class Authenticator(Protocol):
     user: str
 
@@ -65,6 +69,10 @@ class ModernAuthentication:
         if not result:  # If we don't find the token in the cache then we go off and retrieve it from the provider
             logger.info("Token not found in cache")
             result = self.app.acquire_token_for_client(scopes=scopes)
+
+        if "access_token" not in result:
+            logger.info(result)
+            raise AuthenticationError("No access token found")
 
         return result["access_token"]
 
