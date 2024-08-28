@@ -1,10 +1,11 @@
 import base64
+import uuid
 from poplib import POP3_SSL
 from unittest.mock import MagicMock, call, patch
 
 from django.test import SimpleTestCase
 
-from mail.auth import BasicAuthentication, ModernAuthentication
+from mail.auth import AuthenticationError, BasicAuthentication, ModernAuthentication
 
 
 class BasicAuthenticationTests(SimpleTestCase):
@@ -127,6 +128,44 @@ class ModernAuthenticationTests(SimpleTestCase):
                 call(access_string),
             ]
         )
+
+    def test_error_acquiring_access_token(self):
+        pop3conn = MagicMock(spec=POP3_SSL)
+        mock_conn = pop3conn()
+
+        username = "username"
+        client_id = "client_id"
+        client_secret = "client_secret"  # nosec
+        tenant_id = "tenant_id"
+
+        mock_failed_result = {
+            "error": "invalid_client",
+            "error_description": "AAZZZZ1234567: There was an error",
+            "error_codes": [1234567],
+            "timestamp": "2024-08-27 08:59:54Z",
+            "trace_id": str(uuid.uuid4()),
+            "correlation_id": str(uuid.uuid4()),
+            "error_uri": "https://login.microsoftonline.com/error?code=1234567",
+        }
+
+        with patch("mail.auth.msal") as mock_msal:
+            mock_ConfidentialClientApplication = mock_msal.ConfidentialClientApplication()
+            mock_acquire_token_silent = mock_ConfidentialClientApplication.acquire_token_silent
+            mock_acquire_token_silent.return_value = mock_failed_result
+
+            auth = ModernAuthentication(
+                username,
+                client_id,
+                client_secret,
+                tenant_id,
+            )
+            with self.assertRaises(AuthenticationError), self.assertLogs(logger="mail.auth", level="INFO") as cm:
+                auth.authenticate(mock_conn)
+
+            self.assertIn(
+                f"INFO:mail.auth:{mock_failed_result}",
+                cm.output,
+            )
 
     def test_equal(self):
         username = "username"
