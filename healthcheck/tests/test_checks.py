@@ -73,7 +73,10 @@ class MailboxAuthenticationHealthCheckTest(TestCase):
         check = LicencePayloadsHealthCheck()
         check.check_status()
         assert len(check.errors) == 1
-        assert "Payload object has been unprocessed for over" in check.errors[0].message
+        assert (
+            f"Number of unprocessed payloads for over {settings.LICENSE_POLL_INTERVAL} seconds: 1"
+            == check.errors[0].message
+        )
 
     def test_all_payloads_processed(self):
         LicencePayload.objects.create(

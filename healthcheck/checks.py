@@ -39,9 +39,8 @@ class LicencePayloadsHealthCheck(BaseHealthCheckBackend):
         dt = timezone.now() + datetime.timedelta(seconds=settings.LICENSE_POLL_INTERVAL)
         unprocessed_payloads = LicencePayload.objects.filter(is_processed=False, received_at__lte=dt)
 
-        for unprocessed_payload in unprocessed_payloads:
-            error_message = f"Payload object has been unprocessed for over {settings.LICENSE_POLL_INTERVAL} seconds: {unprocessed_payload}"
-            self.add_error(HealthCheckException(error_message))
+        error_message = f"Number of unprocessed payloads for over {settings.LICENSE_POLL_INTERVAL} seconds: {unprocessed_payloads.count()}"
+        self.add_error(HealthCheckException(error_message))
 
 
 class PendingMailHealthCheck(BaseHealthCheckBackend):
