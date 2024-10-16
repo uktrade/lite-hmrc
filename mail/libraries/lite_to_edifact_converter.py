@@ -91,6 +91,7 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
             address3=trader.get("address").get("line_3", ""),
             address4=trader.get("address").get("line_4", ""),
             address5=trader.get("address").get("line_5", ""),
+            address6=trader.get("address").get("line_6", ""),
             postcode=trader.get("address").get("postcode"),
         )
 
@@ -122,6 +123,7 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
                 address3=trader.get("address").get("line_3", ""),
                 address4=trader.get("address").get("line_4", ""),
                 address5=trader.get("address").get("line_5", ""),
+                address6=trader.get("address").get("line_6", ""),
                 postcode=trader.get("address").get("postcode", ""),
                 country=get_country_id(trader.get("address").get("country")),
             )
@@ -315,6 +317,7 @@ def generate_lines_for_icms_licence(licence: LicencePayload) -> Iterable[chiefty
         address3=trader_address.get("line_3"),
         address4=trader_address.get("line_4"),
         address5=trader_address.get("line_5"),
+        address6=trader_address.get("line_6"),
         postcode=trader_address.get("postcode"),
     )
 

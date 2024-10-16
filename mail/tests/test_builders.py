@@ -104,6 +104,7 @@ class TestBuildICMSLicenceDataFAOIL(testcases.TestCase):
                         "line_3": "line_3",
                         "line_4": "line_4",
                         "line_5": "line_5",
+                        "line_6": "line_6",
                         "postcode": "S118ZZ",
                     },
                 },
@@ -171,6 +172,7 @@ class TestBuildICMSLicenceDataFADFL(testcases.TestCase):
                 "line_3": "line_3",
                 "line_4": "line_4",
                 "line_5": "",
+                "line_6": "",
                 "postcode": "S881ZZ",
             },
         }
@@ -242,6 +244,7 @@ class TestBuildICMSLicenceDataFASIL(testcases.TestCase):
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
+                "line_6": "",
                 "postcode": "S227ZZ",
             },
         }
@@ -305,6 +308,7 @@ class TestBuildICMSLicenceDataSanction(testcases.TestCase):
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
+                "line_6": "",
                 "postcode": "S227ZZ",
             },
         }

@@ -32,6 +32,7 @@ class AddressSerializer(serializers.Serializer):
     line_3 = serializers.CharField(required=False, max_length=35, allow_blank=True)
     line_4 = serializers.CharField(required=False, max_length=35, allow_blank=True)
     line_5 = serializers.CharField(required=False, max_length=35, allow_blank=True)
+    line_6 = serializers.CharField(required=False, max_length=35, allow_blank=True)
     postcode = serializers.CharField(max_length=8)
 
 

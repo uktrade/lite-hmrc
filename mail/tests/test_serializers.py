@@ -287,6 +287,7 @@ class ICMSLicenceDataSerializerTestCase(TestCase):
                     "line_3": "line_3",
                     "line_4": "line_4",
                     "line_5": "line_5",
+                    "line_6": "line_6",
                     "postcode": "S118ZZ",  # /PS-IGNORE
                 },
             },
@@ -332,6 +333,7 @@ class ICMSLicenceDataSerializerTestCase(TestCase):
                     "line_3": "line_3",
                     "line_4": "line_4",
                     "line_5": "line_5",
+                    "line_6": "line_6",
                     "postcode": "S118ZZ",  # /PS-IGNORE
                 },
             },
@@ -373,6 +375,7 @@ class ICMSLicenceDataSerializerTestCase(TestCase):
                     "line_3": "line_3",
                     "line_4": "line_4",
                     "line_5": "line_5",
+                    "line_6": "line_6",
                     "postcode": "S118ZZ",  # /PS-IGNORE
                     "start_date": None,
                     "end_date": None,
@@ -498,6 +501,7 @@ def get_valid_fa_sil_payload():
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
+                "line_6": "",
                 "postcode": "S227ZZ",
             },
         },
@@ -531,6 +535,7 @@ def get_valid_sanctions_payload():
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
+                "line_6": "",
                 "postcode": "S227ZZ",
             },
         },

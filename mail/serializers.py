@@ -160,6 +160,7 @@ class AddressSerializer(serializers.Serializer):
     line_3 = serializers.CharField(allow_blank=True, required=False)
     line_4 = serializers.CharField(allow_blank=True, required=False)
     line_5 = serializers.CharField(allow_blank=True, required=False)
+    line_5 = serializers.CharField(allow_blank=True, required=False)
     postcode = serializers.CharField(allow_blank=True, required=False)
     country = CountrySerializer()
 
