@@ -111,6 +111,7 @@ class Trader(_Record):
     address3: Optional[str] = None
     address4: Optional[str] = None
     address5: Optional[str] = None
+    address6: Optional[str] = None
     postcode: Optional[str] = None
 
 
@@ -144,6 +145,7 @@ class ForeignTrader(_Record):
     address3: Optional[str] = None
     address4: Optional[str] = None
     address5: Optional[str] = None
+    address6: Optional[str] = None
     postcode: Optional[str] = None
     country: Optional[str] = None
 
