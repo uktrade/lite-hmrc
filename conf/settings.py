@@ -51,15 +51,15 @@ INSTALLED_APPS = [
     "mail",
     "health_check",
     "django_db_anonymiser.db_anonymiser",
+    "healthcheck",
+    "health_check.contrib.migrations",
 ]
 
 if not IS_ENV_DBT_PLATFORM:
     INSTALLED_APPS += [
-        "healthcheck",
         "health_check.db",
         "health_check.cache",
         "health_check.storage",
-        "health_check.contrib.migrations",
         "health_check.contrib.celery",
         "health_check.contrib.celery_ping",
     ]
