@@ -83,7 +83,6 @@ which is capable of sending lite-hmrc formatted emails.  Details of how this sho
 be used are present in the help text for the command.
 
 # Linting
-
 - Code formatting and conventions
 
 [Black](https://black.readthedocs.io/en/stable/) and isort are used in this project to enforce a consistent code style.
