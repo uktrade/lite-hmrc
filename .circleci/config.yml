@@ -161,7 +161,7 @@ jobs:
       - attach_workspace:
           at: ~/lite-hmrc/tmp
 
-      - run: pip install coverage diff_cover
+      - run: pip install coverage==7.6.4 diff_cover
 
       - run: cp tmp/.coverage .
 
