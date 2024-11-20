@@ -59,4 +59,4 @@ class SimpleHealthCheck(BaseHealthCheckBackend):
     critical_service = False
 
     def check_status(self):
-        pass
+        print("Lite HMRC is OK")
