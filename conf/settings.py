@@ -50,19 +50,26 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "mail",
     "health_check",
+    "health_check.db",
+    "health_check.cache",
+    "health_check.storage",
+    "health_check.contrib.celery",
+    "health_check.contrib.celery_ping",
     "django_db_anonymiser.db_anonymiser",
     "healthcheck",
     "health_check.contrib.migrations",
 ]
 
-if not IS_ENV_DBT_PLATFORM:
-    INSTALLED_APPS += [
-        "health_check.db",
-        "health_check.cache",
-        "health_check.storage",
-        "health_check.contrib.celery",
-        "health_check.contrib.celery_ping",
-    ]
+"""
+This takes any healthchecks added into the list and creates a callable URL for them
+which will be the key corresponding to the list value.
+e.g. BASEURL.com/healthcheck/startup-liveness-probe/
+"""
+HEALTH_CHECK = {
+    "SUBSETS": {
+        "startup-liveness-probe": ["SimpleHealthCheck"],
+    },
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
