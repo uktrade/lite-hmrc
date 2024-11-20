@@ -56,7 +56,7 @@ class PendingMailHealthCheck(BaseHealthCheckBackend):
             self.add_error(HealthCheckException(error_message))
 
 
-class SimpleHealthCheck(BaseHealthCheckBackend):
+class DBTPlatformHealthCheck(BaseHealthCheckBackend):
     critical_service = False
 
     def check_status(self):

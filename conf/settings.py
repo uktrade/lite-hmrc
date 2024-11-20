@@ -67,7 +67,7 @@ e.g. BASEURL.com/healthcheck/startup-liveness-probe/
 """
 HEALTH_CHECK = {
     "SUBSETS": {
-        "startup-liveness-probe": ["SimpleHealthCheck"],
+        "startup-liveness-probe": ["DBTPlatformHealthCheck"],
     },
 }
 
