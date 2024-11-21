@@ -13,7 +13,6 @@ from healthcheck.checks import (
     LicencePayloadsHealthCheck,
     MailboxAuthenticationHealthCheck,
     PendingMailHealthCheck,
-    SimpleHealthCheck,
 )
 from mail.enums import LicenceActionEnum, ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
