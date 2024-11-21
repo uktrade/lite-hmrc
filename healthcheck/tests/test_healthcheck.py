@@ -63,3 +63,21 @@ def test_healthcheck_down(client, backends):
         b"</status><response_time>0.23</response_time>"
         b"</pingdom_http_custom_check>\n"
     )
+
+def test_service_available_check_broken(client, backends):
+    backends.reset()
+    backends.register(HealthCheckBroken)
+    url = reverse("service-available-check")
+    response = client.get(url)
+
+    assert response.status_code == 200
+
+
+def test_service_available_check_ok(client, backends):
+    backends.reset()
+    backends.register(HealthCheckOk)
+    url = reverse("service-available-check")
+    response = client.get(url)
+
+    assert response.status_code == 200
+

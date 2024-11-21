@@ -115,7 +115,3 @@ class MailboxAuthenticationHealthCheckTest(TestCase):
 
         check = PendingMailHealthCheck()
         check.check_status()
-
-    def test_dbt_platform_healthcheck(self):
-        check = SimpleHealthCheck()
-        check.check_status()

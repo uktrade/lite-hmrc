@@ -11,10 +11,8 @@ class MyAppConfig(AppConfig):
             MailboxAuthenticationHealthCheck,
             LicencePayloadsHealthCheck,
             PendingMailHealthCheck,
-            DBTPlatformHealthCheck,
         )
 
         plugin_dir.register(MailboxAuthenticationHealthCheck)
         plugin_dir.register(LicencePayloadsHealthCheck)
         plugin_dir.register(PendingMailHealthCheck)
-        plugin_dir.register(DBTPlatformHealthCheck)

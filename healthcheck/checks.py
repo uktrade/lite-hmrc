@@ -54,10 +54,3 @@ class PendingMailHealthCheck(BaseHealthCheckBackend):
         for pending_mail in pending_mails:
             error_message = f"The following Mail has been pending for over {settings.EMAIL_AWAITING_REPLY_TIME} seconds: {pending_mail}"
             self.add_error(HealthCheckException(error_message))
-
-
-class DBTPlatformHealthCheck(BaseHealthCheckBackend):
-    critical_service = False
-
-    def check_status(self):
-        print("Lite HMRC is OK")
