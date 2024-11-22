@@ -2,3 +2,5 @@ repository: lite/lite-hmrc
 builder:
   name: paketobuildpacks/builder-jammy-full
   version: 0.3.339
+packs:
+  - acodeninja/install
