@@ -50,19 +50,16 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "mail",
     "health_check",
+    "health_check.db",
+    "health_check.cache",
+    "health_check.storage",
+    "health_check.contrib.celery",
+    "health_check.contrib.celery_ping",
     "django_db_anonymiser.db_anonymiser",
     "healthcheck",
     "health_check.contrib.migrations",
 ]
 
-if not IS_ENV_DBT_PLATFORM:
-    INSTALLED_APPS += [
-        "health_check.db",
-        "health_check.cache",
-        "health_check.storage",
-        "health_check.contrib.celery",
-        "health_check.contrib.celery_ping",
-    ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

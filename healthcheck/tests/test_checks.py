@@ -9,7 +9,11 @@ from django.utils import timezone
 from health_check.exceptions import HealthCheckException
 from parameterized import parameterized
 
-from healthcheck.checks import LicencePayloadsHealthCheck, MailboxAuthenticationHealthCheck, PendingMailHealthCheck
+from healthcheck.checks import (
+    LicencePayloadsHealthCheck,
+    MailboxAuthenticationHealthCheck,
+    PendingMailHealthCheck,
+)
 from mail.enums import LicenceActionEnum, ReceptionStatusEnum
 from mail.models import LicencePayload, Mail
 
