@@ -144,7 +144,7 @@ def send_email_task(message):
 
     with cache_lock(global_lock_id) as lock_acquired:
         if not lock_acquired:
-            logger.exception("Another SMTP connection is active, will be retried after backing off")
+            logger.warning("Another SMTP connection is active, will be retried after backing off")
             raise SMTPConnectionBusy()
 
         logger.info("Lock acquired, proceeding to send email from %s to %s", message["From"], message["To"])
