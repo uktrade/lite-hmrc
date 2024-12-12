@@ -115,7 +115,10 @@ class SendEmailBaseTask(Task):
 
 
 @shared_task(
-    autoretry_for=(SMTPException,),
+    autoretry_for=(
+        ConnectionResetError,
+        SMTPException,
+    ),
     max_retries=MAX_ATTEMPTS,
     retry_backoff=RETRY_BACKOFF,
     base=SendEmailBaseTask,
@@ -150,7 +153,7 @@ def send_email_task(message):
 
         try:
             smtp_send(message)
-        except SMTPException:
+        except (SMTPException, ConnectionResetError):
             logger.exception("An unexpected error occurred when sending email")
             raise
 
