@@ -152,7 +152,7 @@ def send_email_task(message):
         try:
             smtp_send(message)
         except SMTPException:
-            logger.exception("An unexpected error occurred when sending email -> %s")
+            logger.exception("An unexpected error occurred when sending email")
             raise
 
         logger.info("Email sent successfully to %s", message["To"])
