@@ -115,7 +115,7 @@ class SendEmailBaseTask(Task):
 
 
 @shared_task(
-    autoretry_for=(SMTPConnectionBusy, SMTPException),
+    autoretry_for=(SMTPException,),
     max_retries=MAX_ATTEMPTS,
     retry_backoff=RETRY_BACKOFF,
     base=SendEmailBaseTask,
