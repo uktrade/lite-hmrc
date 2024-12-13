@@ -2,7 +2,7 @@ import pathlib
 
 import pytest
 
-from mail.chief.licence_reply import LicenceReplyProcessor
+from mail.chief.licence_reply import LicenceReplyProcessor, EdifactFileError
 from mail.chief.licence_reply.types import FileError, RejectedTransactionError
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.models import Mail
@@ -78,13 +78,8 @@ def test_file_error():
         "2\\fileError\\18\\Record type 'fileHeader' not recognised\\99\n"
         "3\\fileTrailer\\0\\0\\1\n"
     )
-
-    processor = LicenceReplyProcessor(file_with_file_error)
-
-    assert not processor.file_valid()
-    expected_file_errors = [FileError(code="18", text="Record type 'fileHeader' not recognised", position="99")]
-
-    assert processor.file_errors == expected_file_errors
+    with pytest.raises(EdifactFileError):
+        LicenceReplyProcessor(file_with_file_error)
 
 
 def test_rejected_error_out_of_order():
