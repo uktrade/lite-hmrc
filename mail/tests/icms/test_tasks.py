@@ -482,38 +482,36 @@ def test_file_with_errors_raises_errors(db, caplog):
     mail.response_data = file_with_file_error
     mail.save()
 
-    with pytest.raises(EdifactFileError):
-        LicenceReplyProcessor(file_with_file_error)
     
-    # with pytest.raises(
-    #     ValueError,
-    #     match=rf"Unable to process mail \(id: {mail.id}, filename: {mail.response_filename}\) as it has file errors.",
-    # ):
-    #     tasks.send_licence_data_to_icms()
+    with pytest.raises(
+        ValueError,
+        match=rf"Unable to process mail \(id: {mail.id}, filename: {mail.response_filename}\) as it has file errors.",
+    ):
+        tasks.send_licence_data_to_icms()
 
-        # assert caplog.messages == [
-        #     "Checking for licence data to send to ICMS",
-        #     f"Unable to process mail (id: {mail.id}, filename: {mail.response_filename}) as it has file errors.",
-        #     "File error: position: 99, code: 18, error_msg: Record type 'fileHeader' not recognised",
-        # ]
+        assert caplog.messages == [
+            "Checking for licence data to send to ICMS",
+            f"Unable to process mail (id: {mail.id}, filename: {mail.response_filename}) as it has file errors.",
+            "File error: position: 99, code: 18, error_msg: Record type 'fileHeader' not recognised",
+        ]
 
-    # file_with_file_error_and_file_trailer_errors = (
-    #     "1\\fileHeader\\CHIEF\\ILBDOTI\\licenceReply\\202209231140\\29236\n"
-    #     "2\\fileError\\18\\Record type 'fileHeader' not recognised\\99\n"
-    #     "3\\accepted\\ABC12348\n"
-    #     "4\\fileTrailer\\0\\1\\1\n"
-    # )
-    # mail.response_data = file_with_file_error_and_file_trailer_errors
-    # mail.save()
-    # with pytest.raises(
-    #     ValueError,
-    #     match=rf"Unable to process mail \(id: {mail.id}, filename: {mail.response_filename}\) as it has file errors.",
-    # ):
-    #     tasks.send_licence_data_to_icms()
+    file_with_file_error_and_file_trailer_errors = (
+        "1\\fileHeader\\CHIEF\\ILBDOTI\\licenceReply\\202209231140\\29236\n"
+        "2\\fileError\\18\\Record type 'fileHeader' not recognised\\99\n"
+        "3\\accepted\\ABC12348\n"
+        "4\\fileTrailer\\0\\1\\1\n"
+    )
+    mail.response_data = file_with_file_error_and_file_trailer_errors
+    mail.save()
+    with pytest.raises(
+        ValueError,
+        match=rf"Unable to process mail \(id: {mail.id}, filename: {mail.response_filename}\) as it has file errors.",
+    ):
+        tasks.send_licence_data_to_icms()
 
-    #     assert caplog.messages == [
-    #         "Checking for licence data to send to ICMS",
-    #         f"Unable to process mail (id: {mail.id}, filename: {mail.response_filename}) as it has file errors.",
-    #         "File error: position: 99, code: 18, error_msg: Record type 'fileHeader' not recognised",
-    #         "File trailer count is different from processor count of accepted and rejected",
-    #     ]
+        assert caplog.messages == [
+            "Checking for licence data to send to ICMS",
+            f"Unable to process mail (id: {mail.id}, filename: {mail.response_filename}) as it has file errors.",
+            "File error: position: 99, code: 18, error_msg: Record type 'fileHeader' not recognised",
+            "File trailer count is different from processor count of accepted and rejected",
+        ]

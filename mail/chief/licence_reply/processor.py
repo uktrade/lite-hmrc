@@ -100,11 +100,14 @@ class LicenceReplyProcessor:
         except KeyError:
             raise ValueError(f"Unable to process file: Unknown field_type on line {line_no}")
 
+        if record.source_system == "CHIEF" and field_type == FileError.record_type:
+            raise EdifactFileError(f"Unable to process file:  Error in run number{record.run_num}")
+
         if field_type == FileHeader.record_type:
             self.file_header = record
 
         elif field_type == FileError.record_type:
-            raise EdifactFileError(f"Unable to process file:  Error{record}")
+            self.file_errors.append(record)
 
         elif field_type == AcceptedTransaction.record_type:
             self._accepted.append(record)
