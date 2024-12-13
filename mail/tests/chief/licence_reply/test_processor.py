@@ -82,8 +82,6 @@ def test_file_error():
     )
     with pytest.raises(EdifactFileError):
         LicenceReplyProcessor(file_with_file_error)
-    
-    
 
 
 def test_rejected_error_out_of_order():
