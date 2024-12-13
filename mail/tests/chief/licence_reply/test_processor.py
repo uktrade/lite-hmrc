@@ -2,11 +2,12 @@ import pathlib
 
 import pytest
 
-from mail.chief.licence_reply import LicenceReplyProcessor, EdifactFileError
+from mail.chief.licence_reply import LicenceReplyProcessor
 from mail.chief.licence_reply.types import FileError, RejectedTransactionError
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum
 from mail.models import Mail
 
+from mail.chief.licence_reply.processor import EdifactFileError
 
 @pytest.fixture
 def licence_reply_example() -> str:
