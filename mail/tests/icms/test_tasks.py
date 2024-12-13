@@ -15,7 +15,7 @@ from mail.enums import ChiefSystemEnum, ExtractTypeEnum, LicenceActionEnum, Rece
 from mail.icms import tasks
 from mail.models import LicenceData, LicencePayload, Mail, SourceEnum
 from mail.utils import pop3
-from mail.chief.licence_reply import EdifactFileError
+from mail.chief.licence_reply.processor import EdifactFileError
 
 if TYPE_CHECKING:
     from requests_mock import Mocker
