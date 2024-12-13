@@ -108,7 +108,6 @@ def get_mail_instance(extract_type, run_number) -> Mail or None:
         ]:
             logging.info("Licence update reply has already been processed")
             return
-        # Why not 
         return find_mail_of(
             [ExtractTypeEnum.LICENCE_DATA, ExtractTypeEnum.LICENCE_REPLY], ReceptionStatusEnum.REPLY_PENDING, run_number
         )
