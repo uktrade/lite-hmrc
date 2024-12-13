@@ -15,6 +15,8 @@ from .types import (
     RejectedTransactionTrailer,
 )
 
+class EdifactFileError(Exception):
+    pass
 
 @dataclass()
 class RejectedTransaction:
@@ -100,7 +102,7 @@ class LicenceReplyProcessor:
             self.file_header = record
 
         elif field_type == FileError.record_type:
-            self.file_errors.append(record)
+            raise EdifactFileError(f"Unable to process file:  Error{record}")
 
         elif field_type == AcceptedTransaction.record_type:
             self._accepted.append(record)
