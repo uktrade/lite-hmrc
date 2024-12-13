@@ -181,9 +181,9 @@ def read_last_three_emails(pop3connection: POP3_SSL) -> list:
     return email_message_dtos
 
 
-def find_mail_of(extract_types: List[str], reception_status: str) -> Mail or None:
+def find_mail_of(extract_types: List[str], reception_status: str, hmrc_run_number) -> Mail or None:
     try:
-        mail = Mail.objects.get(status=reception_status, extract_type__in=extract_types)
+        mail = Mail.objects.get(status=reception_status, extract_type__in=extract_types, hmrc_run_number=hmrc_run_number)
     except Mail.DoesNotExist:
         logging.warning("Can not find any mail in [%s] of extract type [%s]", reception_status, extract_types)
         return
