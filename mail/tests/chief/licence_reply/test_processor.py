@@ -9,6 +9,7 @@ from mail.models import Mail
 
 from mail.chief.licence_reply.processor import EdifactFileError
 
+
 @pytest.fixture
 def licence_reply_example() -> str:
     filename = "mail/tests/files/icms/CHIEF_licenceReply_accepted_and_rejected_example"
@@ -81,6 +82,8 @@ def test_file_error():
     )
     with pytest.raises(EdifactFileError):
         LicenceReplyProcessor(file_with_file_error)
+    
+    
 
 
 def test_rejected_error_out_of_order():

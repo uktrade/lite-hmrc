@@ -15,8 +15,10 @@ from .types import (
     RejectedTransactionTrailer,
 )
 
+
 class EdifactFileError(Exception):
     pass
+
 
 @dataclass()
 class RejectedTransaction:
