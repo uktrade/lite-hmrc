@@ -21,10 +21,6 @@ from mail.utils import pop3
 logger = logging.getLogger(__name__)
 
 
-class EdifactFileError(Exception):
-    pass
-
-
 def process_licence_reply_and_usage_emails():
     """Downloads licenceReply and usageData emails from HMRC mailbox and stores in Mail model."""
 
@@ -51,16 +47,11 @@ def process_licence_reply_and_usage_emails():
                 logger.debug("Subject of email being processed: %s", subject)
 
                 if "licenceReply" in subject:
-                    # _check_for_file_errors(mail)
                     _save_licence_reply_email(mail)
                     con.dele(msg_id)
 
                 elif "usageData" in subject:
                     _save_usage_data_email(mail)
-                    con.dele(msg_id)
-
-                elif "licenceData" in subject:
-                    _check_for_file_errors(mail)
                     con.dele(msg_id)
 
                 else:
@@ -247,11 +238,3 @@ def _save_usage_data_email(usage_email: email.message.EmailMessage) -> None:
     #     extract_type=ExtractTypeEnum.USAGE_DATA
     # )
     raise NotImplementedError
-
-
-def _check_for_file_errors(reply_email: email.message.EmailMessage) -> None:
-    processor = LicenceReplyProcessor.load_from_mail(reply_email)
-    error = None
-    for error in processor._current_rejected.errors:
-        if "Duplicate transaction reference" in error:
-            raise EdifactFileError(f"Unable to process file due to the following error: {error}")
