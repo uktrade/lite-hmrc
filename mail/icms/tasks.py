@@ -253,5 +253,5 @@ def _check_for_file_errors(reply_email: email.message.EmailMessage) -> None:
     processor = LicenceReplyProcessor.load_from_mail(reply_email)
     error = None
     for error in processor._current_rejected.errors:
-        if "3057\Duplicate transaction reference" in error:
+        if "Duplicate transaction reference" in error:
             raise EdifactFileError(f"Unable to process file due to the following error: {error}")
