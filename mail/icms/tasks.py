@@ -53,7 +53,6 @@ def process_licence_reply_and_usage_emails():
                 elif "usageData" in subject:
                     _save_usage_data_email(mail)
                     con.dele(msg_id)
-
                 else:
                     raise ValueError(f"Unable to process email with subject: {subject}")
 
