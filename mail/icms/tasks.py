@@ -51,14 +51,15 @@ def process_licence_reply_and_usage_emails():
                 logger.debug("Subject of email being processed: %s", subject)
 
                 if "licenceReply" in subject:
+                    # _check_for_file_errors(mail)
                     _save_licence_reply_email(mail)
                     con.dele(msg_id)
 
                 elif "usageData" in subject:
                     _save_usage_data_email(mail)
                     con.dele(msg_id)
-
-                elif "Licence rejected by HMRC" in subject:
+                
+                elif "licenceData" in subject:
                     _check_for_file_errors(mail)
                     con.dele(msg_id)
 
@@ -250,8 +251,9 @@ def _save_usage_data_email(usage_email: email.message.EmailMessage) -> None:
 
 def _check_for_file_errors(reply_email: email.message.EmailMessage) -> None:
     processor = LicenceReplyProcessor.load_from_mail(reply_email)
-    file_error = None
-    if file_error in processor.file_errors:
-        raise EdifactFileError(
-            f"Unable to process file due to the following errors: {error for error in processor.file_errors}"
-        )
+    error = None
+    for error in processor._current_rejected.errors:
+        if "3057\Duplicate transaction reference" in error:
+            raise EdifactFileError(
+                f"Unable to process file due to the following error: {error}"
+            )
