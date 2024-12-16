@@ -249,5 +249,6 @@ def _save_usage_data_email(usage_email: email.message.EmailMessage) -> None:
 
 def _check_for_file_errors(reply_email: email.message.EmailMessage) -> None:
     processor = LicenceReplyProcessor.load_from_mail(reply_email)
+    file_error = None
     if file_error in processor.file_errors:
-        raise EdifactFileError(f"Unable to process file due to the following errors: {error for file_error in processor.file_errors}")
+        raise EdifactFileError(f"Unable to process file due to the following errors: {error for error in processor.file_errors}")
