@@ -70,7 +70,7 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
     #             f"Unable to process file due to the following error: {error.text}.  It was sent in run number {run_number}"
     #         )
 
-    if _mail.response_data != None and "Duplicate transaction reference" in _mail.response_data:
+    if _mail.response_data and "Duplicate transaction reference" in _mail.response_data:
         raise EdifactFileError(
             f"Unable to process file due to error with mail {_mail.id} the edi file was {_mail.edi_filename}"
         )
