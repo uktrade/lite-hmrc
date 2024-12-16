@@ -1,6 +1,4 @@
-import time
 import urllib.parse
-from contextlib import contextmanager
 from smtplib import SMTPException
 from typing import List, MutableMapping, Tuple
 
@@ -84,23 +82,6 @@ CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_
 CELERY_MANAGE_INBOX_TASK_NAME = "mail.celery_tasks.manage_inbox"
 
 
-class SMTPConnectionBusy(SMTPException):
-    pass
-
-
-@contextmanager
-def cache_lock(lock_id):
-    timeout_at = time.monotonic() + LOCK_EXPIRE - 3
-    # cache.add fails if the key already exists.
-    # return True if lock is acquired, False otherwise
-    status = cache.add(lock_id, "lock_acquired", LOCK_EXPIRE)
-    try:
-        yield status
-    finally:
-        if time.monotonic() < timeout_at and status:
-            cache.delete(lock_id)
-
-
 class SendEmailBaseTask(Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         message = """
@@ -144,11 +125,7 @@ def send_email_task(message):
 
     global_lock_id = "global_send_email_lock"
 
-    with cache_lock(global_lock_id) as lock_acquired:
-        if not lock_acquired:
-            logger.warning("Another SMTP connection is active, will be retried after backing off")
-            raise SMTPConnectionBusy()
-
+    with cache.lock(global_lock_id, timeout=LOCK_EXPIRE):
         logger.info("Lock acquired, proceeding to send email from %s to %s", message["From"], message["To"])
 
         try:
