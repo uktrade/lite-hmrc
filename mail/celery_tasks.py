@@ -380,10 +380,6 @@ def manage_inbox():
     logger.info("Polling inbox for updates")
     try:
         check_and_route_emails()
-    except Exception as exc:  # noqa
-        logger.error(
-            "An unexpected error occurred when polling inbox for updates -> %s",
-            type(exc).__name__,
-            exc_info=True,
-        )
-        raise exc
+    except Exception:  # noqa
+        logger.exception("An unexpected error occurred when polling inbox for updates")
+        raise
