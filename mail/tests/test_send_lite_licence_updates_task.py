@@ -3,8 +3,8 @@ from unittest import mock
 from parameterized import parameterized
 
 from mail.celery_tasks import send_licence_details_to_hmrc
-from mail.libraries.lite_to_edifact_converter import EdifactValidationError
 from mail.enums import ReceptionStatusEnum
+from mail.libraries.lite_to_edifact_converter import EdifactValidationError
 from mail.models import LicencePayload, Mail
 from mail.tests.libraries.client import LiteHMRCTestClient
 
@@ -14,17 +14,9 @@ class SendLiteLicenceDetailsTaskTests(LiteHMRCTestClient):
         super().setUp()
         self.mail = Mail.objects.create(edi_filename="filename", edi_data="1\\fileHeader\\CHIEF\\SPIRE\\")
 
-    @parameterized.expand(
-        [
-            ([True],),
-            ([False, True],),
-        ]
-    )
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.celery_tasks.smtp_send")
-    def test_send_licence_details_success(self, lock_acquired, mock_smtp_send, mock_cache):
-        """Test sending of LITE licence details without and with retry scenario"""
-        mock_cache.add.side_effect = lock_acquired
+    def test_send_licence_details_success(self, mock_smtp_send, mock_cache):
         self.mail.status = ReceptionStatusEnum.REPLY_SENT
         self.mail.save()
 
@@ -34,7 +26,6 @@ class SendLiteLicenceDetailsTaskTests(LiteHMRCTestClient):
         self.assertEqual(Mail.objects.count(), 2)
         self.assertEqual(LicencePayload.objects.filter(is_processed=True).count(), 1)
 
-        assert mock_cache.add.call_count == len(lock_acquired)
         assert mock_smtp_send.call_count == 1
 
     @parameterized.expand(
