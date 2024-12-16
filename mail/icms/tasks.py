@@ -58,7 +58,7 @@ def process_licence_reply_and_usage_emails():
                 elif "usageData" in subject:
                     _save_usage_data_email(mail)
                     con.dele(msg_id)
-                
+
                 elif "licenceData" in subject:
                     _check_for_file_errors(mail)
                     con.dele(msg_id)
@@ -254,6 +254,4 @@ def _check_for_file_errors(reply_email: email.message.EmailMessage) -> None:
     error = None
     for error in processor._current_rejected.errors:
         if "3057\Duplicate transaction reference" in error:
-            raise EdifactFileError(
-                f"Unable to process file due to the following error: {error}"
-            )
+            raise EdifactFileError(f"Unable to process file due to the following error: {error}")
