@@ -19,6 +19,7 @@ from mail.libraries.helpers import get_extract_type, process_attachment
 from mail.libraries.mailbox_service import find_mail_of
 from mail.models import LicenceData, Mail, UsageData
 from mail.serializers import LicenceDataMailSerializer, UpdateResponseSerializer, UsageDataMailSerializer
+
 # from mail.chief.licence_reply import LicenceReplyProcessor
 
 
@@ -70,8 +71,9 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
     #         )
 
     if _mail.response_data != None and "Duplicate transaction reference" in _mail.response_data:
-        raise EdifactFileError(f"Unable to process file due to error with mail {_mail.id} the edi file was {_mail.edi_filename}")
-
+        raise EdifactFileError(
+            f"Unable to process file due to error with mail {_mail.id} the edi file was {_mail.edi_filename}"
+        )
 
     return _mail
 
