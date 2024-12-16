@@ -59,8 +59,8 @@ class Mail(models.Model):
         db_table = "mail"
         ordering = ["created_at"]
 
-    def __str__(self):
-        return f"{self.__class__.__name__}(id={self.id}, status={self.status})"
+    def __repr__(self):
+        return f"id={self.id} status={self.status}"
 
     def save(self, *args, **kwargs):
         if not self.edi_data or not self.edi_filename:
@@ -101,12 +101,12 @@ class LicenceData(models.Model):
     class Meta:
         ordering = ["mail__created_at"]
 
-    def __str__(self):
+    def __repr__(self):
         source = self.source
         if source == SourceEnum.SPIRE:
             source = f"{source} ({self.source_run_number})"
 
-        return f"{self.__class__.__name__}(hmrc_run_number={self.hmrc_run_number}, source={source}, status={self.mail.status})"
+        return f"hmrc_run_number={self.hmrc_run_number} source={source} status={self.mail.status}"
 
     def set_licence_ids(self, data: List):
         self.licence_ids = json.dumps(data)
@@ -173,8 +173,8 @@ class LicencePayload(models.Model):
         if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.SPIRE:
             LicenceIdMapping.objects.get_or_create(lite_id=self.lite_id, reference=self.reference)
 
-    def __str__(self):
-        return f"{self.__class__.__name__}(lite_id={self.lite_id}, reference={self.reference}, action={self.action})"
+    def __repr__(self):
+        return f"lite_id={self.lite_id} reference={self.reference} action={self.action}"
 
 
 class LicenceIdMapping(models.Model):
@@ -218,5 +218,5 @@ class MailReadStatus(TimeStampedModel):
     status = models.TextField(choices=MailReadStatuses.choices, default=MailReadStatuses.UNREAD, db_index=True)
     mailbox = models.ForeignKey(MailboxConfig, on_delete=models.CASCADE)
 
-    def __str__(self):
-        return f"{self.__class__.__name__}(message_id={self.message_id}, status={self.status})"
+    def __repr__(self):
+        return f"message_id={self.message_id} status={self.status}"
