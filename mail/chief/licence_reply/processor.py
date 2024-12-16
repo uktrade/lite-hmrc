@@ -55,7 +55,8 @@ class LicenceReplyProcessor:
 
     @classmethod
     def load_from_mail(cls, mail: Mail) -> "LicenceReplyProcessor":
-        if mail.extract_type != ExtractTypeEnum.LICENCE_DATA or ExtractTypeEnum.LICENCE_REPLY:
+        acceptable_types = [ExtractTypeEnum.LICENCE_DATA, LICENCE_REPLY]
+        if mail.extract_type not in acceptable_types:
             raise ValueError(
                 f"Error with Mail ({mail.id} - {mail.response_subject}): Invalid extract type {mail.extract_type}"
             )
