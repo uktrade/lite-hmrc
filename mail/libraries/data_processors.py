@@ -20,8 +20,6 @@ from mail.libraries.mailbox_service import find_mail_of
 from mail.models import LicenceData, Mail, UsageData
 from mail.serializers import LicenceDataMailSerializer, UpdateResponseSerializer, UsageDataMailSerializer
 
-from mail.chief.licence_reply import LicenceReplyProcessor
-
 
 class EdifactFileError(Exception):
     pass
@@ -58,18 +56,6 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
         _mail.set_response_date_time()
 
     logging.info("Successfully serialized email (subject: %s)", dto.subject)
-
-    if _mail.response_subject and "licenceReply" in _mail.response_subject:
-        processor = LicenceReplyProcessor.load_licence_reply_from_mail(_mail)
-
-        if processor._current_rejected:
-            rejected_transaction_errors = processor._current_rejected.errors
-            for error in rejected_transaction_errors:
-                if "Duplicate transaction reference" in error.text:
-                    run_number = LicenceData.objects.get(mail=_mail).hmrc_run_number
-                    raise EdifactFileError(
-                        f"Unable to process file due to the following error: {error.text}.  It was sent in run number {run_number}"
-                    )
 
     # if _mail.response_data and "Duplicate transaction reference" in _mail.response_data:
     #     raise EdifactFileError(

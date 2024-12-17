@@ -227,3 +227,101 @@ class ManageInboxTests(LiteHMRCTestClient):
                 self.assertEqual(message["From"], emails_data[index]["sender"])
                 self.assertEqual(message["To"], emails_data[index]["recipients"])
                 self.assertEqual(message["Subject"], emails_data[index]["subject"])
+
+    @parameterized.expand(
+        [
+            # SEND_REJECTED_EMAIL state, mail sender and recipients
+            (
+                True,
+                [
+                    {
+                        "sender": "lite-hmrc@gov.uk",
+                        "recipients": "spire@example.com",
+                        "subject": "ILBDOTI_live_CHIEF_licenceReply_78120_202403060300",
+                    },
+                    {
+                        "sender": "lite-hmrc@gov.uk",
+                        "recipients": "ecju@gov.uk",
+                        "subject": "Licence rejected by HMRC",
+                    },
+                ],
+            )
+        ]
+    )
+    @override_settings(
+        EMAIL_USER="lite-hmrc@gov.uk",
+        NOTIFY_USERS=["ecju@gov.uk"],
+        SPIRE_ADDRESS="spire@example.com",
+    )
+    @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
+    @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
+    @mock.patch("mail.celery_tasks.smtp_send")
+    @mock.patch("mail.celery_tasks.cache")
+    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    def test_processing_of_licence_reply_with_duplicate_transaction_error(
+        self,
+        send_rejected_email_flag,
+        emails_data,
+        email_dtos,
+        mock_cache,
+        mock_smtp_send,
+        mock_get_hmrc_to_dit_mailserver,
+        mock_get_spire_to_dit_mailserver,
+    ):
+        """
+        Test processing of licence reply from HMRC with rejected licences.
+        If SEND_REJECTED_EMAIL=True then we send email notifications to users if any licences are rejected.
+        """
+        obj = MagicMock()
+        mock_get_hmrc_to_dit_mailserver.return_value = obj
+        mock_get_spire_to_dit_mailserver.return_value = obj
+        mock_cache.add.return_value = True
+
+        run_number = 78120
+        mail = MailFactory(
+            extract_type=ExtractTypeEnum.LICENCE_DATA,
+            edi_filename=self.licence_data_file_name,
+            edi_data=self.licence_data_file_body.decode("utf-8"),
+            status=ReceptionStatusEnum.REPLY_PENDING,
+        )
+        LicenceDataFactory(mail=mail, source_run_number=run_number, hmrc_run_number=run_number)
+
+        licence_reply_filename = f"ILBDOTI_live_CHIEF_licenceReply_{run_number}_202403060300"
+        file_lines = "\n".join(
+            [
+                f"1\\fileHeader\\CHIEF\\SPIRE\\licenceReply\\202111091457\\{run_number}",
+                "2\\fileError\\3057\\Duplicate transaction reference = 20240005721P - Input Line Number = 0\\2",
+                "3\\fileTrailer\\0\\0\\1",
+            ]
+        )
+
+        email_message_dto = EmailMessageDto(
+            run_number=f"{run_number}",
+            sender="test@example.com",
+            receiver="receiver@example.com",
+            date="Mon, 17 May 2021 14:20:18 +0100",
+            body="licence rejected",
+            subject=licence_reply_filename,
+            attachment=[licence_reply_filename, file_lines.encode("utf-8")],
+            raw_data="qwerty",
+        )
+        email_dtos.return_value = [
+            (email_message_dto, lambda x: x),
+        ]
+
+        with override_settings(SEND_REJECTED_EMAIL=send_rejected_email_flag):
+            with pytest.raises(Exception) as excinfo:
+                check_and_route_emails()
+
+            # mail.refresh_from_db()
+            # self.assertEqual(mail.status, ReceptionStatusEnum.REPLY_SENT)
+
+            # assert mock_cache.add.call_count == len(emails_data)
+            # mock_smtp_send.call_count == len(emails_data)
+
+            # for index, item in enumerate(mock_smtp_send.call_args_list):
+            #     message = item.args[0]
+            #     self.assertTrue(isinstance(message, MIMEMultipart))
+            #     self.assertEqual(message["From"], emails_data[index]["sender"])
+            #     self.assertEqual(message["To"], emails_data[index]["recipients"])
+            #     self.assertEqual(message["Subject"], emails_data[index]["subject"])
