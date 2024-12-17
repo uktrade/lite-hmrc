@@ -64,9 +64,13 @@ class LicenceReplyProcessor:
             raise ValueError(f"Error with Mail ({mail.id} - {mail.response_subject}): Invalid status {mail.status}")
 
         return cls(mail.response_data)
-    
+
     @classmethod
     def load_licence_reply_from_mail(cls, mail: Mail) -> "LicenceReplyProcessor":
+        if mail.extract_type != ExtractTypeEnum.LICENCE_REPLY:
+            raise ValueError(
+                f"Error with Mail ({mail.id} - {mail.response_subject}): Invalid extract type {mail.extract_type}"
+            )
         return cls(mail.response_data)
 
     @property
