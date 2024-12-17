@@ -19,9 +19,8 @@ class LiteHMRCTestClient(testcases.TestCase):
         self.licence_usage_file_name = "ILBDOTI_live_CHIEF_usageData_49543_201901130300"
         self.licence_usage_file_body = read_file("mail/tests/files/license_usage_file", mode="rb")
         self.licence_data_reply_body = (
-            b"MVxmaWxlSGVhZGVyXENISUVGXFNQSVJFXGxpY2VuY2VSZXBseVwyMDE5MDIwODAwMjVcMTAxMAo"
-            b"yXGFjY2VwdGVkXEdCU0lFTC8yMDIwLzAwMDAwMDEvUAozXGFjY2VwdGVkXEdCU0lFTC8yMDIwLz"
-            b"AwMDAwMDEvUAo0XGZpbGVUcmFpbGVyXDJcMFww"
+            b"1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\{:04d}{:02d}{:02d}{:02d}{:02d}\\4321\n"
+            b"2\\fileHeader\\SPIRE\\CHIEF\\licenceData\\{:04d}{:02d}{:02d}{:02d}{:02d}\\4321\n"
         )
         self.usage_data_reply_body = read_file("mail/tests/files/usage_data_reply_file", mode="rb")
         self.licence_data_reply_name = "ILBDOTI_live_CHIEF_licenceReply_49543_201902080025"
