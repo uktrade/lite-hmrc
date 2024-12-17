@@ -75,7 +75,7 @@ def _log_error(message, lite_usage_data_id):
     logger.error("Failed to send LITE UsageData [{%s}] to LITE API -> {%s}", lite_usage_data_id, message)
 
 
-MAX_ATTEMPTS = 3
+MAX_RETRIES = 3
 RETRY_BACKOFF = 180
 LOCK_EXPIRE = 60 * 10  # secs (10 min)
 CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_to_hmrc"
@@ -100,7 +100,7 @@ class SendEmailBaseTask(Task):
         ConnectionResetError,
         SMTPException,
     ),
-    max_retries=MAX_ATTEMPTS,
+    max_retries=MAX_RETRIES,
     retry_backoff=RETRY_BACKOFF,
     base=SendEmailBaseTask,
     serializer="pickle",
@@ -117,10 +117,9 @@ def send_email_task(message):
     This is achieved by deferring all email sending functionality to this task.
     Before sending email it first tries to acquire a lock.
       - If there are no active connections then it acquires lock and sends email.
-        In some cases we need to update state which is handled in subtask linked to this task.
-      - If there is active connection (lock acquisition fails) then it raises an exception
-        which triggers a retry.
-        If all retries fail then manual intervention may be required (unlikely)
+      - If there is already an active connection then it will block until it is closed.
+      - In some cases we need to update state which is handled in subtask linked to this task.
+      - If all retries fail then manual intervention may be required (unlikely)
     """
 
     global_lock_id = "global_send_email_lock"
@@ -217,7 +216,7 @@ class SendLicenceDetailsBaseTask(Task):
 
 @shared_task(
     autoretry_for=(EdifactValidationError,),
-    max_retries=MAX_ATTEMPTS,
+    max_retries=MAX_RETRIES,
     retry_backoff=RETRY_BACKOFF,
     base=SendLicenceDetailsBaseTask,
 )
@@ -272,7 +271,7 @@ def send_licence_details_to_hmrc():
 
 @shared_task(
     autoretry_for=(Exception,),
-    max_retries=MAX_ATTEMPTS,
+    max_retries=MAX_RETRIES,
     retry_backoff=True,
     base=SendUsageDataBaseTask,
 )
@@ -348,7 +347,7 @@ def send_licence_usage_figures_to_lite_api(lite_usage_data_id):
 # Scan Inbox for SPIRE and HMRC Emails
 @shared_task(
     autoretry_for=(Exception,),
-    max_retries=MAX_ATTEMPTS,
+    max_retries=MAX_RETRIES,
     retry_backoff=RETRY_BACKOFF,
 )
 def manage_inbox():

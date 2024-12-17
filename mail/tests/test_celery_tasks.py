@@ -1,6 +1,9 @@
+import concurrent.futures
 import email.mime.multipart
+import time
 from datetime import datetime, timezone
 from email.mime.multipart import MIMEMultipart
+from smtplib import SMTPException
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -8,7 +11,13 @@ import pytest
 from django.test import TestCase, override_settings
 from parameterized import parameterized
 
-from mail.celery_tasks import get_lite_api_url, manage_inbox, notify_users_of_rejected_licences
+from mail.celery_tasks import (
+    MAX_RETRIES,
+    get_lite_api_url,
+    manage_inbox,
+    notify_users_of_rejected_licences,
+    send_email_task,
+)
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.routing_controller import check_and_route_emails
@@ -223,3 +232,126 @@ class ManageInboxTests(LiteHMRCTestClient):
                 self.assertEqual(message["From"], emails_data[index]["sender"])
                 self.assertEqual(message["To"], emails_data[index]["recipients"])
                 self.assertEqual(message["Subject"], emails_data[index]["subject"])
+
+
+class SendEmailTestTests(TestCase):
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog):
+        self.caplog = caplog
+
+    @mock.patch("mail.celery_tasks.cache")
+    @mock.patch("mail.servers.get_smtp_connection")
+    def test_sends_email(self, mock_get_smtp_connection, mock_cache):
+        mock_conn = mock_get_smtp_connection()
+        message = {
+            "From": "from@example.com",
+            "To": "to@example.com",
+        }
+        send_email_task.apply(args=[message])
+        mock_conn.send_message.assert_called_with(message)
+        mock_conn.quit.assert_called()
+        mock_cache.lock.assert_called_with("global_send_email_lock", timeout=600)
+
+    @parameterized.expand(
+        [
+            (ConnectionResetError,),
+            (SMTPException,),
+        ]
+    )
+    @mock.patch("mail.celery_tasks.cache")
+    @mock.patch("mail.servers.get_smtp_connection")
+    def test_sends_email_failed_then_succeeds(self, exception_class, mock_get_smtp_connection, mock_cache):
+        mock_conn = mock_get_smtp_connection()
+        message = {
+            "From": "from@example.com",
+            "To": "to@example.com",
+        }
+        mock_conn.send_message.side_effect = [exception_class(), None]
+        send_email_task.apply(args=[message])
+        mock_conn.send_message.assert_called_with(message)
+        self.assertEqual(mock_conn.send_message.call_count, 2)
+        self.assertEqual(mock_conn.quit.call_count, 2)
+        mock_cache.lock.assert_called_with("global_send_email_lock", timeout=600)
+
+    @parameterized.expand(
+        [
+            (ConnectionResetError,),
+            (SMTPException,),
+        ]
+    )
+    @mock.patch("mail.celery_tasks.cache")
+    @mock.patch("mail.servers.get_smtp_connection")
+    def test_sends_email_max_retry_failures(self, exception_class, mock_get_smtp_connection, mock_cache):
+        mock_conn = mock_get_smtp_connection()
+        message = {
+            "From": "from@example.com",
+            "To": "to@example.com",
+        }
+        mock_conn.send_message.side_effect = exception_class()
+        send_email_task.apply(args=[message])
+        mock_conn.send_message.assert_called_with(message)
+        self.assertEqual(
+            mock_conn.send_message.call_count,
+            MAX_RETRIES + 1,
+        )
+        self.assertEqual(mock_conn.quit.call_count, MAX_RETRIES + 1)
+        mock_cache.lock.assert_called_with("global_send_email_lock", timeout=600)
+
+    @mock.patch("mail.servers.get_smtp_connection")
+    def test_locking(self, mock_get_smtp_connection):
+        results = []
+
+        SLEEP_TIME = 1
+
+        def _sleepy(message):
+            call = {}
+            call["start"] = {
+                "message": message,
+                "time": time.monotonic(),
+            }
+            time.sleep(SLEEP_TIME)
+            call["end"] = {
+                "message": message,
+                "time": time.monotonic(),
+            }
+            results.append(call)
+
+        mock_conn = mock_get_smtp_connection()
+        mock_conn.send_message.side_effect = _sleepy
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            message_1 = {
+                "From": "from1@example.com",
+                "To": "to1@example.com",
+            }
+            future_1 = executor.submit(send_email_task.apply, args=[message_1])
+
+            message_2 = {
+                "From": "from2@example.com",
+                "To": "to2@example.com",
+            }
+            future_2 = executor.submit(send_email_task.apply, args=[message_2])
+
+        future_1.result()
+        future_2.result()
+
+        first_call, second_call = results
+
+        # We don't particularly care about the exact order of these calls
+        # We just care that they didn't happen at the same time due to the lock
+
+        self.assertEqual(first_call["start"]["message"], first_call["end"]["message"])
+        self.assertEqual(second_call["start"]["message"], second_call["end"]["message"])
+        self.assertNotEqual(first_call["start"]["message"], second_call["start"]["message"])
+        self.assertNotEqual(first_call["end"]["message"], second_call["end"]["message"])
+
+        self.assertGreater(
+            second_call["start"]["time"],
+            first_call["end"]["time"],
+            "The second call should start after the end of the first call",
+        )
+        self.assertGreater(
+            second_call["start"]["time"],
+            first_call["start"]["time"] + SLEEP_TIME,
+            f"The second call should start at least {SLEEP_TIME} after the first started",
+        )
