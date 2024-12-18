@@ -290,7 +290,7 @@ class ManageInboxTests(LiteHMRCTestClient):
         file_lines = "\n".join(
             [
                 f"1\\fileHeader\\CHIEF\\SPIRE\\licenceReply\\202111091457\\{run_number}",
-                "2\\fileError\\3057\\Duplicate transaction reference = 20240005721P - Input Line Number = 0",
+                "2\\fileError\\3057\\Duplicate transaction reference = 20240001111P - Input Line Number = 0\\99",
                 "3\\fileTrailer\\0\\0\\1",
             ]
         )

@@ -88,14 +88,15 @@ class FileError:
     Attribute       Format      Presence    Comments
     code            AN(..6)     M           See Section 5.2.1 for recommended error codes and text.
     text            X(..130)    M           See Section 5.2.1 for recommended error codes and text.
-
+    position        9(7)        O           Sequence number of the record on the input file at which the error is detected.
+                                            If supplied for a record out of sequence it is the expected number.
     """
 
     record_type: ClassVar[str] = "fileError"
 
     code: str
     text: str
-
+    position: str
 
 
 @dataclass
