@@ -22,10 +22,14 @@ from mail.libraries.helpers import (
     sort_dtos_by_date,
 )
 from mail.libraries.mailbox_service import get_message_iterator
-from mail.models import Mail
+from mail.models import Mail, LicenceData
 from mail.servers import MailServer, smtp_send
 
 logger = logging.getLogger(__name__)
+
+
+class EdifactFileError(Exception):
+    pass
 
 
 def get_spire_to_dit_mailserver() -> MailServer:
@@ -221,9 +225,21 @@ def get_email_message_dtos(server: MailServer, number: Optional[int] = 3) -> Lis
 
 def check_and_notify_rejected_licences(mail):
     from mail.celery_tasks import notify_users_of_rejected_licences
+    from mail.chief.licence_reply import LicenceReplyProcessor
 
     if not settings.SEND_REJECTED_EMAIL:
         return
 
     if mail.response_data and ReplyStatusEnum.REJECTED in mail.response_data:
         notify_users_of_rejected_licences(str(mail.id), mail.response_subject)
+
+    if mail.response_subject and "licenceReply" in mail.response_subject:
+        processor = LicenceReplyProcessor.load_licence_reply_from_mail(mail)
+
+        if processor.file_errors:
+            for error in processor.file_errors:
+                if "Duplicate transaction reference" in error.text:
+                    run_number = LicenceData.objects.get(mail=mail).hmrc_run_number
+                    raise EdifactFileError(
+                        f"Unable to process file due to the following error: {error.text}.  It was sent in run number {run_number}"
+                    )

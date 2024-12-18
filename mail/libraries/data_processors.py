@@ -21,6 +21,10 @@ from mail.models import LicenceData, Mail, UsageData
 from mail.serializers import LicenceDataMailSerializer, UpdateResponseSerializer, UsageDataMailSerializer
 
 
+class EdifactFileError(Exception):
+    pass
+
+
 def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
     extract_type = get_extract_type(dto.subject)
     if not extract_type:
@@ -52,6 +56,11 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
         _mail.set_response_date_time()
 
     logging.info("Successfully serialized email (subject: %s)", dto.subject)
+
+    # if _mail.response_data and "Duplicate transaction reference" in _mail.response_data:
+    #     raise EdifactFileError(
+    #         f"Unable to process file due to error with mail {_mail.id} the edi file was {_mail.edi_filename}"
+    #     )
 
     return _mail
 

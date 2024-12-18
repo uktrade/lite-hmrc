@@ -65,6 +65,10 @@ class LicenceReplyProcessor:
 
         return cls(mail.response_data)
 
+    @classmethod
+    def load_licence_reply_from_mail(cls, mail: Mail) -> "LicenceReplyProcessor":
+        return cls(mail.response_data)
+
     @property
     def accepted_licences(self) -> List[AcceptedTransaction]:
         self._check_is_valid("accepted_licences")
