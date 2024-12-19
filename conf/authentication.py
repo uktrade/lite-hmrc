@@ -47,11 +47,16 @@ def _authenticate(request):
     """
 
     if hawk_authentication_enabled():
+        url = request.build_absolute_uri().replace("http", "https")
+        logger.warning(f"URL: {url}")
+        logger.warning(f"Request method: {request.method}")
+        logger.warning(f"Request body: {request.body}")
+        logger.warning(f"Request content type: {request.content_type}")
         return Receiver(
             _lookup_credentials,
             request.META["HTTP_HAWK_AUTHENTICATION"],
             # build_absolute_uri() returns 'http' which is incorrect since our clients communicate via https
-            request.build_absolute_uri().replace("http", "https"),
+            url,
             request.method,
             content=request.body,
             content_type=request.content_type,
