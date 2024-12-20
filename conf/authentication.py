@@ -24,14 +24,13 @@ class HawkOnlyAuthentication(authentication.BaseAuthentication):
             hawk_receiver = _authenticate(request)
         except HawkFail as e:
             logger.warning("Failed HAWK authentication %s", e)
+            if settings.SENTRY_ENABLED:
+                capture_exception(e)
 
             raise exceptions.AuthenticationFailed(f"Failed HAWK authentication")
 
         except Exception as e:
             logger.error("Failed HAWK authentication %s", e)
-
-            if settings.SENTRY_ENABLED:
-                capture_exception(e)
 
             raise exceptions.AuthenticationFailed(f"Failed HAWK authentication")
 
@@ -47,15 +46,22 @@ def _authenticate(request):
     """
 
     if hawk_authentication_enabled():
+        # build_absolute_uri() returns 'http' which is incorrect since our clients communicate via https
         url = request.build_absolute_uri().replace("http", "https")
+        logger.warning(f"URL before replace: {url}")
+        if url.startswith(("http")):
+            url.replace("http", "https")
+        logger.warning(f"URL after replace: {url}")
         logger.warning(f"URL: {url}")
         logger.warning(f"Request method: {request.method}")
         logger.warning(f"Request body: {request.body}")
         logger.warning(f"Request content type: {request.content_type}")
+        logger.warning(f"Request META: {request.META}")
+        logger.warning(f"Credentials: {_lookup_credentials}")
+        logger.warning(f"Seen nonce: {_seen_nonce}")
         return Receiver(
             _lookup_credentials,
             request.META["HTTP_HAWK_AUTHENTICATION"],
-            # build_absolute_uri() returns 'http' which is incorrect since our clients communicate via https
             url,
             request.method,
             content=request.body,
@@ -69,7 +75,7 @@ def _seen_nonce(access_key_id, nonce, _):
     Returns if the passed access_key_id/nonce combination has been
     used within settings.HAWK_RECEIVER_NONCE_EXPIRY_SECONDS
     """
-
+    logger.warning(f"Nonce: {nonce}")
     cache_key = f"hawk:{access_key_id}:{nonce}"
 
     # cache.add only adds key if it isn't present
