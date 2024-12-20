@@ -47,10 +47,12 @@ def _authenticate(request):
     """
 
     if hawk_authentication_enabled():
+        url = request.build_absolute_uri()
+        logger.info(f"URL: {url}")
         return Receiver(
             _lookup_credentials,
             request.META["HTTP_HAWK_AUTHENTICATION"],
-            request.build_absolute_uri(),
+            url,
             request.method,
             content=request.body,
             content_type=request.content_type,
