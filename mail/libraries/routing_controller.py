@@ -177,7 +177,7 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
-    from mail.celery_tasks import send_email_task, finalise_sending_spire_licence_details
+    from mail.celery_tasks import finalise_sending_spire_licence_details, send_email_task
 
     logger.info("Sending Mail [%s] of extract type %s", mail.id, mail.extract_type)
 
@@ -214,7 +214,6 @@ def get_email_message_dtos(server: MailServer, number: Optional[int] = 3) -> Lis
         emails = list(islice(emails_iter, number))
     else:
         emails = list(emails_iter)
-    # emails = read_last_three_emails(pop3_connection)
     server.quit_pop3_connection()
     return emails
 
