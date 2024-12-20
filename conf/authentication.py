@@ -47,11 +47,9 @@ def _authenticate(request):
     """
 
     if hawk_authentication_enabled():
-        logger.warning(f"URL before: {url}")
+        logger.warning(f"URL before: {request.build_absolute_uri()}")
         # build_absolute_uri() returns 'http' which is incorrect since our clients communicate via https
         url = request.build_absolute_uri().replace("http", "https")
-        if url.startswith("http:"):
-            url.replace("http:", "https:")
         logger.warning(f"URL after: {url}")
         logger.warning(f"Request method: {request.method}")
         logger.warning(f"Request body: {request.body}")
