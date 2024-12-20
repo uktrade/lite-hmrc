@@ -155,44 +155,6 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
             yield mail_message, mark_status
 
 
-def read_last_message(pop3_connection: POP3_SSL) -> EmailMessageDto:
-    _, mails, _ = pop3_connection.list()
-    message_id, message_num = get_message_id(pop3_connection, mails[-1])
-
-    try:
-        message = pop3_connection.retr(message_num)
-    except error_proto as err:
-        raise Exception(
-            f"Unable to RETR message num {message_num} with Message-ID {message_id}",
-        ) from err
-
-    return to_mail_message_dto(message)
-
-
-def read_last_three_emails(pop3connection: POP3_SSL) -> list:
-    _, mails, _ = pop3connection.list()
-
-    reversed_mails = list(reversed(mails))
-    last_three_mails = reversed_mails[:3]
-
-    message_ids = [get_message_id(pop3connection, line.decode(settings.DEFAULT_ENCODING)) for line in last_three_mails]
-
-    emails = []
-    for message_id, message_num in message_ids:
-        try:
-            emails.append(pop3connection.retr(message_num))
-        except error_proto as err:
-            raise Exception(
-                f"Unable to RETR message num {message_num} with Message-ID {message_id}",
-            ) from err
-
-    email_message_dtos = []
-    for email in emails:
-        email_message_dtos.append(to_mail_message_dto(email))
-
-    return email_message_dtos
-
-
 def find_mail_of(extract_types: List[str], reception_status: str) -> Mail or None:
     try:
         mail = Mail.objects.get(status=reception_status, extract_type__in=extract_types)
