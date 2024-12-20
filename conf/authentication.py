@@ -49,7 +49,7 @@ def _authenticate(request):
         # build_absolute_uri() returns 'http' which is incorrect since our clients communicate via https
         url = request.build_absolute_uri()
         logger.warning(f"URL before replace: {url}")
-        if url.startswith(("http:")):
+        if url.startswith("http:"):
             url.replace("http:", "https:")
         logger.warning(f"URL after replace: {url}")
         logger.warning(f"URL: {url}")
