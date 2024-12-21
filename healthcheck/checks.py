@@ -23,13 +23,12 @@ class MailboxAuthenticationHealthCheck(BaseHealthCheckBackend):
         for mailserver_factory in mailserver_factories:
             mailserver = mailserver_factory()
             try:
-                mailserver.connect_to_pop3()
+                with mailserver.connect_to_pop3():
+                    pass
             except poplib.error_proto as e:
                 response, *_ = e.args
                 error_message = f"Failed to connect to mailbox: {mailserver.hostname} ({response})"
                 self.add_error(HealthCheckException(error_message))
-            finally:
-                mailserver.quit_pop3_connection()
 
 
 class LicencePayloadsHealthCheck(BaseHealthCheckBackend):
