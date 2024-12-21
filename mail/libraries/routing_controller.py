@@ -6,7 +6,6 @@ from django.conf import settings
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from mail.auth import BasicAuthentication, ModernAuthentication
 from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
@@ -23,7 +22,8 @@ from mail.libraries.helpers import (
 )
 from mail.libraries.mailbox_service import get_message_iterator
 from mail.models import Mail
-from mail.servers import MailServer, smtp_send
+from mail_servers.auth import BasicAuthentication, ModernAuthentication
+from mail_servers.servers import MailServer, smtp_send
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +177,7 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
-    from mail.celery_tasks import send_email_task, finalise_sending_spire_licence_details
+    from mail.celery_tasks import finalise_sending_spire_licence_details, send_email_task
 
     logger.info("Sending Mail [%s] of extract type %s", mail.id, mail.extract_type)
 
@@ -208,14 +208,12 @@ def _collect_and_send(mail: Mail):
 
 
 def get_email_message_dtos(server: MailServer, number: Optional[int] = 3) -> List[Tuple[EmailMessageDto, Callable]]:
-    pop3_connection = server.connect_to_pop3()
-    emails_iter = get_message_iterator(pop3_connection, server.user)
-    if number:
-        emails = list(islice(emails_iter, number))
-    else:
-        emails = list(emails_iter)
-    # emails = read_last_three_emails(pop3_connection)
-    server.quit_pop3_connection()
+    with server.connect_to_pop3() as pop3_connection:
+        emails_iter = get_message_iterator(pop3_connection, server.user)
+        if number:
+            emails = list(islice(emails_iter, number))
+        else:
+            emails = list(emails_iter)
     return emails
 
 
