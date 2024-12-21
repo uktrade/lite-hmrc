@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 from django.conf import settings
 
-from mail.auth import Authenticator
+from mail_servers.auth import Authenticator
 
 logger = logging.getLogger(__name__)
 

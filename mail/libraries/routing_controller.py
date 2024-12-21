@@ -6,7 +6,6 @@ from django.conf import settings
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from mail.auth import BasicAuthentication, ModernAuthentication
 from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
@@ -23,7 +22,8 @@ from mail.libraries.helpers import (
 )
 from mail.libraries.mailbox_service import get_message_iterator
 from mail.models import Mail
-from mail.servers import MailServer, smtp_send
+from mail_servers.auth import BasicAuthentication, ModernAuthentication
+from mail_servers.servers import MailServer, smtp_send
 
 logger = logging.getLogger(__name__)
 

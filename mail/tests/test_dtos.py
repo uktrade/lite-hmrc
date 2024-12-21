@@ -8,8 +8,8 @@ from parameterized import parameterized
 from mail.libraries.email_message_dto import *
 from mail.libraries.helpers import read_file, sort_dtos_by_date, to_mail_message_dto
 from mail.libraries.routing_controller import get_email_message_dtos
-from mail.servers import MailServer
 from mail.tests.libraries.client import LiteHMRCTestClient
+from mail_servers.servers import MailServer
 
 
 class TestDtos(LiteHMRCTestClient):
