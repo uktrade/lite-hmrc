@@ -26,16 +26,17 @@ class Command(BaseCommand):
             pop3_port=995,
             smtp_port=587,
         )
-        pop3_connection = server.connect_to_pop3()
-        self.stdout.write(self.style.SUCCESS(f"Connected to {email_user}"))
 
-        _, mails, _ = pop3_connection.list()
-        self.stdout.write(self.style.SUCCESS(f"Found {len(mails)} in the inbox"))
+        with server.connect_to_pop3() as pop3_connection:
+            self.stdout.write(self.style.SUCCESS(f"Connected to {email_user}"))
 
-        mail_message_ids = [get_message_id(pop3_connection, m.decode(settings.DEFAULT_ENCODING)) for m in mails]
-        self.stdout.write(
-            self.style.SUCCESS(f"List of Message-Id and message numbers for existing mails:\n{mail_message_ids}")
-        )
+            _, mails, _ = pop3_connection.list()
+            self.stdout.write(self.style.SUCCESS(f"Found {len(mails)} in the inbox"))
+
+            mail_message_ids = [get_message_id(pop3_connection, m.decode(settings.DEFAULT_ENCODING)) for m in mails]
+            self.stdout.write(
+                self.style.SUCCESS(f"List of Message-Id and message numbers for existing mails:\n{mail_message_ids}")
+            )
 
         if dry_run.lower() == "false":
             mailbox_config, _ = models.MailboxConfig.objects.get_or_create(username=email_user)

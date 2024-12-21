@@ -1,21 +1,6 @@
-import contextlib
 import email
 import poplib
 from typing import List
-
-from mail.auth import Authenticator
-from mail.servers import MailServer
-
-
-@contextlib.contextmanager
-def get_connection(auth: Authenticator, hostname: str, port: int) -> poplib.POP3:
-    ms = MailServer(auth, hostname=hostname, pop3_port=port)
-
-    try:
-        yield ms.connect_to_pop3()
-
-    finally:
-        ms.quit_pop3_connection()
 
 
 def list_messages_ids(con: poplib.POP3) -> List[str]:
