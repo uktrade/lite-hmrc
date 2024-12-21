@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, call, patch
 
 from django.test import SimpleTestCase
 
-from mail.auth import AuthenticationError, BasicAuthentication, ModernAuthentication
+from mail_servers.auth import AuthenticationError, BasicAuthentication, ModernAuthentication
 
 
 class BasicAuthenticationTests(SimpleTestCase):
@@ -69,7 +69,9 @@ class ModernAuthenticationTests(SimpleTestCase):
             account=None,
         )
 
-        access_string = base64.b64encode("user=username\x01auth=Bearer access_token\x01\x01".encode()).decode()
+        access_string = base64.b64encode(  # /PS-IGNORE
+            "user=username\x01auth=Bearer access_token\x01\x01".encode()  # /PS-IGNORE
+        ).decode()
         mock_conn._shortcmd.assert_has_calls(
             [
                 call("AUTH XOAUTH2"),
@@ -121,7 +123,9 @@ class ModernAuthenticationTests(SimpleTestCase):
             scopes=["https://outlook.office.com/.default"],
         )
 
-        access_string = base64.b64encode("user=username\x01auth=Bearer access_token\x01\x01".encode()).decode()
+        access_string = base64.b64encode(  # /PS-IGNORE
+            "user=username\x01auth=Bearer access_token\x01\x01".encode()  # /PS-IGNORE
+        ).decode()
         mock_conn._shortcmd.assert_has_calls(
             [
                 call("AUTH XOAUTH2"),
