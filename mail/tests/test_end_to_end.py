@@ -10,12 +10,12 @@ from freezegun import freeze_time
 from pytest_django.asserts import assertQuerySetEqual
 from rest_framework import status
 
-from mail.auth import BasicAuthentication
 from mail.celery_tasks import manage_inbox, send_licence_details_to_hmrc
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.libraries.helpers import read_file
 from mail.models import LicenceData, LicencePayload, Mail, UsageData
-from mail.servers import MailServer
+from mail_servers.auth import BasicAuthentication
+from mail_servers.servers import MailServer
 
 pytestmark = pytest.mark.django_db
 
