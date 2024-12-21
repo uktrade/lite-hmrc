@@ -1,12 +1,11 @@
 import time
 import urllib.parse
-
+from contextlib import contextmanager
 from smtplib import SMTPException
 from typing import List, MutableMapping, Tuple
 
 from celery import Task, shared_task
 from celery.utils.log import get_task_logger
-from contextlib import contextmanager
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
@@ -22,7 +21,7 @@ from mail.libraries.lite_to_edifact_converter import EdifactValidationError
 from mail.libraries.routing_controller import check_and_route_emails, update_mail
 from mail.libraries.usage_data_decomposition import build_json_payload_from_data_blocks, split_edi_data_by_id
 from mail.models import LicenceIdMapping, LicencePayload, Mail, UsageData
-from mail.servers import smtp_send
+from mail_servers.servers import smtp_send
 
 logger = get_task_logger(__name__)
 
