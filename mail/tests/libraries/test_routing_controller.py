@@ -3,12 +3,12 @@ from unittest.mock import patch
 
 from django.test import override_settings
 
-from mail.auth import BasicAuthentication, ModernAuthentication
 from mail.libraries.routing_controller import (
     get_hmrc_to_dit_mailserver,
     get_mock_hmrc_mailserver,
     get_spire_to_dit_mailserver,
 )
+from mail_servers.auth import BasicAuthentication, ModernAuthentication
 
 
 class RoutingControllerTest(unittest.TestCase):

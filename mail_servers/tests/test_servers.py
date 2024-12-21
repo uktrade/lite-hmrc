@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, Mock, patch
 
 from django.test import SimpleTestCase, override_settings
 
-from mail.auth import Authenticator
-from mail.servers import MailServer, smtp_send
+from mail_servers.auth import Authenticator
+from mail_servers.servers import MailServer, smtp_send
 
 
 class MailServerTests(SimpleTestCase):
@@ -31,7 +31,7 @@ class MailServerTests(SimpleTestCase):
 
         self.assertNotEqual(m1, m2)
 
-    @patch("mail.servers.poplib")
+    @patch("mail_servers.servers.poplib")
     def test_mail_server_connect_to_pop3(self, mock_poplib):
         hostname = "host"
         pop3_port = 1
@@ -59,7 +59,7 @@ class MailServerTests(SimpleTestCase):
         pop3connection.quit.assert_called_once()
         pop3connection.list.assert_called_once()
 
-    @patch("mail.servers.poplib")
+    @patch("mail_servers.servers.poplib")
     def test_mail_server_connection_exception(self, mock_poplib):
         hostname = "host"
         pop3_port = 1
@@ -88,7 +88,7 @@ class MailServerTests(SimpleTestCase):
         mock_connection.quit.assert_not_called()
         mock_connection.list.assert_not_called()
 
-    @patch("mail.servers.poplib")
+    @patch("mail_servers.servers.poplib")
     def test_mail_server_connection_context_exception(self, mock_poplib):
         hostname = "host"
         pop3_port = 1
@@ -116,7 +116,7 @@ class MailServerTests(SimpleTestCase):
         auth.authenticate.assert_called_with(pop3connection)
         pop3connection.quit.assert_called_once()
 
-    @patch("mail.servers.poplib")
+    @patch("mail_servers.servers.poplib")
     def test_mail_server_connection_authentication_exception(self, mock_poplib):
         hostname = "host"
         pop3_port = 1
@@ -162,7 +162,7 @@ class MailServerTests(SimpleTestCase):
     EMAIL_USER="test.user",
     EMAIL_PASSWORD="test_password",
 )
-@patch("mail.servers.smtplib.SMTP", autospec=True)
+@patch("mail_servers.servers.smtplib.SMTP", autospec=True)
 class SmtpSendTests(SimpleTestCase):
     def test_smtp_send(self, mock_SMTP):
         mock_result = MagicMock()
