@@ -208,13 +208,12 @@ def _collect_and_send(mail: Mail):
 
 
 def get_email_message_dtos(server: MailServer, number: Optional[int] = 3) -> List[Tuple[EmailMessageDto, Callable]]:
-    pop3_connection = server.connect_to_pop3()
-    emails_iter = get_message_iterator(pop3_connection, server.user)
-    if number:
-        emails = list(islice(emails_iter, number))
-    else:
-        emails = list(emails_iter)
-    server.quit_pop3_connection()
+    with server.connect_to_pop3() as pop3_connection:
+        emails_iter = get_message_iterator(pop3_connection, server.user)
+        if number:
+            emails = list(islice(emails_iter, number))
+        else:
+            emails = list(emails_iter)
     return emails
 
 
