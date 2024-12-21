@@ -1,20 +1,18 @@
 import os
 import sys
 import uuid
-import sentry_sdk
-
-from django_log_formatter_ecs import ECSFormatter
-from environ import Env
 from pathlib import Path
-from sentry_sdk.integrations.django import DjangoIntegration
 from urllib.parse import urlencode
-from django_log_formatter_asim import ASIMFormatter
-
-from dbt_copilot_python.network import setup_allowed_hosts
-from dbt_copilot_python.database import database_url_from_env
-from dbt_copilot_python.utility import is_copilot
 
 import dj_database_url
+import sentry_sdk
+from dbt_copilot_python.database import database_url_from_env
+from dbt_copilot_python.network import setup_allowed_hosts
+from dbt_copilot_python.utility import is_copilot
+from django_log_formatter_asim import ASIMFormatter
+from django_log_formatter_ecs import ECSFormatter
+from environ import Env
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -139,6 +137,44 @@ HMRC_ADDRESS = env("HMRC_ADDRESS", default="test-hmrc-address@example.com")  # /
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 MAILHOG_URL = env.str("MAILHOG_URL", default="http://localhost:8025")
 
+AZURE_AUTH_CLIENT_ID = env.str("AZURE_AUTH_CLIENT_ID")
+AZURE_AUTH_CLIENT_SECRET = env.str("AZURE_AUTH_CLIENT_SECRET")
+AZURE_AUTH_TENANT_ID = env.str("AZURE_AUTH_TENANT_ID")
+
+MAIL_SERVERS = {
+    "spire_to_dit": {
+        "HOSTNAME": INCOMING_EMAIL_HOSTNAME,
+        "POP3_PORT": INCOMING_EMAIL_POP3_PORT,
+        "AUTHENTICATION_CLASS": "mail_servers.auth.ModernAuthentication",
+        "AUTHENTICATION_OPTIONS": {
+            "user": INCOMING_EMAIL_USER,
+            "client_id": AZURE_AUTH_CLIENT_ID,
+            "client_secret": AZURE_AUTH_CLIENT_SECRET,
+            "tenant_id": AZURE_AUTH_TENANT_ID,
+        },
+    },
+    "hmrc_to_dit": {
+        "HOSTNAME": HMRC_TO_DIT_EMAIL_HOSTNAME,
+        "POP3_PORT": HMRC_TO_DIT_EMAIL_POP3_PORT,
+        "AUTHENTICATION_CLASS": "mail_servers.auth.ModernAuthentication",
+        "AUTHENTICATION_OPTIONS": {
+            "user": HMRC_TO_DIT_EMAIL_USER,
+            "client_id": AZURE_AUTH_CLIENT_ID,
+            "client_secret": AZURE_AUTH_CLIENT_SECRET,
+            "tenant_id": AZURE_AUTH_TENANT_ID,
+        },
+    },
+    "mock_hmrc": {
+        "HOSTNAME": MOCK_HMRC_EMAIL_HOSTNAME,
+        "POP3_PORT": MOCK_HMRC_EMAIL_POP3_PORT,
+        "AUTHENTICATION_CLASS": "mail_servers.auth.BasicAuthentication",
+        "AUTHENTICATION_OPTIONS": {
+            "user": MOCK_HMRC_EMAIL_USER,
+            "password": MOCK_HMRC_EMAIL_PASSWORD,
+        },
+    },
+}
+
 TIME_TESTS = env.bool("TIME_TESTS", default=False)
 
 LOCK_INTERVAL = env.float("LOCK_INTERVAL", default=120.0)
@@ -238,10 +274,6 @@ else:
 
 
 DEFAULT_ENCODING = "iso-8859-1"
-
-AZURE_AUTH_CLIENT_ID = env.str("AZURE_AUTH_CLIENT_ID")
-AZURE_AUTH_CLIENT_SECRET = env.str("AZURE_AUTH_CLIENT_SECRET")
-AZURE_AUTH_TENANT_ID = env.str("AZURE_AUTH_TENANT_ID")
 
 SEND_REJECTED_EMAIL = env.bool("SEND_REJECTED_EMAIL", default=True)
 
