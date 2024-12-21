@@ -138,6 +138,44 @@ TEST_EMAIL_HOSTNAME = env("TEST_EMAIL_HOSTNAME", default="outbox-mailserver")
 SPIRE_ADDRESS = env("SPIRE_ADDRESS", default="test-spire-address@example.com")  # /PS-IGNORE
 HMRC_ADDRESS = env("HMRC_ADDRESS", default="test-hmrc-address@example.com")  # /PS-IGNORE
 
+AZURE_AUTH_CLIENT_ID = env.str("AZURE_AUTH_CLIENT_ID")
+AZURE_AUTH_CLIENT_SECRET = env.str("AZURE_AUTH_CLIENT_SECRET")
+AZURE_AUTH_TENANT_ID = env.str("AZURE_AUTH_TENANT_ID")
+
+MAIL_SERVERS = {
+    "spire_to_dit": {
+        "HOSTNAME": INCOMING_EMAIL_HOSTNAME,
+        "POP3_PORT": INCOMING_EMAIL_POP3_PORT,
+        "AUTHENTICATION_CLASS": "mail_servers.auth.ModernAuthentication",
+        "AUTHENTICATION_OPTIONS": {
+            "user": INCOMING_EMAIL_USER,
+            "client_id": AZURE_AUTH_CLIENT_ID,
+            "client_secret": AZURE_AUTH_CLIENT_SECRET,
+            "tenant_id": AZURE_AUTH_TENANT_ID,
+        },
+    },
+    "hmrc_to_dit": {
+        "HOSTNAME": HMRC_TO_DIT_EMAIL_HOSTNAME,
+        "POP3_PORT": HMRC_TO_DIT_EMAIL_POP3_PORT,
+        "AUTHENTICATION_CLASS": "mail_servers.auth.ModernAuthentication",
+        "AUTHENTICATION_OPTIONS": {
+            "user": HMRC_TO_DIT_EMAIL_USER,
+            "client_id": AZURE_AUTH_CLIENT_ID,
+            "client_secret": AZURE_AUTH_CLIENT_SECRET,
+            "tenant_id": AZURE_AUTH_TENANT_ID,
+        },
+    },
+    "mock_hmrc": {
+        "HOSTNAME": MOCK_HMRC_EMAIL_HOSTNAME,
+        "POP3_PORT": MOCK_HMRC_EMAIL_POP3_PORT,
+        "AUTHENTICATION_CLASS": "mail_servers.auth.BasicAuthentication",
+        "AUTHENTICATION_OPTIONS": {
+            "user": MOCK_HMRC_EMAIL_USER,
+            "password": MOCK_HMRC_EMAIL_PASSWORD,
+        },
+    },
+}
+
 TIME_TESTS = env.bool("TIME_TESTS", default=False)
 
 LOCK_INTERVAL = env.float("LOCK_INTERVAL", default=120.0)
@@ -237,10 +275,6 @@ else:
 
 
 DEFAULT_ENCODING = "iso-8859-1"
-
-AZURE_AUTH_CLIENT_ID = env.str("AZURE_AUTH_CLIENT_ID")
-AZURE_AUTH_CLIENT_SECRET = env.str("AZURE_AUTH_CLIENT_SECRET")
-AZURE_AUTH_TENANT_ID = env.str("AZURE_AUTH_TENANT_ID")
 
 SEND_REJECTED_EMAIL = env.bool("SEND_REJECTED_EMAIL", default=True)
 

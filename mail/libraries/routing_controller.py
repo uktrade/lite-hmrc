@@ -22,8 +22,8 @@ from mail.libraries.helpers import (
 )
 from mail.libraries.mailbox_service import get_message_iterator
 from mail.models import Mail
-from mail_servers.auth import BasicAuthentication, ModernAuthentication
 from mail_servers.servers import MailServer, smtp_send
+from mail_servers.utils import get_mail_server
 
 logger = logging.getLogger(__name__)
 
@@ -34,18 +34,9 @@ def get_spire_to_dit_mailserver() -> MailServer:
 
     These are licenceData and usageReply emails. They are processed by the service and sent to HMRC.
     """
-    auth = ModernAuthentication(
-        user=settings.INCOMING_EMAIL_USER,
-        client_id=settings.AZURE_AUTH_CLIENT_ID,
-        client_secret=settings.AZURE_AUTH_CLIENT_SECRET,
-        tenant_id=settings.AZURE_AUTH_TENANT_ID,
-    )
+    mail_server = get_mail_server("spire_to_dit")
 
-    return MailServer(
-        auth,
-        hostname=settings.INCOMING_EMAIL_HOSTNAME,
-        pop3_port=settings.INCOMING_EMAIL_POP3_PORT,
-    )
+    return mail_server
 
 
 def get_hmrc_to_dit_mailserver() -> MailServer:
@@ -54,31 +45,15 @@ def get_hmrc_to_dit_mailserver() -> MailServer:
 
     These are licenceReply and usageData emails
     """
-    auth = ModernAuthentication(
-        user=settings.HMRC_TO_DIT_EMAIL_USER,
-        client_id=settings.AZURE_AUTH_CLIENT_ID,
-        client_secret=settings.AZURE_AUTH_CLIENT_SECRET,
-        tenant_id=settings.AZURE_AUTH_TENANT_ID,
-    )
+    mail_server = get_mail_server("hmrc_to_dit")
 
-    return MailServer(
-        auth,
-        hostname=settings.HMRC_TO_DIT_EMAIL_HOSTNAME,
-        pop3_port=settings.HMRC_TO_DIT_EMAIL_POP3_PORT,
-    )
+    return mail_server
 
 
 def get_mock_hmrc_mailserver() -> MailServer:
-    auth = BasicAuthentication(
-        user=settings.MOCK_HMRC_EMAIL_USER,
-        password=settings.MOCK_HMRC_EMAIL_PASSWORD,
-    )
+    mail_server = get_mail_server("mock")
 
-    return MailServer(
-        auth,
-        hostname=settings.MOCK_HMRC_EMAIL_HOSTNAME,
-        pop3_port=settings.MOCK_HMRC_EMAIL_POP3_PORT,
-    )
+    return mail_server
 
 
 def check_and_route_emails():
