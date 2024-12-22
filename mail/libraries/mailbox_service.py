@@ -9,7 +9,7 @@ from mail.libraries.helpers import to_mail_message_dto
 from mail.models import Mail
 from mailboxes.enums import MailReadStatuses
 from mailboxes.models import MailboxConfig, MailReadStatus
-from mailboxes.utils import get_message_id
+from mailboxes.utils import get_message_header, get_message_id
 
 
 def get_read_messages(mailbox_config):
@@ -33,7 +33,7 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
     # The mails is a list of message number and size - message number is an increasing value so the
     # latest emails will always be at the end.
     mail_message_ids = [
-        get_message_id(pop3_connection, m.decode(settings.DEFAULT_ENCODING))
+        get_message_id(*get_message_header(pop3_connection, m.decode(settings.DEFAULT_ENCODING)))
         for m in mails[-incoming_email_check_limit:]
     ]
 
