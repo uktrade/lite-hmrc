@@ -2,9 +2,8 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from mail import enums, models
-from mail.libraries.mailbox_service import get_message_id
 from mail_servers.servers import MailServer
-from mailboxes.utils import get_message_id
+from mailboxes.utils import get_message_header, get_message_id
 
 
 class Command(BaseCommand):
@@ -34,7 +33,9 @@ class Command(BaseCommand):
             _, mails, _ = pop3_connection.list()
             self.stdout.write(self.style.SUCCESS(f"Found {len(mails)} in the inbox"))
 
-            mail_message_ids = [get_message_id(pop3_connection, m.decode(settings.DEFAULT_ENCODING)) for m in mails]
+            mail_message_ids = [
+                get_message_id(*get_message_header(pop3_connection, m.decode(settings.DEFAULT_ENCODING))) for m in mails
+            ]
             self.stdout.write(
                 self.style.SUCCESS(f"List of Message-Id and message numbers for existing mails:\n{mail_message_ids}")
             )
