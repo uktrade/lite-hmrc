@@ -9,7 +9,9 @@ from mail.libraries.helpers import to_mail_message_dto
 from mail.models import Mail
 from mailboxes.enums import MailReadStatuses
 from mailboxes.models import MailboxConfig, MailReadStatus
-from mailboxes.utils import get_message_header, get_message_id
+from mailboxes.utils import get_message_header, get_message_id, is_from_valid_sender
+
+logger = logging.getLogger(__name__)
 
 
 def get_read_messages(mailbox_config):
@@ -28,22 +30,34 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
     incoming_email_check_limit = settings.INCOMING_EMAIL_CHECK_LIMIT
 
     # Check only the emails specified in the setting
-    # Since we don't delete emails from these mailboxes the total number can be very high over a perio
+    # Since we don't delete emails from these mailboxes the total number can be very high over a period of time
     # and increases the processing time.
     # The mails is a list of message number and size - message number is an increasing value so the
     # latest emails will always be at the end.
-    mail_message_ids = [
-        get_message_id(*get_message_header(pop3_connection, m.decode(settings.DEFAULT_ENCODING)))
-        for m in mails[-incoming_email_check_limit:]
-    ]
+    mail_message_ids = []
+    for m in mails[-incoming_email_check_limit:]:
+        listing_msg = m.decode(settings.DEFAULT_ENCODING)
+        msg_num = listing_msg.split()[0]
+        message_header = get_message_header(pop3_connection, msg_num)
+        if not is_from_valid_sender(message_header, [settings.SPIRE_FROM_ADDRESS, settings.HMRC_TO_DIT_REPLY_ADDRESS]):
+            logger.warning(
+                "Found mail with message_num %s that is not from SPIRE (%s) or HMRC (%s), skipping ...",
+                msg_num,
+                settings.SPIRE_FROM_ADDRESS,
+                settings.HMRC_TO_DIT_REPLY_ADDRESS,
+            )
+            continue
+        message_id = get_message_id(message_header)
+        logger.info("Extracted Message-Id as %s for the message_num %s", message_id, msg_num)
+        mail_message_ids.append(message_id, msg_num)
 
     # these are mailbox message ids we've seen before
     read_messages = get_read_messages(mailbox_config)
-    logging.info("Number of messages READ/UNPROCESSABLE in %s are %s", mailbox_config.username, len(read_messages))
+    logger.info("Number of messages READ/UNPROCESSABLE in %s are %s", mailbox_config.username, len(read_messages))
 
     for message_id, message_num in mail_message_ids:
         # only return messages we haven't seen before
-        if message_id is not None and message_id not in read_messages:
+        if message_id not in read_messages:
             read_status, _ = MailReadStatus.objects.get_or_create(
                 message_id=message_id, message_num=message_num, mailbox=mailbox_config
             )
@@ -52,7 +66,7 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
                 """
                 :param status: A choice from `MailReadStatuses.choices`
                 """
-                logging.info(
+                logger.info(
                     "Marking message_id %s with message_num %s from %s as %s",
                     message_id,
                     message_num,
@@ -64,14 +78,14 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
 
             try:
                 m = pop3_connection.retr(message_num)
-                logging.info(
+                logger.info(
                     "Retrieved message_id %s with message_num %s from %s",
                     message_id,
                     message_num,
                     read_status.mailbox.username,
                 )
             except error_proto as err:
-                logging.error(
+                logger.error(
                     "Unable to RETR message num %s with Message-ID %s in %s: %s",
                     message_num,
                     message_id,
@@ -84,7 +98,7 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
             try:
                 mail_message = to_mail_message_dto(m)
             except ValueError as ve:
-                logging.error(
+                logger.error(
                     "Unable to convert message num %s with Message-Id %s to DTO in %s: %s",
                     message_num,
                     message_id,
@@ -102,8 +116,8 @@ def find_mail_of(extract_types: List[str], reception_status: str) -> Mail or Non
     try:
         mail = Mail.objects.get(status=reception_status, extract_type__in=extract_types)
     except Mail.DoesNotExist:
-        logging.warning("Can not find any mail in [%s] of extract type [%s]", reception_status, extract_types)
+        logger.warning("Can not find any mail in [%s] of extract type [%s]", reception_status, extract_types)
         return
 
-    logging.info("Found mail in [%s] of extract type [%s]", reception_status, extract_types)
+    logger.info("Found mail in [%s] of extract type [%s]", reception_status, extract_types)
     return mail
