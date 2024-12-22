@@ -4,10 +4,11 @@ from typing import Callable, Iterator, List, Tuple
 
 from django.conf import settings
 
-from mail.enums import MailReadStatuses
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import to_mail_message_dto
-from mail.models import Mail, MailboxConfig, MailReadStatus
+from mail.models import Mail
+from mailboxes.enums import MailReadStatuses
+from mailboxes.models import MailboxConfig, MailReadStatus
 
 
 def get_message_id(pop3_connection, listing_msg):
