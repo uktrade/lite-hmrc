@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from mail import enums, models
 from mail.libraries.mailbox_service import get_message_id
 from mail_servers.servers import MailServer
+from mailboxes.utils import get_message_id
 
 
 class Command(BaseCommand):
