@@ -3,8 +3,8 @@ import logging
 from django.conf import settings
 
 from mail.libraries.helpers import to_hmrc_mail_message_dto
-from mail.libraries.mailbox_service import get_message_id
 from mail.libraries.routing_controller import get_mock_hmrc_mailserver
+from mailboxes.utils import get_message_id
 from mock_hmrc import enums, models
 from mock_hmrc.data_processors import save_hmrc_email_message_data, send_reply
 
