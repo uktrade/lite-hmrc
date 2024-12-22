@@ -14,6 +14,9 @@ class MailboxConfig(TimeStampedModel):
             "mail_mailboxconfig"  # This was moved from another app and this makes the migrations backwards compatible
         )
 
+    def __str__(self):
+        return f"username={self.username}"
+
 
 class MailReadStatus(TimeStampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -35,4 +38,4 @@ class MailReadStatus(TimeStampedModel):
         )
 
     def __str__(self):
-        return f"{self.__class__.__name__}(message_id={self.message_id}, status={self.status})"
+        return f"message_id={self.message_id} status={self.status}"
