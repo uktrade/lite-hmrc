@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
+from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
     lock_db_for_sending_transaction,
@@ -24,6 +24,7 @@ from mail.libraries.mailbox_service import get_message_iterator
 from mail.models import Mail
 from mail_servers.servers import MailServer, smtp_send
 from mail_servers.utils import get_mail_server
+from mailboxes.enums import MailReadStatuses
 
 logger = logging.getLogger(__name__)
 
