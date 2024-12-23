@@ -34,7 +34,7 @@ def get_message_id(msg_header):
 
 
 def get_read_messages(mailbox_config):
-    mail_read_statuses = mailbox_config.mailreadstatus_set.filter(
+    mail_read_statuses = mailbox_config.mail_read_statuses.filter(
         status__in=[
             MailReadStatuses.READ,
             MailReadStatuses.UNPROCESSABLE,
