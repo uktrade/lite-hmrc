@@ -6,7 +6,6 @@ from django.conf import settings
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from mail.auth import BasicAuthentication, ModernAuthentication
 from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
@@ -23,7 +22,8 @@ from mail.libraries.helpers import (
 )
 from mail.libraries.mailbox_service import get_message_iterator
 from mail.models import Mail
-from mail.servers import MailServer, smtp_send
+from mail_servers.servers import MailServer, smtp_send
+from mail_servers.utils import get_mail_server
 
 logger = logging.getLogger(__name__)
 
@@ -34,18 +34,9 @@ def get_spire_to_dit_mailserver() -> MailServer:
 
     These are licenceData and usageReply emails. They are processed by the service and sent to HMRC.
     """
-    auth = ModernAuthentication(
-        user=settings.INCOMING_EMAIL_USER,
-        client_id=settings.AZURE_AUTH_CLIENT_ID,
-        client_secret=settings.AZURE_AUTH_CLIENT_SECRET,
-        tenant_id=settings.AZURE_AUTH_TENANT_ID,
-    )
+    mail_server = get_mail_server("spire_to_dit")
 
-    return MailServer(
-        auth,
-        hostname=settings.INCOMING_EMAIL_HOSTNAME,
-        pop3_port=settings.INCOMING_EMAIL_POP3_PORT,
-    )
+    return mail_server
 
 
 def get_hmrc_to_dit_mailserver() -> MailServer:
@@ -54,31 +45,15 @@ def get_hmrc_to_dit_mailserver() -> MailServer:
 
     These are licenceReply and usageData emails
     """
-    auth = ModernAuthentication(
-        user=settings.HMRC_TO_DIT_EMAIL_USER,
-        client_id=settings.AZURE_AUTH_CLIENT_ID,
-        client_secret=settings.AZURE_AUTH_CLIENT_SECRET,
-        tenant_id=settings.AZURE_AUTH_TENANT_ID,
-    )
+    mail_server = get_mail_server("hmrc_to_dit")
 
-    return MailServer(
-        auth,
-        hostname=settings.HMRC_TO_DIT_EMAIL_HOSTNAME,
-        pop3_port=settings.HMRC_TO_DIT_EMAIL_POP3_PORT,
-    )
+    return mail_server
 
 
 def get_mock_hmrc_mailserver() -> MailServer:
-    auth = BasicAuthentication(
-        user=settings.MOCK_HMRC_EMAIL_USER,
-        password=settings.MOCK_HMRC_EMAIL_PASSWORD,
-    )
+    mail_server = get_mail_server("mock")
 
-    return MailServer(
-        auth,
-        hostname=settings.MOCK_HMRC_EMAIL_HOSTNAME,
-        pop3_port=settings.MOCK_HMRC_EMAIL_POP3_PORT,
-    )
+    return mail_server
 
 
 def check_and_route_emails():
@@ -177,7 +152,7 @@ def send(email_message_dto: EmailMessageDto):
 
 
 def _collect_and_send(mail: Mail):
-    from mail.celery_tasks import send_email_task, finalise_sending_spire_licence_details
+    from mail.celery_tasks import finalise_sending_spire_licence_details, send_email_task
 
     logger.info("Sending Mail [%s] of extract type %s", mail.id, mail.extract_type)
 
@@ -208,14 +183,12 @@ def _collect_and_send(mail: Mail):
 
 
 def get_email_message_dtos(server: MailServer, number: Optional[int] = 3) -> List[Tuple[EmailMessageDto, Callable]]:
-    pop3_connection = server.connect_to_pop3()
-    emails_iter = get_message_iterator(pop3_connection, server.user)
-    if number:
-        emails = list(islice(emails_iter, number))
-    else:
-        emails = list(emails_iter)
-    # emails = read_last_three_emails(pop3_connection)
-    server.quit_pop3_connection()
+    with server.connect_to_pop3() as pop3_connection:
+        emails_iter = get_message_iterator(pop3_connection, server.user)
+        if number:
+            emails = list(islice(emails_iter, number))
+        else:
+            emails = list(emails_iter)
     return emails
 
 
