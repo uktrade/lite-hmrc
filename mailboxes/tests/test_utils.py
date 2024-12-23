@@ -156,7 +156,7 @@ class IsFromValidSenderTests(TestCase):
 
 
 class MarkStatusTests(TestCase):
-    def test_mark_status_read_status_without_initial_object(self):
+    def test_mark_status_read_status(self):
         mailbox_config = MailboxConfigFactory()
 
         message = Message()
@@ -171,63 +171,13 @@ class MarkStatusTests(TestCase):
             "1",
         )
 
-        self.assertEqual(mailbox_config.mail_read_statuses.count(), 0)
-        mark_status = MarkStatus(mailbox_config, mailbox_message)
-        mail_read_status = mailbox_config.mail_read_statuses.get()
-        self.assertEqual(
-            mail_read_status.status,
-            MailReadStatuses.UNREAD,
-        )
-        self.assertEqual(
-            mail_read_status.message_id,
-            mailbox_message.message_id,
-        )
-        self.assertEqual(
-            mail_read_status.message_num,
-            mailbox_message.message_number,
-        )
-
-        mark_status(MailReadStatuses.READ)
-        mail_read_status.refresh_from_db()
-        self.assertEqual(
-            mail_read_status.status,
-            MailReadStatuses.READ,
-        )
-
-    def test_mark_status_read_status_with_initial_object(self):
-        mailbox_config = MailboxConfigFactory()
-
-        message = Message()
-        message["Message-Id"] = Header("<12345@example.com>")  # /PS-IGNORE
-
-        pop3_connection = MagicMock()
-        pop3_connection.top.return_value = MagicMock(), message.as_bytes().split(b"\n"), MagicMock()
-
-        mailbox_message = MailboxMessage(
-            pop3_connection,
-            mailbox_config,
-            "1",
-        )
-
-        mailbox_config.mail_read_statuses.create(
-            message_id="12345",
+        mail_read_status = mailbox_config.mail_read_statuses.create(
             message_num="1",
-        )
-        mark_status = MarkStatus(mailbox_config, mailbox_message)
-        mail_read_status = mailbox_config.mail_read_statuses.get()
-        self.assertEqual(
-            mail_read_status.status,
-            MailReadStatuses.UNREAD,
-        )
-        self.assertEqual(
-            mail_read_status.message_id,
-            mailbox_message.message_id,
-        )
-        self.assertEqual(
-            mail_read_status.message_num,
-            mailbox_message.message_number,
+            message_id="12345",
+            status=MailReadStatuses.UNREAD,
         )
 
+        mark_status = MarkStatus(mailbox_message, mail_read_status)
         mark_status(MailReadStatuses.READ)
         mail_read_status.refresh_from_db()
         self.assertEqual(
@@ -432,6 +382,10 @@ class GetMessageIteratorTests(TestCase):
             ],
             transform=repr,
         )
+        self.assertEqual(
+            bytes(mailbox.mail_read_statuses.all()[0].mail_data),
+            b"Message-Id: <message-id-1@example.com>\nTo: to@example.com\nFrom: spire@example.com\nDate: 2021-04-23T12:38Z\nSubject: abc_xyz_nnn_yyy_1_datetime",  # /PS-IGNORE
+        )
 
     def test_get_message_iterator_invalid_senders(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
@@ -611,7 +565,7 @@ class GetMessageIteratorTests(TestCase):
         mailbox = MailboxConfig.objects.get(username="test@example.com")  # /PS-IGNORE
         self.assertQuerySetEqual(
             mailbox.mail_read_statuses.order_by("message_id"),
-            ["<MailReadStatus: message_id=message-id-1 status=UNREAD>"],  # /PS-IGNORE
+            [],
             transform=repr,
         )
 
@@ -641,7 +595,7 @@ class GetMessageIteratorTests(TestCase):
 
         mock_pop3_connection.top.side_effect = _top
 
-        mock_pop3_connection.retr.return_value = "UNCOVERTABLE"
+        mock_pop3_connection.retr.return_value = MagicMock(), [b"UNCONVERTABLE"], MagicMock()
 
         mock_to_mail_message_dto.side_effect = ValueError()
 
