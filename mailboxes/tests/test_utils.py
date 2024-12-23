@@ -2,10 +2,18 @@ from email.header import Header
 from email.message import Message
 from unittest.mock import MagicMock
 
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from parameterized import parameterized
 
-from mailboxes.utils import get_message_header, get_message_id, get_message_number, is_from_valid_sender
+from mailboxes.enums import MailReadStatuses
+from mailboxes.tests.factories import MailboxConfigFactory, MailReadStatusFactory
+from mailboxes.utils import (
+    get_message_header,
+    get_message_id,
+    get_message_number,
+    get_read_messages,
+    is_from_valid_sender,
+)
 
 
 class GetMessageHeaderTests(SimpleTestCase):
@@ -41,6 +49,51 @@ class GetMessageIdTests(SimpleTestCase):
 class GetMessageNumberTests(SimpleTestCase):
     def test_get_message_number(self):
         self.assertEqual(get_message_number(b"22 12345"), "22")
+
+
+class GetReadMessagesTests(TestCase):
+    def test_get_read_messages(self):
+        a_mailbox = MailboxConfigFactory()
+        MailReadStatusFactory(
+            mailbox=a_mailbox,
+            status=MailReadStatuses.READ,
+            message_id="a-read",
+        )
+        MailReadStatusFactory(
+            mailbox=a_mailbox,
+            status=MailReadStatuses.UNREAD,
+            message_id="a-unread",
+        )
+        MailReadStatusFactory(
+            mailbox=a_mailbox,
+            status=MailReadStatuses.UNPROCESSABLE,
+            message_id="a-unprocessable",
+        )
+        self.assertEqual(
+            get_read_messages(a_mailbox),
+            ["a-read", "a-unprocessable"],
+        )
+
+        b_mailbox = MailboxConfigFactory()
+        MailReadStatusFactory(
+            mailbox=b_mailbox,
+            status=MailReadStatuses.READ,
+            message_id="b-read",
+        )
+        MailReadStatusFactory(
+            mailbox=b_mailbox,
+            status=MailReadStatuses.UNREAD,
+            message_id="b-unread",
+        )
+        MailReadStatusFactory(
+            mailbox=b_mailbox,
+            status=MailReadStatuses.UNPROCESSABLE,
+            message_id="b-unprocessable",
+        )
+        self.assertEqual(
+            get_read_messages(b_mailbox),
+            ["b-read", "b-unprocessable"],
+        )
 
 
 class IsFromValidSenderTests(SimpleTestCase):
