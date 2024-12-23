@@ -25,7 +25,7 @@ class HawkOnlyAuthentication(authentication.BaseAuthentication):
         except HawkFail as e:
             logger.warning("Failed HAWK authentication %s", e)
 
-            raise exceptions.AuthenticationFailed(f"Failed HAWK authentication")
+            raise exceptions.AuthenticationFailed("Failed HAWK authentication")
 
         except Exception as e:
             logger.error("Failed HAWK authentication %s", e)
@@ -33,7 +33,7 @@ class HawkOnlyAuthentication(authentication.BaseAuthentication):
             if settings.SENTRY_ENABLED:
                 capture_exception(e)
 
-            raise exceptions.AuthenticationFailed(f"Failed HAWK authentication")
+            raise exceptions.AuthenticationFailed("Failed HAWK authentication")
 
         return AnonymousUser(), hawk_receiver
 
@@ -45,13 +45,17 @@ def _authenticate(request):
     """
     Raises a HawkFail exception if the passed request cannot be authenticated
     """
+    url = request.build_absolute_uri()
+
+    # TODO: remove this when migration to DBT platform is complete as this hack is only required on Gov Paas
+    if is_env_gov_paas():
+        convert_gov_paas_url(url)
 
     if hawk_authentication_enabled():
         return Receiver(
             _lookup_credentials,
             request.META["HTTP_HAWK_AUTHENTICATION"],
-            # build_absolute_uri() returns 'http' which is incorrect since our clients communicate via https
-            request.build_absolute_uri().replace("http", "https"),
+            url,
             request.method,
             content=request.body,
             content_type=request.content_type,
@@ -102,3 +106,16 @@ def hawk_authentication_enabled() -> bool:
     """
 
     return settings.HAWK_AUTHENTICATION_ENABLED
+
+
+def is_env_gov_paas() -> bool:
+    """Defined as method as you can't override settings.IS_ENV_GOV_PAAS correctly in tests.
+
+    Patch this function to get desired behaviour.
+    """
+
+    return settings.IS_ENV_GOV_PAAS
+
+
+def convert_gov_paas_url(url):
+    return url.replace("http", "https")
