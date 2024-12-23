@@ -30,7 +30,11 @@ class MailReadStatus(TimeStampedModel):
         help_text="Unique Message-ID of the message that is retrieved from the message header",
     )
     status = models.TextField(choices=MailReadStatuses.choices, default=MailReadStatuses.UNREAD, db_index=True)
-    mailbox = models.ForeignKey(MailboxConfig, on_delete=models.CASCADE)
+    mailbox = models.ForeignKey(
+        MailboxConfig,
+        on_delete=models.CASCADE,
+        related_name="mail_read_statuses",
+    )
 
     class Meta:
         db_table = (
