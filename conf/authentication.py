@@ -45,7 +45,7 @@ def _authenticate(request):
     """
     Raises a HawkFail exception if the passed request cannot be authenticated
     """
-    
+
     url = request.build_absolute_uri()
 
     # TODO: remove this when migration to DBT platform is complete as this hack is only required on Gov Paas
