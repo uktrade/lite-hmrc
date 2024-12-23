@@ -3,7 +3,15 @@ from email.headerregistry import Address
 from email.parser import BytesHeaderParser
 from email.utils import parseaddr
 
+from django.conf import settings
+
 logger = logging.getLogger(__name__)
+
+
+def get_message_number(listing_message):
+    listing_msg = listing_message.decode(settings.DEFAULT_ENCODING)
+    msg_num, _, _ = listing_msg.partition(" ")
+    return msg_num
 
 
 def get_message_header(pop3_connection, msg_num):
