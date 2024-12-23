@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from django.test import SimpleTestCase, override_settings
 from parameterized import parameterized
 
-from mailboxes.utils import get_message_header, get_message_id, is_from_valid_sender
+from mailboxes.utils import get_message_header, get_message_id, get_message_number, is_from_valid_sender
 
 
 class GetMessageHeaderTests(SimpleTestCase):
@@ -23,7 +23,7 @@ class GetMessageHeaderTests(SimpleTestCase):
         self.assertEqual(returned_header["header"], "value")
 
 
-class GetMessageId(SimpleTestCase):
+class GetMessageIdTests(SimpleTestCase):
     @override_settings(
         SPIRE_FROM_ADDRESS="spire.from.address@example.com",  # /PS-IGNORE
         HMRC_TO_DIT_REPLY_ADDRESS="hmrc.to.dit.reply.address@example.com",  # /PS-IGNORE
@@ -36,6 +36,11 @@ class GetMessageId(SimpleTestCase):
         message_id = get_message_id(message)
 
         self.assertEqual(message_id, "123456")
+
+
+class GetMessageNumberTests(SimpleTestCase):
+    def test_get_message_number(self):
+        self.assertEqual(get_message_number(b"22 12345"), "22")
 
 
 class IsFromValidSenderTests(SimpleTestCase):
