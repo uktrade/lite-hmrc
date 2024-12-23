@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
 from dateutil.parser import parse
@@ -91,20 +90,11 @@ class TestGetEmailMessagesDTOs(SimpleTestCase):
     @patch("mail.libraries.routing_controller.get_message_iterator")
     def test_get_email_message_dtos(self, mock_get_message_iterator):
         mock_mail_server = Mock(spec=MailServer)
-        mock_connection = Mock()
 
-        @contextmanager
-        def _mock_connect_to_pop3():
-            yield mock_connection
-
-        mock_mail_server.connect_to_pop3.side_effect = _mock_connect_to_pop3
         mock_emails = [Mock(), Mock()]
         mock_get_message_iterator.return_value = mock_emails
 
         emails = get_email_message_dtos(mock_mail_server)
 
         self.assertEqual(emails, mock_emails)
-        mock_get_message_iterator.assert_called_once_with(
-            mock_connection,
-            mock_mail_server.user,
-        )
+        mock_get_message_iterator.assert_called_once_with(mock_mail_server)

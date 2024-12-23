@@ -15,12 +15,13 @@ from mailboxes.enums import MailReadStatuses
 from mailboxes.models import MailboxConfig
 from mailboxes.tests.factories import MailboxConfigFactory, MailReadStatusFactory
 from mailboxes.utils import (
+    MailboxMessage,
+    MarkStatus,
     get_message_header,
     get_message_id,
     get_message_iterator,
     get_message_number,
     get_read_messages,
-    get_unread_message_ids,
     is_from_valid_sender,
 )
 
@@ -105,13 +106,11 @@ class GetReadMessagesTests(TestCase):
         )
 
 
-class IsFromValidSenderTests(SimpleTestCase):
+class IsFromValidSenderTests(TestCase):
     @parameterized.expand(
         [
-            "From: spire.from.address@example.com",  # /PS-IGNORE
-            "From: hmrc.to.dit.reply.address@example.com",  # /PS-IGNORE
-            "spire.from.address@example.com",  # /PS-IGNORE
-            "hmrc.to.dit.reply.address@example.com",  # /PS-IGNORE
+            "From: valid@example.com",  # /PS-IGNORE
+            "valid@example.com",  # /PS-IGNORE
         ]
     )
     def test_is_from_valid_sender(self, valid_address):
@@ -119,14 +118,22 @@ class IsFromValidSenderTests(SimpleTestCase):
         from_header = Header(f"Sender <{valid_address.replace('From: ', '')}>")  # /PS-IGNORE
         message["From"] = from_header
 
+        pop3_connection = MagicMock()
+        pop3_connection.top.return_value = MagicMock(), message.as_bytes().split(b"\n"), MagicMock()
+
+        mailbox_config = MailboxConfigFactory()
+
+        message = MailboxMessage(
+            pop3_connection,
+            mailbox_config,
+            "1",
+        )
         self.assertTrue(is_from_valid_sender(message, [valid_address]))
 
     @parameterized.expand(
         [
-            "From: spire.from.address@example.com",  # /PS-IGNORE
-            "From: hmrc.to.dit.reply.address@example.com",  # /PS-IGNORE
-            "spire.from.address@example.com",  # /PS-IGNORE
-            "hmrc.to.dit.reply.address@example.com",  # /PS-IGNORE
+            "From: valid@example.com",  # /PS-IGNORE
+            "valid@example.com",  # /PS-IGNORE
         ]
     )
     def test_is_from_invalid_sender(self, valid_address):
@@ -134,191 +141,193 @@ class IsFromValidSenderTests(SimpleTestCase):
         from_header = Header("Invalid <not.valid@example.com>")  # /PS-IGNORE
         message["From"] = from_header
 
+        pop3_connection = MagicMock()
+        pop3_connection.top.return_value = MagicMock(), message.as_bytes().split(b"\n"), MagicMock()
+
+        mailbox_config = MailboxConfigFactory()
+
+        message = MailboxMessage(
+            pop3_connection,
+            mailbox_config,
+            "1",
+        )
+
         self.assertFalse(is_from_valid_sender(message, [valid_address]))
 
 
-class GetUnreadMessageIdsTests(TestCase):
-    def test_unread_message_ids(self):
-        pop3_connection = MagicMock()
-        mailbox = MailboxConfigFactory()
+class MarkStatusTests(TestCase):
+    def test_mark_status_read_status_without_initial_object(self):
+        mailbox_config = MailboxConfigFactory()
 
-        pop3_connection.list.return_value = (
-            MagicMock(),
-            [
-                b"1 11111",
-                b"2 22222",
-                b"3 33333",
-            ],
-            MagicMock(),
+        message = Message()
+        message["Message-Id"] = Header("<12345@example.com>")  # /PS-IGNORE
+
+        pop3_connection = MagicMock()
+        pop3_connection.top.return_value = MagicMock(), message.as_bytes().split(b"\n"), MagicMock()
+
+        mailbox_message = MailboxMessage(
+            pop3_connection,
+            mailbox_config,
+            "1",
         )
 
-        def _top(which, howmuch):
-            self.assertEqual(howmuch, 0)
-            msg = Message()
-            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
-            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
-            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+        self.assertEqual(mailbox_config.mail_read_statuses.count(), 0)
+        mark_status = MarkStatus(mailbox_config, mailbox_message)
+        mail_read_status = mailbox_config.mail_read_statuses.get()
+        self.assertEqual(
+            mail_read_status.status,
+            MailReadStatuses.UNREAD,
+        )
+        self.assertEqual(
+            mail_read_status.message_id,
+            mailbox_message.message_id,
+        )
+        self.assertEqual(
+            mail_read_status.message_num,
+            mailbox_message.message_number,
+        )
 
-        pop3_connection.top.side_effect = _top
+        mark_status(MailReadStatuses.READ)
+        mail_read_status.refresh_from_db()
+        self.assertEqual(
+            mail_read_status.status,
+            MailReadStatuses.READ,
+        )
+
+    def test_mark_status_read_status_with_initial_object(self):
+        mailbox_config = MailboxConfigFactory()
+
+        message = Message()
+        message["Message-Id"] = Header("<12345@example.com>")  # /PS-IGNORE
+
+        pop3_connection = MagicMock()
+        pop3_connection.top.return_value = MagicMock(), message.as_bytes().split(b"\n"), MagicMock()
+
+        mailbox_message = MailboxMessage(
+            pop3_connection,
+            mailbox_config,
+            "1",
+        )
+
+        mailbox_config.mail_read_statuses.create(
+            message_id="12345",
+            message_num="1",
+        )
+        mark_status = MarkStatus(mailbox_config, mailbox_message)
+        mail_read_status = mailbox_config.mail_read_statuses.get()
+        self.assertEqual(
+            mail_read_status.status,
+            MailReadStatuses.UNREAD,
+        )
+        self.assertEqual(
+            mail_read_status.message_id,
+            mailbox_message.message_id,
+        )
+        self.assertEqual(
+            mail_read_status.message_num,
+            mailbox_message.message_number,
+        )
+
+        mark_status(MailReadStatuses.READ)
+        mail_read_status.refresh_from_db()
+        self.assertEqual(
+            mail_read_status.status,
+            MailReadStatuses.READ,
+        )
+
+
+class MailboxMessageTests(TestCase):
+    def test_message_header(self):
+        msg = Message()
+        header = Header("value")
+        msg["header"] = header
+
+        pop3_connection = MagicMock()
+        pop3_connection.top.return_value = MagicMock(), msg.as_bytes().split(b"\n"), MagicMock()
+        mailbox_config = MailboxConfigFactory()
+        message_number = "1"
+
+        mailbox_message = MailboxMessage(pop3_connection, mailbox_config, message_number)
+        pop3_connection.top.assert_not_called()
+
+        self.assertIsInstance(mailbox_message.message_header, Message)
+        self.assertEqual(mailbox_message.message_header["header"], "value")
+        pop3_connection.top.assert_called_once_with(message_number, 0)
+
+        msg = Message()
+        header = Header("a different value")
+        msg["header"] = header
+
+        pop3_connection.top.return_value = MagicMock(), msg.as_bytes().split(b"\n"), MagicMock()
+
+        self.assertIsInstance(mailbox_message.message_header, Message)
+        self.assertEqual(mailbox_message.message_header["header"], "value")
+        pop3_connection.top.assert_called_once_with(message_number, 0)
+
+    def test_message_id(self):
+        mailbox_config = MailboxConfigFactory()
+
+        message = Message()
+        message["Message-Id"] = Header("<12345@example.com>")  # /PS-IGNORE
+
+        pop3_connection = MagicMock()
+        pop3_connection.top.return_value = MagicMock(), message.as_bytes().split(b"\n"), MagicMock()
+
+        mailbox_message = MailboxMessage(
+            pop3_connection,
+            mailbox_config,
+            "1",
+        )
+        self.assertEqual(
+            mailbox_message.message_id,
+            "12345",
+        )
+        pop3_connection.top.assert_called_once_with("1", 0)
+
+        message = Message()
+        message["Message-Id"] = Header("<67890@example.com>")  # /PS-IGNORE
+
+        pop3_connection.top.return_value = MagicMock(), message.as_bytes().split(b"\n"), MagicMock()
+        self.assertEqual(
+            mailbox_message.message_id,
+            "12345",
+        )
+        pop3_connection.top.assert_called_once_with("1", 0)
+
+    def test_mail_data(self):
+        mailbox_config = MailboxConfigFactory()
+
+        message = Message()
+        message["Message-Id"] = Header("<12345@example.com>")  # /PS-IGNORE
+
+        pop3_connection = MagicMock()
+        pop3_connection.top.return_value = MagicMock(), message.as_bytes().split(b"\n"), MagicMock()
+        mail_data = MagicMock()
+        pop3_connection.retr.return_value = mail_data
+
+        mailbox_message = MailboxMessage(
+            pop3_connection,
+            mailbox_config,
+            "1",
+        )
+        self.assertEqual(
+            mailbox_message.mail_data,
+            mail_data,
+        )
+        pop3_connection.retr.assert_called_with("1")
+
+        message = Message()
+        message["Message-Id"] = Header("<67890@example.com>")  # /PS-IGNORE
+
+        pop3_connection.top.return_value = MagicMock(), message.as_bytes().split(b"\n"), MagicMock()
+        different_mail_data = MagicMock()
+        pop3_connection.retr.return_value = different_mail_data
 
         self.assertEqual(
-            list(get_unread_message_ids(pop3_connection, mailbox)),
-            [
-                ("message-id-1", "1"),
-                ("message-id-2", "2"),
-                ("message-id-3", "3"),
-            ],
+            mailbox_message.mail_data,
+            mail_data,
         )
-
-    def test_unread_message_ids_skips_read_messages(self):
-        pop3_connection = MagicMock()
-        mailbox = MailboxConfigFactory()
-
-        pop3_connection.list.return_value = (
-            MagicMock(),
-            [
-                b"1 11111",
-                b"2 22222",
-                b"3 33333",
-            ],
-            MagicMock(),
-        )
-
-        def _top(which, howmuch):
-            self.assertEqual(howmuch, 0)
-            msg = Message()
-            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
-            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
-            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
-
-        pop3_connection.top.side_effect = _top
-
-        MailReadStatusFactory(
-            mailbox=mailbox,
-            status=MailReadStatuses.READ,
-            message_id="message-id-1",
-        )
-        MailReadStatusFactory(
-            mailbox=mailbox,
-            status=MailReadStatuses.UNPROCESSABLE,
-            message_id="message-id-3",
-        )
-
-        self.assertEqual(
-            list(get_unread_message_ids(pop3_connection, mailbox)),
-            [
-                ("message-id-2", "2"),
-            ],
-        )
-
-    def test_unread_message_ids_skips_read_messages(self):
-        pop3_connection = MagicMock()
-        mailbox = MailboxConfigFactory()
-
-        pop3_connection.list.return_value = (
-            MagicMock(),
-            [
-                b"1 11111",
-                b"2 22222",
-                b"3 33333",
-            ],
-            MagicMock(),
-        )
-
-        def _top(which, howmuch):
-            self.assertEqual(howmuch, 0)
-            msg = Message()
-            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
-            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
-            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
-
-        pop3_connection.top.side_effect = _top
-
-        MailReadStatusFactory(
-            mailbox=mailbox,
-            status=MailReadStatuses.READ,
-            message_id="message-id-1",
-        )
-        MailReadStatusFactory(
-            mailbox=mailbox,
-            status=MailReadStatuses.UNPROCESSABLE,
-            message_id="message-id-3",
-        )
-
-        self.assertEqual(
-            list(get_unread_message_ids(pop3_connection, mailbox)),
-            [
-                ("message-id-2", "2"),
-            ],
-        )
-
-    def test_unread_message_ids_skips_invalid_senders(self):
-        pop3_connection = MagicMock()
-        mailbox = MailboxConfigFactory()
-
-        sender_map = {
-            "1": settings.SPIRE_FROM_ADDRESS,
-            "2": "invalid@example.com",  # /PS-IGNORE
-            "3": settings.HMRC_TO_DIT_REPLY_ADDRESS,
-        }
-
-        pop3_connection.list.return_value = (
-            MagicMock(),
-            [
-                b"1 11111",
-                b"2 22222",
-                b"3 33333",
-            ],
-            MagicMock(),
-        )
-
-        def _top(which, howmuch):
-            self.assertEqual(howmuch, 0)
-            msg = Message()
-            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
-            msg["From"] = Header(sender_map[which])
-            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
-
-        pop3_connection.top.side_effect = _top
-
-        self.assertEqual(
-            list(get_unread_message_ids(pop3_connection, mailbox)),
-            [
-                ("message-id-1", "1"),
-                ("message-id-3", "3"),
-            ],
-        )
-
-    def test_unread_message_ids_checks_up_to_limit(self):
-        pop3_connection = MagicMock()
-        mailbox = MailboxConfigFactory()
-
-        pop3_connection.list.return_value = (
-            MagicMock(),
-            [
-                b"1 11111",
-                b"2 22222",
-                b"3 33333",
-            ],
-            MagicMock(),
-        )
-
-        def _top(which, howmuch):
-            self.assertEqual(howmuch, 0)
-            msg = Message()
-            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
-            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
-            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
-
-        pop3_connection.top.side_effect = _top
-
-        self.assertEqual(
-            list(get_unread_message_ids(pop3_connection, mailbox, 2)),
-            [
-                ("message-id-2", "2"),
-                ("message-id-3", "3"),
-            ],
-        )
+        pop3_connection.retr.assert_called_with("1")
 
 
 class GetMessageIteratorTests(TestCase):
@@ -422,6 +431,151 @@ class GetMessageIteratorTests(TestCase):
                 "<MailReadStatus: message_id=message-id-3 status=UNPROCESSABLE>",
             ],
             transform=repr,
+        )
+
+    def test_get_message_iterator_invalid_senders(self):
+        self.assertEqual(MailboxConfig.objects.count(), 0)
+
+        mail_server = MagicMock(spec=MailServer)
+        type(mail_server).username = "test@example.com"  # /PS-IGNORE
+
+        mock_pop3_connection = mail_server.connect_to_pop3().__enter__()
+        mock_pop3_connection.list.return_value = (
+            MagicMock(),
+            [
+                b"1 11111",
+                b"2 22222",
+                b"3 33333",
+            ],
+            MagicMock(),
+        )
+
+        lookup_from = {
+            "1": "invalid@example.com",  # /PS-IGNORE
+            "2": settings.SPIRE_FROM_ADDRESS,
+            "3": "invalid@example.com",  # /PS-IGNORE
+        }
+
+        def _top(which, howmuch):
+            self.assertEqual(howmuch, 0)
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["To"] = Header("to@example.com")  # /PS-IGNORE
+            msg["From"] = Header(lookup_from[which])
+            msg["Date"] = Header("2021-04-23T12:38Z")
+            msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
+            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+
+        mock_pop3_connection.top.side_effect = _top
+
+        def _retr(which):
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["To"] = Header("to@example.com")  # /PS-IGNORE
+            msg["From"] = Header(lookup_from[which])
+            msg["Date"] = Header("2021-04-23T12:38Z")
+            msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
+            return b"+OK", msg.as_bytes().split(b"\n\n"), len(msg.as_bytes())
+
+        mock_pop3_connection.retr.side_effect = _retr
+
+        iterator = get_message_iterator(mail_server)
+        dtos, _ = zip(*iterator)
+
+        self.assertEqual(
+            list(dtos),
+            [
+                EmailMessageDto(
+                    run_number=2,
+                    sender=settings.SPIRE_FROM_ADDRESS,
+                    receiver="to@example.com",  # /PS-IGNORE
+                    date=datetime.datetime(2021, 4, 23, 12, 38, tzinfo=tzlocal()),
+                    subject="abc_xyz_nnn_yyy_2_datetime",
+                    body=b"",
+                    attachment=[None, None],
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>\\nTo: to@example.com\\nFrom: {settings.SPIRE_FROM_ADDRESS}\\nDate: 2021-04-23T12:38Z\\nSubject: abc_xyz_nnn_yyy_2_datetime', b''], 143)",  # /PS-IGNORE
+                ),
+            ],
+        )
+
+        mailbox = MailboxConfig.objects.get(username="test@example.com")  # /PS-IGNORE
+        self.assertQuerySetEqual(
+            mailbox.mail_read_statuses.order_by("message_id"),
+            [
+                "<MailReadStatus: message_id=message-id-2 status=UNREAD>",
+            ],
+            transform=repr,
+        )
+
+    def test_get_message_iterator_already_read(self):
+        self.assertEqual(MailboxConfig.objects.count(), 0)
+
+        mail_server = MagicMock(spec=MailServer)
+        type(mail_server).username = "test@example.com"  # /PS-IGNORE
+
+        mailbox_config = MailboxConfigFactory(username="test@example.com")  # /PS-IGNORE
+        mailbox_config.mail_read_statuses.create(
+            message_num=1,
+            message_id="message-id-1",
+            status=MailReadStatuses.READ,
+        )
+        mailbox_config.mail_read_statuses.create(
+            message_num=3,
+            message_id="message-id-3",
+            status=MailReadStatuses.UNPROCESSABLE,
+        )
+
+        mock_pop3_connection = mail_server.connect_to_pop3().__enter__()
+        mock_pop3_connection.list.return_value = (
+            MagicMock(),
+            [
+                b"1 11111",
+                b"2 22222",
+                b"3 33333",
+            ],
+            MagicMock(),
+        )
+
+        def _top(which, howmuch):
+            self.assertEqual(howmuch, 0)
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["To"] = Header("to@example.com")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            msg["Date"] = Header("2021-04-23T12:38Z")
+            msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
+            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+
+        mock_pop3_connection.top.side_effect = _top
+
+        def _retr(which):
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["To"] = Header("to@example.com")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            msg["Date"] = Header("2021-04-23T12:38Z")
+            msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
+            return b"+OK", msg.as_bytes().split(b"\n\n"), len(msg.as_bytes())
+
+        mock_pop3_connection.retr.side_effect = _retr
+
+        iterator = get_message_iterator(mail_server)
+        dtos, _ = zip(*iterator)
+
+        self.assertEqual(
+            list(dtos),
+            [
+                EmailMessageDto(
+                    run_number=2,
+                    sender=settings.SPIRE_FROM_ADDRESS,
+                    receiver="to@example.com",  # /PS-IGNORE
+                    date=datetime.datetime(2021, 4, 23, 12, 38, tzinfo=tzlocal()),
+                    subject="abc_xyz_nnn_yyy_2_datetime",
+                    body=b"",
+                    attachment=[None, None],
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>\\nTo: to@example.com\\nFrom: {settings.SPIRE_FROM_ADDRESS}\\nDate: 2021-04-23T12:38Z\\nSubject: abc_xyz_nnn_yyy_2_datetime', b''], 143)",  # /PS-IGNORE
+                ),
+            ],
         )
 
     def test_get_message_iterator_retr_failure(self):
