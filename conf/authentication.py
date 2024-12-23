@@ -49,7 +49,7 @@ def _authenticate(request):
 
     # TODO: remove this when migration to DBT platform is complete as this hack is only required on Gov Paas
     if is_env_gov_paas():
-        convert_url(url)
+        convert_gov_paas_url(url)
 
     if hawk_authentication_enabled():
         return Receiver(
@@ -117,5 +117,5 @@ def is_env_gov_paas() -> bool:
     return settings.IS_ENV_GOV_PAAS
 
 
-def convert_url(url):
+def convert_gov_paas_url(url):
     return url.replace("http", "https")

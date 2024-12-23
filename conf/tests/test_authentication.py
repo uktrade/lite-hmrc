@@ -1,9 +1,9 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
-from conf.authentication import convert_url
+from conf.authentication import convert_gov_paas_url
 
 
 # override_settings doesn't work - left here for reference
@@ -28,10 +28,11 @@ class TestHawkAuthentication(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
     @patch("conf.authentication.is_env_gov_paas", lambda: True)
-    @patch("conf.authentication.convert_url")
-    def test_hawk_authentication_calls_convert_url_on_gov_paas(self, mock_convert_url):
+    @patch("conf.authentication.convert_gov_paas_url")
+    def test_hawk_authentication_calls_convert_url_on_gov_paas(self, mock_convert_gov_paas_url):
         resp = self.client.get(self.test_url)
-        mock_convert_url.assert_called_with(resp.wsgi_request.build_absolute_uri())
+        mock_convert_gov_paas_url.assert_called_with(resp.wsgi_request.build_absolute_uri())
 
-    def test_convert_url(self):
-        assert convert_url("http") == "https"
+    def test_convert_gov_paas_url(self):
+        resp = self.client.get(self.test_url)
+        assert convert_gov_paas_url(resp.wsgi_request.build_absolute_uri()) == "https://testserver/mail/licence/"
