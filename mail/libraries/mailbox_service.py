@@ -9,7 +9,7 @@ from mail.libraries.helpers import to_mail_message_dto
 from mail.models import Mail
 from mailboxes.enums import MailReadStatuses
 from mailboxes.models import MailboxConfig, MailReadStatus
-from mailboxes.utils import get_message_header, get_message_id, is_from_valid_sender
+from mailboxes.utils import get_message_header, get_message_id, get_message_number, is_from_valid_sender
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +36,7 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
     # latest emails will always be at the end.
     mail_message_ids = []
     for m in mails[-incoming_email_check_limit:]:
-        listing_msg = m.decode(settings.DEFAULT_ENCODING)
-        msg_num = listing_msg.split()[0]
+        msg_num = get_message_number(m)
         message_header = get_message_header(pop3_connection, msg_num)
         if not is_from_valid_sender(message_header, [settings.SPIRE_FROM_ADDRESS, settings.HMRC_TO_DIT_REPLY_ADDRESS]):
             logger.warning(
