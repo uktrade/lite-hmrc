@@ -6,7 +6,6 @@ from email.utils import parseaddr
 from django.conf import settings
 
 from mailboxes.enums import MailReadStatuses
-from mailboxes.models import MailReadStatus
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +34,14 @@ def get_message_id(msg_header):
 
 
 def get_read_messages(mailbox_config):
-    return [
-        str(m.message_id)
-        for m in MailReadStatus.objects.filter(
-            mailbox=mailbox_config, status__in=[MailReadStatuses.READ, MailReadStatuses.UNPROCESSABLE]
-        )
-    ]
+    mail_read_statuses = mailbox_config.mailreadstatus_set.filter(
+        status__in=[
+            MailReadStatuses.READ,
+            MailReadStatuses.UNPROCESSABLE,
+        ]
+    )
+    read_message_ids = set(mail_read_statuses.values_list("message_id", flat=True))
+    return read_message_ids
 
 
 def is_from_valid_sender(msg_header, valid_addresses):

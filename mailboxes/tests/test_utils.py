@@ -71,7 +71,7 @@ class GetReadMessagesTests(TestCase):
         )
         self.assertEqual(
             get_read_messages(a_mailbox),
-            ["a-read", "a-unprocessable"],
+            {"a-read", "a-unprocessable"},
         )
 
         b_mailbox = MailboxConfigFactory()
@@ -92,7 +92,7 @@ class GetReadMessagesTests(TestCase):
         )
         self.assertEqual(
             get_read_messages(b_mailbox),
-            ["b-read", "b-unprocessable"],
+            {"b-read", "b-unprocessable"},
         )
 
 
