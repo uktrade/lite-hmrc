@@ -45,12 +45,13 @@ def _authenticate(request):
     """
     Raises a HawkFail exception if the passed request cannot be authenticated
     """
-
+    url = request.build_absolute_uri()
+    logger.info(f"URL: {url}, Method: {request.method}, Body: {request.body}")
     if hawk_authentication_enabled():
         return Receiver(
             _lookup_credentials,
             request.META["HTTP_HAWK_AUTHENTICATION"],
-            request.build_absolute_uri(),
+            url,
             request.method,
             content=request.body,
             content_type=request.content_type,
