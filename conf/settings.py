@@ -3,7 +3,6 @@ import sys
 import uuid
 import sentry_sdk
 
-from django_log_formatter_ecs import ECSFormatter
 from environ import Env
 from pathlib import Path
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -25,10 +24,7 @@ if os.path.exists(ENV_FILE):
 
 env = Env()
 
-VCAP_SERVICES = env.json("VCAP_SERVICES", {})
-
 IS_ENV_DBT_PLATFORM = is_copilot()
-IS_ENV_GOV_PAAS = bool(VCAP_SERVICES)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("DJANGO_SECRET_KEY")
@@ -265,51 +261,7 @@ def _build_redis_url(base_url, db_number, **query_args):
     return f"{base_url}/{db_number}?{encoded_query_args}"
 
 
-if IS_ENV_GOV_PAAS:
-    # Database
-    # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
-    DATABASES = {"default": env.db()}
-    for bucket_details in VCAP_SERVICES["aws-s3-bucket"]:
-        if S3_BUCKET_TAG_ANONYMISER_DESTINATION in bucket_details["tags"]:
-            aws_credentials = bucket_details["credentials"]
-            DB_ANONYMISER_AWS_ENDPOINT_URL = None
-            DB_ANONYMISER_AWS_ACCESS_KEY_ID = aws_credentials["aws_access_key_id"]
-            DB_ANONYMISER_AWS_SECRET_ACCESS_KEY = aws_credentials["aws_secret_access_key"]
-            DB_ANONYMISER_AWS_REGION = aws_credentials["aws_region"]
-            DB_ANONYMISER_AWS_STORAGE_BUCKET_NAME = aws_credentials["bucket_name"]
-    REDIS_BASE_URL = VCAP_SERVICES["redis"][0]["credentials"]["uri"]
-    # Application Performance Monitoring
-    if env.str("ELASTIC_APM_SERVER_URL", ""):
-        ELASTIC_APM = {
-            "SERVICE_NAME": env.str("ELASTIC_APM_SERVICE_NAME", default="lite-hmrc"),
-            "SECRET_TOKEN": env.str("ELASTIC_APM_SECRET_TOKEN"),
-            "SERVER_URL": env.str("ELASTIC_APM_SERVER_URL"),
-            "ENVIRONMENT": env.str("SENTRY_ENVIRONMENT"),
-            "DEBUG": DEBUG,
-        }
-        INSTALLED_APPS.append("elasticapm.contrib.django")
-
-        if REDIS_BASE_URL:
-            # Give celery tasks their own redis DB - future uses of redis should use a different DB
-            REDIS_CELERY_DB = env("REDIS_CELERY_DB", default=0)
-            is_redis_ssl = REDIS_BASE_URL.startswith("rediss://")
-            url_args = {"ssl_cert_reqs": "CERT_REQUIRED"} if is_redis_ssl else {}
-
-            CELERY_BROKER_URL = _build_redis_url(REDIS_BASE_URL, REDIS_CELERY_DB, **url_args)
-            CELERY_RESULT_BACKEND = CELERY_BROKER_URL
-
-        CACHES = {
-            "default": {
-                "BACKEND": "django.core.cache.backends.redis.RedisCache",
-                "LOCATION": REDIS_BASE_URL,
-            }
-        }
-
-        LOGGING.update({"formatters": {"ecs_formatter": {"()": ECSFormatter}}})
-        LOGGING.update({"handlers": {"ecs": {"class": "logging.StreamHandler", "formatter": "ecs_formatter"}}})
-        LOGGING.update({"root": {"handlers": ["ecs"], "level": _log_level.upper()}})
-
-elif IS_ENV_DBT_PLATFORM:
+if IS_ENV_DBT_PLATFORM:
     ALLOWED_HOSTS = setup_allowed_hosts(ALLOWED_HOSTS)
     DATABASES = {"default": dj_database_url.config(default=database_url_from_env("DATABASE_CREDENTIALS"))}
     # Application Performance Monitoring
