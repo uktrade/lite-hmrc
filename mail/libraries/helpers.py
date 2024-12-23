@@ -1,6 +1,5 @@
 import json
 import logging
-
 from email.message import Message
 from email.parser import Parser
 from json.decoder import JSONDecodeError
@@ -13,7 +12,6 @@ from mail import serializers
 from mail.enums import ExtractTypeEnum, LicenceStatusEnum, ReceptionStatusEnum, SourceEnum
 from mail.libraries.email_message_dto import EmailMessageDto, HmrcEmailMessageDto
 from mail.models import GoodIdMapping, LicenceData, LicenceIdMapping, Mail, UsageData
-
 
 ALLOWED_FILE_MIMETYPES = ["application/octet-stream", "text/plain"]
 
@@ -117,7 +115,6 @@ def get_run_number(patterned_text: str) -> int:
     Gets run-number from a patterned text: abc_xyz_nnn_yyy_1234_datetime.
     :returns found number; ValueError if it not found or is not a number
     """
-
     if patterned_text is None:
         raise ValueError("None received")
 
