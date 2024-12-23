@@ -9,18 +9,15 @@ from mail.libraries.helpers import to_mail_message_dto
 from mail.models import Mail
 from mailboxes.enums import MailReadStatuses
 from mailboxes.models import MailboxConfig, MailReadStatus
-from mailboxes.utils import get_message_header, get_message_id, get_message_number, is_from_valid_sender
+from mailboxes.utils import (
+    get_message_header,
+    get_message_id,
+    get_message_number,
+    get_read_messages,
+    is_from_valid_sender,
+)
 
 logger = logging.getLogger(__name__)
-
-
-def get_read_messages(mailbox_config):
-    return [
-        str(m.message_id)
-        for m in MailReadStatus.objects.filter(
-            mailbox=mailbox_config, status__in=[MailReadStatuses.READ, MailReadStatuses.UNPROCESSABLE]
-        )
-    ]
 
 
 def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[Tuple[EmailMessageDto, Callable]]:
