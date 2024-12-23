@@ -68,7 +68,32 @@ def check_and_route_emails():
 
     email_message_dtos.extend(reply_message_dtos)
 
-    if not email_message_dtos:
+    if email_message_dtos:
+        for email, mark_status in email_message_dtos:
+            try:
+                logger.info("Processing mail with subject %s", email.subject)
+                serialize_email_message(email)
+                mark_status(MailReadStatuses.READ)
+            except ValidationError as ve:
+                logger.info("Marking message %s as UNPROCESSABLE. %s", email.subject, ve.detail)
+                mark_status(MailReadStatuses.UNPROCESSABLE)
+
+        logger.info("Finished checking for emails")
+
+        mail = (
+            select_email_for_sending()
+        )  # Can return None in the event of in flight or no pending or no reply_received
+        if mail:
+            logger.info(
+                "Selected mail (%s) for sending, extract type %s, current status %s",
+                mail.id,
+                mail.extract_type,
+                mail.status,
+            )
+            _collect_and_send(mail)
+
+            check_and_notify_rejected_licences(mail)
+    else:
         pending_message = check_for_pending_messages()
         if pending_message:
             logger.info(
@@ -83,33 +108,6 @@ def check_and_route_emails():
             hmrc_to_dit_server.user,
             spire_to_dit_server.user,
         )
-
-        publish_queue_status()
-
-        return
-
-    for email, mark_status in email_message_dtos:
-        try:
-            logger.info("Processing mail with subject %s", email.subject)
-            serialize_email_message(email)
-            mark_status(MailReadStatuses.READ)
-        except ValidationError as ve:
-            logger.info("Marking message %s as UNPROCESSABLE. %s", email.subject, ve.detail)
-            mark_status(MailReadStatuses.UNPROCESSABLE)
-
-    logger.info("Finished checking for emails")
-
-    mail = select_email_for_sending()  # Can return None in the event of in flight or no pending or no reply_received
-    if mail:
-        logger.info(
-            "Selected mail (%s) for sending, extract type %s, current status %s",
-            mail.id,
-            mail.extract_type,
-            mail.status,
-        )
-        _collect_and_send(mail)
-
-        check_and_notify_rejected_licences(mail)
 
     publish_queue_status()
 
