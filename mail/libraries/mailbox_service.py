@@ -8,7 +8,7 @@ from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import to_mail_message_dto
 from mail.models import Mail
 from mailboxes.enums import MailReadStatuses
-from mailboxes.models import MailboxConfig, MailReadStatus
+from mailboxes.models import MailboxConfig
 from mailboxes.utils import (
     get_message_header,
     get_message_id,
@@ -52,60 +52,63 @@ def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[T
     logger.info("Number of messages READ/UNPROCESSABLE in %s are %s", mailbox_config.username, len(read_messages))
 
     for message_id, message_num in mail_message_ids:
+        if message_id in read_messages:
+            continue
+
         # only return messages we haven't seen before
-        if message_id not in read_messages:
-            read_status, _ = MailReadStatus.objects.get_or_create(
-                message_id=message_id, message_num=message_num, mailbox=mailbox_config
+        read_status, _ = mailbox_config.mail_read_statuses.get_or_create(
+            message_id=message_id,
+            message_num=message_num,
+        )
+
+        def mark_status(status):
+            """
+            :param status: A choice from `MailReadStatuses.choices`
+            """
+            logger.info(
+                "Marking message_id %s with message_num %s from %s as %s",
+                message_id,
+                message_num,
+                read_status.mailbox,
+                status,
             )
+            read_status.status = status
+            read_status.save()
 
-            def mark_status(status):
-                """
-                :param status: A choice from `MailReadStatuses.choices`
-                """
-                logger.info(
-                    "Marking message_id %s with message_num %s from %s as %s",
-                    message_id,
-                    message_num,
-                    read_status.mailbox.username,
-                    status,
-                )
-                read_status.status = status
-                read_status.save()
+        try:
+            m = pop3_connection.retr(message_num)
+            logger.info(
+                "Retrieved message_id %s with message_num %s from %s",
+                message_id,
+                message_num,
+                read_status.mailbox,
+            )
+        except error_proto as err:
+            logger.error(
+                "Unable to RETR message num %s with Message-ID %s in %s: %s",
+                message_num,
+                message_id,
+                mailbox_config,
+                err,
+                exc_info=True,
+            )
+            continue
 
-            try:
-                m = pop3_connection.retr(message_num)
-                logger.info(
-                    "Retrieved message_id %s with message_num %s from %s",
-                    message_id,
-                    message_num,
-                    read_status.mailbox.username,
-                )
-            except error_proto as err:
-                logger.error(
-                    "Unable to RETR message num %s with Message-ID %s in %s: %s",
-                    message_num,
-                    message_id,
-                    mailbox_config,
-                    err,
-                    exc_info=True,
-                )
-                continue
+        try:
+            mail_message = to_mail_message_dto(m)
+        except ValueError as ve:
+            logger.error(
+                "Unable to convert message num %s with Message-Id %s to DTO in %s: %s",
+                message_num,
+                message_id,
+                mailbox_config,
+                ve,
+                exc_info=True,
+            )
+            mark_status(MailReadStatuses.UNPROCESSABLE)
+            continue
 
-            try:
-                mail_message = to_mail_message_dto(m)
-            except ValueError as ve:
-                logger.error(
-                    "Unable to convert message num %s with Message-Id %s to DTO in %s: %s",
-                    message_num,
-                    message_id,
-                    mailbox_config,
-                    ve,
-                    exc_info=True,
-                )
-                mark_status(MailReadStatuses.UNPROCESSABLE)
-                continue
-
-            yield mail_message, mark_status
+        yield mail_message, mark_status
 
 
 def find_mail_of(extract_types: List[str], reception_status: str) -> Mail or None:
