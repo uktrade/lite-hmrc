@@ -59,12 +59,9 @@ def is_from_valid_sender(message, valid_addresses):
 
 
 class MarkStatus:
-    def __init__(self, mailbox_config, message):
+    def __init__(self, message, read_status):
         self.message = message
-        self.read_status, _ = mailbox_config.mail_read_statuses.get_or_create(
-            message_id=message.message_id,
-            message_num=message.message_number,
-        )
+        self.read_status = read_status
 
     def __call__(self, status):
         logger.info(
@@ -97,6 +94,10 @@ class MailboxMessage:
     @cached_property
     def mail_data(self):
         return self.pop3_connection.retr(self.message_number)
+
+    @cached_property
+    def binary_data(self):
+        return b"".join(self.mail_data[1])
 
 
 def get_messages(pop3_connection, mailbox_config, max_limit):
@@ -150,7 +151,13 @@ def get_message_iterator(server: MailServer) -> Iterator[Tuple[EmailMessageDto, 
         if is_read(message, read_messages):
             continue
 
-        mark_status = MarkStatus(mailbox_config, message)
+        read_status, _ = mailbox_config.mail_read_statuses.get_or_create(
+            message_id=message.message_id,
+            message_num=message.message_number,
+            mail_data=message.binary_data,
+        )
+
+        mark_status = MarkStatus(message, read_status)
 
         try:
             message_dto = get_message_dto(message)

@@ -432,6 +432,10 @@ class GetMessageIteratorTests(TestCase):
             ],
             transform=repr,
         )
+        self.assertEqual(
+            bytes(mailbox.mail_read_statuses.all()[0].mail_data),
+            b"Message-Id: <message-id-1@example.com>\nTo: to@example.com\nFrom: spire@example.com\nDate: 2021-04-23T12:38Z\nSubject: abc_xyz_nnn_yyy_1_datetime",  # /PS-IGNORE
+        )
 
     def test_get_message_iterator_invalid_senders(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
