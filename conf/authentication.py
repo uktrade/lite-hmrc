@@ -45,8 +45,13 @@ def _authenticate(request):
     """
     Raises a HawkFail exception if the passed request cannot be authenticated
     """
+    
     url = request.build_absolute_uri()
-    logger.info(f"URL: {url}, Method: {request.method}, Body: {request.body}")
+
+    # TODO: remove this when migration to DBT platform is complete as this hack is only required on Gov Paas
+    if settings.IS_ENV_GOV_PAAS:
+        url.replace("http", "https")
+
     if hawk_authentication_enabled():
         return Receiver(
             _lookup_credentials,
