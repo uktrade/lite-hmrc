@@ -180,9 +180,8 @@ class ManageInboxTests(LiteHMRCTestClient):
         Test processing of licence reply from HMRC with rejected licences.
         If SEND_REJECTED_EMAIL=True then we send email notifications to users if any licences are rejected.
         """
-        obj = MagicMock()
-        mock_get_hmrc_to_dit_mailserver.return_value = obj
-        mock_get_spire_to_dit_mailserver.return_value = obj
+        mock_get_hmrc_to_dit_mailserver.return_value = MagicMock()
+        mock_get_spire_to_dit_mailserver.return_value = MagicMock()
 
         run_number = 78120
         mail = MailFactory(

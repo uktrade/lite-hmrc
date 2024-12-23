@@ -53,19 +53,20 @@ def get_hmrc_to_dit_mailserver() -> MailServer:
 
 def check_and_route_emails():
     logger.info("Checking for emails")
+
     hmrc_to_dit_server = get_hmrc_to_dit_mailserver()
+    spire_to_dit_server = get_spire_to_dit_mailserver()
+
+    if hmrc_to_dit_server == spire_to_dit_server:
+        raise ValueError("HMRC and SPIRE servers should not be the same")
+
     email_message_dtos = get_email_message_dtos(hmrc_to_dit_server, number=None)
     email_message_dtos = sort_dtos_by_date(email_message_dtos)
 
-    spire_to_dit_server = get_spire_to_dit_mailserver()
-    if hmrc_to_dit_server != spire_to_dit_server:
-        # if the config for the return path is different to outgoing mail path
-        # then check the return path otherwise don't bother as it will contain the
-        # same emails.
-        reply_message_dtos = get_email_message_dtos(spire_to_dit_server)
-        reply_message_dtos = sort_dtos_by_date(reply_message_dtos)
+    reply_message_dtos = get_email_message_dtos(spire_to_dit_server)
+    reply_message_dtos = sort_dtos_by_date(reply_message_dtos)
 
-        email_message_dtos.extend(reply_message_dtos)
+    email_message_dtos.extend(reply_message_dtos)
 
     if not email_message_dtos:
         pending_message = check_for_pending_messages()
