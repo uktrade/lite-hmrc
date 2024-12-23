@@ -35,6 +35,7 @@ class MailReadStatus(TimeStampedModel):
         on_delete=models.CASCADE,
         related_name="mail_read_statuses",
     )
+    mail_data = models.BinaryField(null=True)
 
     class Meta:
         db_table = (
