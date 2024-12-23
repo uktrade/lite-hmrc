@@ -24,7 +24,7 @@ from mail.models import Mail
 from mail_servers.servers import MailServer, smtp_send
 from mail_servers.utils import get_mail_server
 from mailboxes.enums import MailReadStatuses
-from mailboxes.utils import get_message_iterator
+from mailboxes.utils import get_unread_messages_iterator
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,50 @@ def get_hmrc_to_dit_mailserver() -> MailServer:
     return mail_server
 
 
+def process_unread_email_messages(unread_email_message_dtos):
+    for email, mark_status in unread_email_message_dtos:
+        logger.info("Processing mail with subject %s", email.subject)
+        try:
+            serialize_email_message(email)
+        except ValidationError as ve:
+            logger.info("Marking message %s as UNPROCESSABLE. %s", email.subject, ve.detail)
+            mark_status(MailReadStatuses.UNPROCESSABLE)
+        else:
+            mark_status(MailReadStatuses.READ)
+
+    logger.info("Finished checking for emails")
+
+    mail = select_email_for_sending()  # Can return None in the event of in flight or no pending or no reply_received
+    if not mail:
+        return
+
+    logger.info(
+        "Selected mail (%s) for sending, extract type %s, current status %s",
+        mail.id,
+        mail.extract_type,
+        mail.status,
+    )
+    _collect_and_send(mail)
+    check_and_notify_rejected_licences(mail)
+
+
+def process_pending_messages(hmrc_to_dit_server, spire_to_dit_server):
+    pending_message = check_for_pending_messages()
+    if pending_message:
+        logger.info(
+            "Found pending mail (%s) of extract type %s for sending",
+            pending_message.id,
+            pending_message.extract_type,
+        )
+        _collect_and_send(pending_message)
+
+    logger.info(
+        "No new emails found from %s or %s",
+        hmrc_to_dit_server.user,
+        spire_to_dit_server.user,
+    )
+
+
 def check_and_route_emails():
     logger.info("Checking for emails")
 
@@ -60,54 +104,18 @@ def check_and_route_emails():
     if hmrc_to_dit_server == spire_to_dit_server:
         raise ValueError("HMRC and SPIRE servers should not be the same")
 
-    email_message_dtos = get_email_message_dtos(hmrc_to_dit_server, number=None)
-    email_message_dtos = sort_dtos_by_date(email_message_dtos)
+    unread_email_message_dtos = get_unread_email_message_dtos(hmrc_to_dit_server, number=None)
+    unread_email_message_dtos = sort_dtos_by_date(unread_email_message_dtos)
 
-    reply_message_dtos = get_email_message_dtos(spire_to_dit_server)
-    reply_message_dtos = sort_dtos_by_date(reply_message_dtos)
+    unread_reply_message_dtos = get_unread_email_message_dtos(spire_to_dit_server)
+    unread_reply_message_dtos = sort_dtos_by_date(unread_reply_message_dtos)
 
-    email_message_dtos.extend(reply_message_dtos)
+    unread_email_message_dtos.extend(unread_reply_message_dtos)
 
-    if email_message_dtos:
-        for email, mark_status in email_message_dtos:
-            try:
-                logger.info("Processing mail with subject %s", email.subject)
-                serialize_email_message(email)
-                mark_status(MailReadStatuses.READ)
-            except ValidationError as ve:
-                logger.info("Marking message %s as UNPROCESSABLE. %s", email.subject, ve.detail)
-                mark_status(MailReadStatuses.UNPROCESSABLE)
-
-        logger.info("Finished checking for emails")
-
-        mail = (
-            select_email_for_sending()
-        )  # Can return None in the event of in flight or no pending or no reply_received
-        if mail:
-            logger.info(
-                "Selected mail (%s) for sending, extract type %s, current status %s",
-                mail.id,
-                mail.extract_type,
-                mail.status,
-            )
-            _collect_and_send(mail)
-
-            check_and_notify_rejected_licences(mail)
+    if unread_email_message_dtos:
+        process_unread_email_messages(unread_email_message_dtos)
     else:
-        pending_message = check_for_pending_messages()
-        if pending_message:
-            logger.info(
-                "Found pending mail (%s) of extract type %s for sending",
-                pending_message.id,
-                pending_message.extract_type,
-            )
-            _collect_and_send(pending_message)
-
-        logger.info(
-            "No new emails found from %s or %s",
-            hmrc_to_dit_server.user,
-            spire_to_dit_server.user,
-        )
+        process_pending_messages(hmrc_to_dit_server, spire_to_dit_server)
 
     publish_queue_status()
 
@@ -176,8 +184,11 @@ def _collect_and_send(mail: Mail):
             update_mail(mail, message_to_send_dto)
 
 
-def get_email_message_dtos(server: MailServer, number: Optional[int] = 3) -> List[Tuple[EmailMessageDto, Callable]]:
-    emails_iter = get_message_iterator(server)
+def get_unread_email_message_dtos(
+    server: MailServer,
+    number: Optional[int] = 3,
+) -> List[Tuple[EmailMessageDto, Callable]]:
+    emails_iter = get_unread_messages_iterator(server)
     if number:
         emails = list(islice(emails_iter, number))
     else:

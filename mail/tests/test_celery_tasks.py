@@ -91,7 +91,7 @@ class ManageInboxTests(LiteHMRCTestClient):
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_sending_of_new_message_from_spire_success(
         self,
         email_dtos,
@@ -165,7 +165,7 @@ class ManageInboxTests(LiteHMRCTestClient):
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_processing_of_licence_reply_with_rejected_licences(
         self,
         send_rejected_email_flag,

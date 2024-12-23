@@ -18,7 +18,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
     @mock.patch("mail.management.commands.resend_email.send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_resend_licence_data_mail_to_hmrc(
         self,
         email_dtos,
@@ -77,7 +77,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
     @mock.patch("mail.management.commands.resend_email.send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_resend_licence_reply_mail_to_spire(
         self,
         email_dtos,
@@ -150,7 +150,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
     @mock.patch("mail.management.commands.resend_email.send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_resend_usage_data_mail_to_spire(
         self,
         email_dtos,
