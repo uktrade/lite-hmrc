@@ -9,53 +9,19 @@ from mail.libraries.helpers import to_mail_message_dto
 from mail.models import Mail
 from mailboxes.enums import MailReadStatuses
 from mailboxes.models import MailboxConfig
-from mailboxes.utils import (
-    get_message_header,
-    get_message_id,
-    get_message_number,
-    get_read_messages,
-    is_from_valid_sender,
-)
+from mailboxes.utils import get_unread_message_ids
 
 logger = logging.getLogger(__name__)
 
 
 def get_message_iterator(pop3_connection: POP3_SSL, username: str) -> Iterator[Tuple[EmailMessageDto, Callable]]:
-    mails: list
-    _, mails, _ = pop3_connection.list()
     mailbox_config, _ = MailboxConfig.objects.get_or_create(username=username)
-    incoming_email_check_limit = settings.INCOMING_EMAIL_CHECK_LIMIT
 
-    # Check only the emails specified in the setting
-    # Since we don't delete emails from these mailboxes the total number can be very high over a period of time
-    # and increases the processing time.
-    # The mails is a list of message number and size - message number is an increasing value so the
-    # latest emails will always be at the end.
-    mail_message_ids = []
-    for m in mails[-incoming_email_check_limit:]:
-        msg_num = get_message_number(m)
-        message_header = get_message_header(pop3_connection, msg_num)
-        if not is_from_valid_sender(message_header, [settings.SPIRE_FROM_ADDRESS, settings.HMRC_TO_DIT_REPLY_ADDRESS]):
-            logger.warning(
-                "Found mail with message_num %s that is not from SPIRE (%s) or HMRC (%s), skipping ...",
-                msg_num,
-                settings.SPIRE_FROM_ADDRESS,
-                settings.HMRC_TO_DIT_REPLY_ADDRESS,
-            )
-            continue
-        message_id = get_message_id(message_header)
-        logger.info("Extracted Message-Id as %s for the message_num %s", message_id, msg_num)
-        mail_message_ids.append(message_id, msg_num)
-
-    # these are mailbox message ids we've seen before
-    read_messages = get_read_messages(mailbox_config)
-    logger.info("Number of messages READ/UNPROCESSABLE in %s are %s", mailbox_config.username, len(read_messages))
-
-    for message_id, message_num in mail_message_ids:
-        if message_id in read_messages:
-            continue
-
-        # only return messages we haven't seen before
+    for message_id, message_num in get_unread_message_ids(
+        pop3_connection,
+        mailbox_config,
+        settings.INCOMING_EMAIL_CHECK_LIMIT,
+    ):
         read_status, _ = mailbox_config.mail_read_statuses.get_or_create(
             message_id=message_id,
             message_num=message_num,

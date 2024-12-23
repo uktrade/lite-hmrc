@@ -2,6 +2,7 @@ from email.header import Header
 from email.message import Message
 from unittest.mock import MagicMock
 
+from django.conf import settings
 from django.test import SimpleTestCase, TestCase, override_settings
 from parameterized import parameterized
 
@@ -12,6 +13,7 @@ from mailboxes.utils import (
     get_message_id,
     get_message_number,
     get_read_messages,
+    get_unread_message_ids,
     is_from_valid_sender,
 )
 
@@ -126,3 +128,187 @@ class IsFromValidSenderTests(SimpleTestCase):
         message["From"] = from_header
 
         self.assertFalse(is_from_valid_sender(message, [valid_address]))
+
+
+class GetUnreadMessageIdsTests(TestCase):
+    def test_unread_message_ids(self):
+        pop3_connection = MagicMock()
+        mailbox = MailboxConfigFactory()
+
+        pop3_connection.list.return_value = (
+            MagicMock(),
+            [
+                b"1 11111",
+                b"2 22222",
+                b"3 33333",
+            ],
+            MagicMock(),
+        )
+
+        def _top(which, howmuch):
+            self.assertEqual(howmuch, 0)
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+
+        pop3_connection.top.side_effect = _top
+
+        self.assertEqual(
+            list(get_unread_message_ids(pop3_connection, mailbox)),
+            [
+                ("message-id-1", "1"),
+                ("message-id-2", "2"),
+                ("message-id-3", "3"),
+            ],
+        )
+
+    def test_unread_message_ids_skips_read_messages(self):
+        pop3_connection = MagicMock()
+        mailbox = MailboxConfigFactory()
+
+        pop3_connection.list.return_value = (
+            MagicMock(),
+            [
+                b"1 11111",
+                b"2 22222",
+                b"3 33333",
+            ],
+            MagicMock(),
+        )
+
+        def _top(which, howmuch):
+            self.assertEqual(howmuch, 0)
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+
+        pop3_connection.top.side_effect = _top
+
+        MailReadStatusFactory(
+            mailbox=mailbox,
+            status=MailReadStatuses.READ,
+            message_id="message-id-1",
+        )
+        MailReadStatusFactory(
+            mailbox=mailbox,
+            status=MailReadStatuses.UNPROCESSABLE,
+            message_id="message-id-3",
+        )
+
+        self.assertEqual(
+            list(get_unread_message_ids(pop3_connection, mailbox)),
+            [
+                ("message-id-2", "2"),
+            ],
+        )
+
+    def test_unread_message_ids_skips_read_messages(self):
+        pop3_connection = MagicMock()
+        mailbox = MailboxConfigFactory()
+
+        pop3_connection.list.return_value = (
+            MagicMock(),
+            [
+                b"1 11111",
+                b"2 22222",
+                b"3 33333",
+            ],
+            MagicMock(),
+        )
+
+        def _top(which, howmuch):
+            self.assertEqual(howmuch, 0)
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+
+        pop3_connection.top.side_effect = _top
+
+        MailReadStatusFactory(
+            mailbox=mailbox,
+            status=MailReadStatuses.READ,
+            message_id="message-id-1",
+        )
+        MailReadStatusFactory(
+            mailbox=mailbox,
+            status=MailReadStatuses.UNPROCESSABLE,
+            message_id="message-id-3",
+        )
+
+        self.assertEqual(
+            list(get_unread_message_ids(pop3_connection, mailbox)),
+            [
+                ("message-id-2", "2"),
+            ],
+        )
+
+    def test_unread_message_ids_skips_invalid_senders(self):
+        pop3_connection = MagicMock()
+        mailbox = MailboxConfigFactory()
+
+        sender_map = {
+            "1": settings.SPIRE_FROM_ADDRESS,
+            "2": "invalid@example.com",  # /PS-IGNORE
+            "3": settings.HMRC_TO_DIT_REPLY_ADDRESS,
+        }
+
+        pop3_connection.list.return_value = (
+            MagicMock(),
+            [
+                b"1 11111",
+                b"2 22222",
+                b"3 33333",
+            ],
+            MagicMock(),
+        )
+
+        def _top(which, howmuch):
+            self.assertEqual(howmuch, 0)
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["From"] = Header(sender_map[which])
+            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+
+        pop3_connection.top.side_effect = _top
+
+        self.assertEqual(
+            list(get_unread_message_ids(pop3_connection, mailbox)),
+            [
+                ("message-id-1", "1"),
+                ("message-id-3", "3"),
+            ],
+        )
+
+    def test_unread_message_ids_checks_up_to_limit(self):
+        pop3_connection = MagicMock()
+        mailbox = MailboxConfigFactory()
+
+        pop3_connection.list.return_value = (
+            MagicMock(),
+            [
+                b"1 11111",
+                b"2 22222",
+                b"3 33333",
+            ],
+            MagicMock(),
+        )
+
+        def _top(which, howmuch):
+            self.assertEqual(howmuch, 0)
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+
+        pop3_connection.top.side_effect = _top
+
+        self.assertEqual(
+            list(get_unread_message_ids(pop3_connection, mailbox, 2)),
+            [
+                ("message-id-2", "2"),
+                ("message-id-3", "3"),
+            ],
+        )
