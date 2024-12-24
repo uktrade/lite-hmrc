@@ -124,7 +124,7 @@ jobs:
             git submodule update --init
       - run:
           name: Set Environment File
-          command: cp local.env .env
+          command: cp docker.env .env
       - run:
           name: Run tests
           command: docker compose run --build lite-hmrc-intg pipenv run pytest -k integration
