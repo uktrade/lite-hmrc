@@ -164,10 +164,21 @@ def get_message_iterator(server: MailServer) -> Iterator[Tuple[EmailMessageDto, 
                 )
                 continue
 
-            read_status, _ = mailbox_config.mail_read_statuses.get_or_create(
+            logger.debug(
+                "About to create or update mail_read_status for %s (%s)", message.message_id, message.message_number
+            )
+            read_status, created = mailbox_config.mail_read_statuses.update_or_create(
                 message_id=message.message_id,
                 message_num=message.message_number,
-                mail_data=mail_data,
+                defaults={
+                    "mail_data": mail_data,
+                },
+            )
+            logger.debug(
+                "%s read_status for %s (%s)",
+                "Created" if created else "Updated",
+                message.message_id,
+                message.message_number,
             )
 
             mark_status = MarkStatus(message, read_status)
