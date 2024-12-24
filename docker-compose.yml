@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   lite-hmrc-postgres:
     restart: unless-stopped
