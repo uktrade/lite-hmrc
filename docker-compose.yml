@@ -14,6 +14,9 @@ services:
     container_name: "lite-hmrc-intg"
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgres://postgres:password@lite-hmrc-postgres:5432/postgres
+      - REDIS_BASE_URL=redis://hmrc-redis:6379
     build: .
     platform: linux/amd64
     volumes:
