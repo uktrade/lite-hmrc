@@ -36,6 +36,7 @@ class MailServer:
             self.auth.authenticate(pop3_connection)
             yield pop3_connection
         finally:
+            logger.info("Disconnecting pop3 connection")
             pop3_connection.quit()
 
     @property

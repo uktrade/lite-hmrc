@@ -128,7 +128,7 @@ def get_message_dto(message):
 
 
 def get_message_iterator(server: MailServer) -> Iterator[Tuple[EmailMessageDto, Callable]]:
-    mailbox_config, _ = MailboxConfig.objects.get_or_create(username=server.username)
+    mailbox_config, _ = MailboxConfig.objects.get_or_create(username=server.user)
     read_messages = get_read_messages(mailbox_config)
 
     with server.connect_to_pop3() as pop3_connection:
@@ -138,48 +138,48 @@ def get_message_iterator(server: MailServer) -> Iterator[Tuple[EmailMessageDto, 
             settings.INCOMING_EMAIL_CHECK_LIMIT,
         )
 
-    for message in messages:
-        if not is_from_valid_sender(message, [settings.SPIRE_FROM_ADDRESS, settings.HMRC_TO_DIT_REPLY_ADDRESS]):
-            logger.warning(
-                "Found mail with message_num %s that is not from SPIRE (%s) or HMRC (%s), skipping ...",
-                message.message_number,
-                settings.SPIRE_FROM_ADDRESS,
-                settings.HMRC_TO_DIT_REPLY_ADDRESS,
+        for message in messages:
+            if not is_from_valid_sender(message, [settings.SPIRE_FROM_ADDRESS, settings.HMRC_TO_DIT_REPLY_ADDRESS]):
+                logger.warning(
+                    "Found mail with message_num %s that is not from SPIRE (%s) or HMRC (%s), skipping ...",
+                    message.message_number,
+                    settings.SPIRE_FROM_ADDRESS,
+                    settings.HMRC_TO_DIT_REPLY_ADDRESS,
+                )
+                continue
+
+            if is_read(message, read_messages):
+                continue
+
+            try:
+                mail_data = message.binary_data
+            except error_proto:
+                logger.exception(
+                    "Unable to RETR message num %s with Message-ID %s in %r",
+                    message.message_number,
+                    message.message_id,
+                    message.mailbox_config,
+                )
+                continue
+
+            read_status, _ = mailbox_config.mail_read_statuses.get_or_create(
+                message_id=message.message_id,
+                message_num=message.message_number,
+                mail_data=mail_data,
             )
-            continue
 
-        if is_read(message, read_messages):
-            continue
+            mark_status = MarkStatus(message, read_status)
 
-        try:
-            mail_data = message.binary_data
-        except error_proto:
-            logger.exception(
-                "Unable to RETR message num %s with Message-ID %s in %r",
-                message.message_number,
-                message.message_id,
-                message.mailbox_config,
-            )
-            continue
+            try:
+                message_dto = get_message_dto(message)
+            except ValueError:
+                mark_status(MailReadStatuses.UNPROCESSABLE)
+                logger.exception(
+                    "Unable to convert message num %s with Message-Id %s to DTO in %r",
+                    message.message_number,
+                    message.message_id,
+                    message.mailbox_config,
+                )
+                continue
 
-        read_status, _ = mailbox_config.mail_read_statuses.get_or_create(
-            message_id=message.message_id,
-            message_num=message.message_number,
-            mail_data=mail_data,
-        )
-
-        mark_status = MarkStatus(message, read_status)
-
-        try:
-            message_dto = get_message_dto(message)
-        except ValueError:
-            mark_status(MailReadStatuses.UNPROCESSABLE)
-            logger.exception(
-                "Unable to convert message num %s with Message-Id %s to DTO in %r",
-                message.message_number,
-                message.message_id,
-                message.mailbox_config,
-            )
-            continue
-
-        yield message_dto, mark_status
+            yield message_dto, mark_status
