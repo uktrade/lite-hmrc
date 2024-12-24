@@ -103,6 +103,7 @@ class MailboxMessage:
 
 def get_messages(pop3_connection, mailbox_config, max_limit):
     _, mails, _ = pop3_connection.list()
+    logger.debug(mails)
     mails = mails[-max_limit:]
     for mail in mails:
         message_number = get_message_number(mail)
