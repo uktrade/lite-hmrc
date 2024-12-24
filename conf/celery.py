@@ -40,5 +40,4 @@ app.conf.beat_schedule = {
     },
 }
 
-if settings.IS_ENV_DBT_PLATFORM:
-    celery_app = healthcheck.setup(app)
+celery_app = healthcheck.setup(app)

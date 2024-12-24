@@ -47,10 +47,6 @@ def _authenticate(request):
     """
     url = request.build_absolute_uri()
 
-    # TODO: remove this when migration to DBT platform is complete as this hack is only required on Gov Paas
-    if is_env_gov_paas():
-        convert_gov_paas_url(url)
-
     if hawk_authentication_enabled():
         return Receiver(
             _lookup_credentials,
@@ -106,16 +102,3 @@ def hawk_authentication_enabled() -> bool:
     """
 
     return settings.HAWK_AUTHENTICATION_ENABLED
-
-
-def is_env_gov_paas() -> bool:
-    """Defined as method as you can't override settings.IS_ENV_GOV_PAAS correctly in tests.
-
-    Patch this function to get desired behaviour.
-    """
-
-    return settings.IS_ENV_GOV_PAAS
-
-
-def convert_gov_paas_url(url):
-    return url.replace("http", "https")
