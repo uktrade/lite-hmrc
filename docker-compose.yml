@@ -46,6 +46,24 @@ services:
       - 587:1025  # SMTP
     image: mailhog/mailhog
 
+  spire-to-dit-mailserver:
+    image: axllent/mailpit
+    environment:
+      - MP_POP3_AUTH_FILE=/config/passwd
+      - MP_POP3_TLS_CERT=/config/cert.pem
+      - MP_POP3_TLS_KEY=/config/key.pem
+    volumes:
+      - ./conf/mail_servers/spire-to-dit-mailserver/:/config
+
+  hmrc-to-dit-mailserver:
+    image: axllent/mailpit
+    environment:
+      - MP_POP3_AUTH_FILE=/config/passwd
+      - MP_POP3_TLS_CERT=/config/cert.pem
+      - MP_POP3_TLS_KEY=/config/key.pem
+    volumes:
+      - ./conf/mail_servers/hmrc-to-dit-mailserver/:/config
+
   celery:
     build: .
     volumes:
