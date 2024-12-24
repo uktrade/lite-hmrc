@@ -99,28 +99,22 @@ def get_serializer_for_dto(extract_type):
 
 
 def get_mail_instance(extract_type, run_number) -> Mail or None:
-    if extract_type == ExtractTypeEnum.LICENCE_REPLY:
-        last_email = LicenceData.objects.filter(hmrc_run_number=run_number).last()
+    type_mapping = {
+        ExtractTypeEnum.LICENCE_REPLY: LicenceData,
+        ExtractTypeEnum.USAGE_REPLY: UsageData,
+    }
+    last_email = type_mapping[extract_type].objects.filter(hmrc_run_number=run_number).last()
+    if last_email and last_email.mail.status in [
+        ReceptionStatusEnum.REPLY_SENT,
+        ReceptionStatusEnum.REPLY_RECEIVED,
+    ]:
+        logging.info("%r has already been processed", last_email)
+        return
 
-        if last_email and last_email.mail.status in [
-            ReceptionStatusEnum.REPLY_SENT,
-            ReceptionStatusEnum.REPLY_RECEIVED,
-        ]:
-            logging.info("Licence update reply has already been processed")
-            return
-        return find_mail_of(
-            [ExtractTypeEnum.LICENCE_DATA, ExtractTypeEnum.LICENCE_REPLY], ReceptionStatusEnum.REPLY_PENDING
-        )
-    elif extract_type == ExtractTypeEnum.USAGE_REPLY:
-        last_email = UsageData.objects.filter(spire_run_number=run_number).last()
-
-        if last_email and last_email.mail.status in [
-            ReceptionStatusEnum.REPLY_SENT,
-            ReceptionStatusEnum.REPLY_RECEIVED,
-        ]:
-            logging.info("Usage update reply has already been processed")
-            return
-        return find_mail_of([ExtractTypeEnum.USAGE_DATA], ReceptionStatusEnum.REPLY_PENDING)
+    return find_mail_of(
+        last_email.get_extract_types(),
+        ReceptionStatusEnum.REPLY_PENDING,
+    )
 
 
 def to_email_message_dto_from(mail: Mail) -> EmailMessageDto:

@@ -1,12 +1,12 @@
 import email.mime.multipart
-import pytest
-
 from datetime import datetime, timezone
-from parameterized import parameterized
 from email.mime.multipart import MIMEMultipart
 from unittest import mock
-from django.test import TestCase, override_settings
 from unittest.mock import MagicMock
+
+import pytest
+from django.test import TestCase, override_settings
+from parameterized import parameterized
 
 from mail.celery_tasks import manage_inbox, notify_users_of_rejected_licences
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
@@ -80,7 +80,7 @@ class ManageInboxTests(LiteHMRCTestClient):
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_sending_of_new_message_from_spire_success(
         self,
         lock_acquired,
@@ -158,7 +158,7 @@ class ManageInboxTests(LiteHMRCTestClient):
     @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_processing_of_licence_reply_with_rejected_licences(
         self,
         send_rejected_email_flag,
@@ -173,9 +173,8 @@ class ManageInboxTests(LiteHMRCTestClient):
         Test processing of licence reply from HMRC with rejected licences.
         If SEND_REJECTED_EMAIL=True then we send email notifications to users if any licences are rejected.
         """
-        obj = MagicMock()
-        mock_get_hmrc_to_dit_mailserver.return_value = obj
-        mock_get_spire_to_dit_mailserver.return_value = obj
+        mock_get_hmrc_to_dit_mailserver.return_value = MagicMock()
+        mock_get_spire_to_dit_mailserver.return_value = MagicMock()
         mock_cache.add.return_value = True
 
         run_number = 78120

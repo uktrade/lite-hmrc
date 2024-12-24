@@ -165,15 +165,6 @@ MAIL_SERVERS = {
             "tenant_id": AZURE_AUTH_TENANT_ID,
         },
     },
-    "mock_hmrc": {
-        "HOSTNAME": MOCK_HMRC_EMAIL_HOSTNAME,
-        "POP3_PORT": MOCK_HMRC_EMAIL_POP3_PORT,
-        "AUTHENTICATION_CLASS": "mail_servers.auth.BasicAuthentication",
-        "AUTHENTICATION_OPTIONS": {
-            "user": MOCK_HMRC_EMAIL_USER,
-            "password": MOCK_HMRC_EMAIL_PASSWORD,
-        },
-    },
 }
 
 TIME_TESTS = env.bool("TIME_TESTS", default=False)

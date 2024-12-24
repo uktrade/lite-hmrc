@@ -1,12 +1,8 @@
-import logging
-
 from django.conf import settings
 
 from mail.libraries.helpers import to_hmrc_mail_message_dto
-from mail.libraries.routing_controller import get_mock_hmrc_mailserver
 from mailboxes.utils import get_message_id
 from mock_hmrc import enums, models
-from mock_hmrc.data_processors import save_hmrc_email_message_data, send_reply
 
 
 def get_hmrc_email_message_dto(server):
@@ -37,16 +33,4 @@ def select_email_to_reply():
 
 
 def parse_and_reply_emails():
-    server = get_mock_hmrc_mailserver()
-    email_dto = get_hmrc_email_message_dto(server)
-    if email_dto:
-        email_instance = save_hmrc_email_message_data(email_dto)
-        if email_instance:
-            send_reply(email_instance)
-    else:
-        logging.info("No emails to process or invalid")
-
-    # If no new emails, check if there are any pending replies
-    email = select_email_to_reply()
-    if email:
-        send_reply(email)
+    pass

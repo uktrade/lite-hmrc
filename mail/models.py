@@ -99,6 +99,9 @@ class LicenceData(models.Model):
     def get_licence_ids(self):
         return json.loads(self.licence_ids)
 
+    def get_extract_types(self):
+        return [ExtractTypeEnum.LICENCE_DATA, ExtractTypeEnum.LICENCE_REPLY]
+
 
 class UsageData(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -129,6 +132,9 @@ class UsageData(models.Model):
         from mail.celery_tasks import send_licence_usage_figures_to_lite_api
 
         send_licence_usage_figures_to_lite_api.delay(str(id))
+
+    def get_extract_types(self):
+        return [ExtractTypeEnum.USAGE_DATA]
 
 
 class LicencePayload(models.Model):
