@@ -23,7 +23,7 @@ def get_message_header(pop3_connection, msg_num):
     _, msg_header, _ = pop3_connection.top(msg_num, 0)
 
     parser = BytesHeaderParser()
-    header = parser.parsebytes(b"".join(msg_header))
+    header = parser.parsebytes(b"\n".join(msg_header))
 
     return header
 
@@ -53,6 +53,7 @@ def get_read_messages(mailbox_config):
 
 def is_from_valid_sender(message, valid_addresses):
     _, from_address = parseaddr(str(message.message_header["From"]))
+    logger.info("Found from address %s", from_address)
     valid_addresses = [address.replace("From: ", "") for address in valid_addresses]
 
     return from_address in valid_addresses
@@ -97,7 +98,7 @@ class MailboxMessage:
 
     @cached_property
     def binary_data(self):
-        return b"".join(self.mail_data[1])
+        return b"\n".join(self.mail_data[1])
 
 
 def get_messages(pop3_connection, mailbox_config, max_limit):
@@ -149,6 +150,7 @@ def get_message_iterator(server: MailServer) -> Iterator[Tuple[EmailMessageDto, 
                 continue
 
             if is_read(message, read_messages):
+                logger.debug("Already read message %s", message.message_id)
                 continue
 
             try:
