@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "mail",
+    "mailboxes",
     "health_check",
     "health_check.db",
     "health_check.cache",
@@ -386,7 +387,6 @@ else:
     # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
     DATABASES = {"default": env.db()}
     REDIS_BASE_URL = env("REDIS_BASE_URL", default=None)
-    INSTALLED_APPS.append("elasticapm.contrib.django")
     DB_ANONYMISER_AWS_ENDPOINT_URL = AWS_ENDPOINT_URL
     DB_ANONYMISER_AWS_ACCESS_KEY_ID = env("DB_ANONYMISER_AWS_ACCESS_KEY_ID", default=None)
     DB_ANONYMISER_AWS_SECRET_ACCESS_KEY = env("DB_ANONYMISER_AWS_SECRET_ACCESS_KEY", default=None)

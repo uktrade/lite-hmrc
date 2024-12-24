@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from mail.enums import ExtractTypeEnum, MailReadStatuses, ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
+from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, ReplyStatusEnum, SourceEnum
 from mail.libraries.builders import build_email_message
 from mail.libraries.data_processors import (
     lock_db_for_sending_transaction,
@@ -20,10 +20,11 @@ from mail.libraries.helpers import (
     select_email_for_sending,
     sort_dtos_by_date,
 )
-from mail.libraries.mailbox_service import get_message_iterator
 from mail.models import Mail
 from mail_servers.servers import MailServer, smtp_send
 from mail_servers.utils import get_mail_server
+from mailboxes.enums import MailReadStatuses
+from mailboxes.utils import get_message_iterator
 
 logger = logging.getLogger(__name__)
 
@@ -183,12 +184,11 @@ def _collect_and_send(mail: Mail):
 
 
 def get_email_message_dtos(server: MailServer, number: Optional[int] = 3) -> List[Tuple[EmailMessageDto, Callable]]:
-    with server.connect_to_pop3() as pop3_connection:
-        emails_iter = get_message_iterator(pop3_connection, server.user)
-        if number:
-            emails = list(islice(emails_iter, number))
-        else:
-            emails = list(emails_iter)
+    emails_iter = get_message_iterator(server)
+    if number:
+        emails = list(islice(emails_iter, number))
+    else:
+        emails = list(emails_iter)
     return emails
 
 
