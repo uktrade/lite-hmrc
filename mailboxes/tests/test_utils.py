@@ -280,12 +280,15 @@ class MailboxMessageTests(TestCase):
         pop3_connection.retr.assert_called_with("1")
 
 
+@override_settings(
+    SPIRE_FROM_ADDRESS="from.spire@example.com",  # /PS-IGNORE
+)
 class GetMessageIteratorTests(TestCase):
     def test_get_message_iterator(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
-        type(mail_server).username = "test@example.com"  # /PS-IGNORE
+        type(mail_server).user = "test@example.com"  # /PS-IGNORE
 
         mock_pop3_connection = mail_server.connect_to_pop3().__enter__()
         mock_pop3_connection.list.return_value = (
@@ -306,7 +309,7 @@ class GetMessageIteratorTests(TestCase):
             msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
             msg["Date"] = Header("2021-04-23T12:38Z")
             msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
-            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+            return MagicMock(), msg.as_bytes().split(b"\n"), MagicMock()
 
         mock_pop3_connection.top.side_effect = _top
 
@@ -317,7 +320,7 @@ class GetMessageIteratorTests(TestCase):
             msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
             msg["Date"] = Header("2021-04-23T12:38Z")
             msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
-            return b"+OK", msg.as_bytes().split(b"\n\n"), len(msg.as_bytes())
+            return b"+OK", msg.as_bytes().split(b"\n"), len(msg.as_bytes())
 
         mock_pop3_connection.retr.side_effect = _retr
 
@@ -335,7 +338,7 @@ class GetMessageIteratorTests(TestCase):
                     subject="abc_xyz_nnn_yyy_1_datetime",
                     body=b"",
                     attachment=[None, None],
-                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-1@example.com>\\nTo: to@example.com\\nFrom: {settings.SPIRE_FROM_ADDRESS}\\nDate: 2021-04-23T12:38Z\\nSubject: abc_xyz_nnn_yyy_1_datetime', b''], 143)",  # /PS-IGNORE
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-1@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_1_datetime', b'', b''], 148)",  # /PS-IGNORE
                 ),
                 EmailMessageDto(
                     run_number=2,
@@ -345,7 +348,7 @@ class GetMessageIteratorTests(TestCase):
                     subject="abc_xyz_nnn_yyy_2_datetime",
                     body=b"",
                     attachment=[None, None],
-                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>\\nTo: to@example.com\\nFrom: {settings.SPIRE_FROM_ADDRESS}\\nDate: 2021-04-23T12:38Z\\nSubject: abc_xyz_nnn_yyy_2_datetime', b''], 143)",  # /PS-IGNORE
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_2_datetime', b'', b''], 148)",  # /PS-IGNORE
                 ),
                 EmailMessageDto(
                     run_number=3,
@@ -355,7 +358,7 @@ class GetMessageIteratorTests(TestCase):
                     subject="abc_xyz_nnn_yyy_3_datetime",
                     body=b"",
                     attachment=[None, None],
-                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-3@example.com>\\nTo: to@example.com\\nFrom: {settings.SPIRE_FROM_ADDRESS}\\nDate: 2021-04-23T12:38Z\\nSubject: abc_xyz_nnn_yyy_3_datetime', b''], 143)",  # /PS-IGNORE
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-3@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_3_datetime', b'', b''], 148)",  # /PS-IGNORE
                 ),
             ],
         )
@@ -384,14 +387,22 @@ class GetMessageIteratorTests(TestCase):
         )
         self.assertEqual(
             bytes(mailbox.mail_read_statuses.all()[0].mail_data),
-            b"Message-Id: <message-id-1@example.com>\nTo: to@example.com\nFrom: spire@example.com\nDate: 2021-04-23T12:38Z\nSubject: abc_xyz_nnn_yyy_1_datetime",  # /PS-IGNORE
+            b"Message-Id: <message-id-1@example.com>\nTo: to@example.com\nFrom: from.spire@example.com\nDate: 2021-04-23T12:38Z\nSubject: abc_xyz_nnn_yyy_1_datetime\n\n",  # /PS-IGNORE
+        )
+        self.assertEqual(
+            bytes(mailbox.mail_read_statuses.all()[1].mail_data),
+            b"Message-Id: <message-id-2@example.com>\nTo: to@example.com\nFrom: from.spire@example.com\nDate: 2021-04-23T12:38Z\nSubject: abc_xyz_nnn_yyy_2_datetime\n\n",  # /PS-IGNORE
+        )
+        self.assertEqual(
+            bytes(mailbox.mail_read_statuses.all()[2].mail_data),
+            b"Message-Id: <message-id-3@example.com>\nTo: to@example.com\nFrom: from.spire@example.com\nDate: 2021-04-23T12:38Z\nSubject: abc_xyz_nnn_yyy_3_datetime\n\n",  # /PS-IGNORE
         )
 
     def test_get_message_iterator_invalid_senders(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
-        type(mail_server).username = "test@example.com"  # /PS-IGNORE
+        type(mail_server).user = "test@example.com"  # /PS-IGNORE
 
         mock_pop3_connection = mail_server.connect_to_pop3().__enter__()
         mock_pop3_connection.list.return_value = (
@@ -418,7 +429,7 @@ class GetMessageIteratorTests(TestCase):
             msg["From"] = Header(lookup_from[which])
             msg["Date"] = Header("2021-04-23T12:38Z")
             msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
-            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+            return MagicMock(), msg.as_bytes().split(b"\n"), MagicMock()
 
         mock_pop3_connection.top.side_effect = _top
 
@@ -429,7 +440,7 @@ class GetMessageIteratorTests(TestCase):
             msg["From"] = Header(lookup_from[which])
             msg["Date"] = Header("2021-04-23T12:38Z")
             msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
-            return b"+OK", msg.as_bytes().split(b"\n\n"), len(msg.as_bytes())
+            return b"+OK", msg.as_bytes().split(b"\n"), len(msg.as_bytes())
 
         mock_pop3_connection.retr.side_effect = _retr
 
@@ -447,7 +458,7 @@ class GetMessageIteratorTests(TestCase):
                     subject="abc_xyz_nnn_yyy_2_datetime",
                     body=b"",
                     attachment=[None, None],
-                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>\\nTo: to@example.com\\nFrom: {settings.SPIRE_FROM_ADDRESS}\\nDate: 2021-04-23T12:38Z\\nSubject: abc_xyz_nnn_yyy_2_datetime', b''], 143)",  # /PS-IGNORE
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_2_datetime', b'', b''], 148)",  # /PS-IGNORE
                 ),
             ],
         )
@@ -465,7 +476,7 @@ class GetMessageIteratorTests(TestCase):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
-        type(mail_server).username = "test@example.com"  # /PS-IGNORE
+        type(mail_server).user = "test@example.com"  # /PS-IGNORE
 
         mailbox_config = MailboxConfigFactory(username="test@example.com")  # /PS-IGNORE
         mailbox_config.mail_read_statuses.create(
@@ -498,7 +509,7 @@ class GetMessageIteratorTests(TestCase):
             msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
             msg["Date"] = Header("2021-04-23T12:38Z")
             msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
-            return MagicMock(), msg.as_bytes().split(b"\n\n"), MagicMock()
+            return MagicMock(), msg.as_bytes().split(b"\n"), MagicMock()
 
         mock_pop3_connection.top.side_effect = _top
 
@@ -509,7 +520,7 @@ class GetMessageIteratorTests(TestCase):
             msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
             msg["Date"] = Header("2021-04-23T12:38Z")
             msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
-            return b"+OK", msg.as_bytes().split(b"\n\n"), len(msg.as_bytes())
+            return b"+OK", msg.as_bytes().split(b"\n"), len(msg.as_bytes())
 
         mock_pop3_connection.retr.side_effect = _retr
 
@@ -527,7 +538,7 @@ class GetMessageIteratorTests(TestCase):
                     subject="abc_xyz_nnn_yyy_2_datetime",
                     body=b"",
                     attachment=[None, None],
-                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>\\nTo: to@example.com\\nFrom: {settings.SPIRE_FROM_ADDRESS}\\nDate: 2021-04-23T12:38Z\\nSubject: abc_xyz_nnn_yyy_2_datetime', b''], 143)",  # /PS-IGNORE
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_2_datetime', b'', b''], 148)",  # /PS-IGNORE
                 ),
             ],
         )
@@ -536,7 +547,7 @@ class GetMessageIteratorTests(TestCase):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
-        type(mail_server).username = "test@example.com"  # /PS-IGNORE
+        type(mail_server).user = "test@example.com"  # /PS-IGNORE
 
         mock_pop3_connection = mail_server.connect_to_pop3().__enter__()
         mock_pop3_connection.list.return_value = (
@@ -574,7 +585,7 @@ class GetMessageIteratorTests(TestCase):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
-        type(mail_server).username = "test@example.com"  # /PS-IGNORE
+        type(mail_server).user = "test@example.com"  # /PS-IGNORE
 
         mock_pop3_connection = mail_server.connect_to_pop3().__enter__()
         mock_pop3_connection.list.return_value = (
