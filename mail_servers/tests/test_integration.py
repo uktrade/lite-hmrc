@@ -11,7 +11,7 @@ from mail_servers.utils import get_mail_server
             "POP3_PORT": 1110,
             "AUTHENTICATION_CLASS": "mail_servers.auth.BasicAuthentication",
             "AUTHENTICATION_OPTIONS": {
-                "user": "user",
+                "user": "spire-to-dit-user",
                 "password": "password",
             },
         },
@@ -20,7 +20,7 @@ from mail_servers.utils import get_mail_server
             "POP3_PORT": 1110,
             "AUTHENTICATION_CLASS": "mail_servers.auth.BasicAuthentication",
             "AUTHENTICATION_OPTIONS": {
-                "user": "user",
+                "user": "hmrc-to-dit-user",
                 "password": "password",
             },
         },
