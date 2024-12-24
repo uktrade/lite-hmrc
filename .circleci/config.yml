@@ -141,7 +141,7 @@ jobs:
           key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
       - run:
           name: Run tests
-          command: docker compose run lite-hmrc-intg pipenv run pytest -k integration
+          command: docker compose run --build lite-hmrc-intg pipenv run pytest -k integration
 
   check_migrations:
     docker:
