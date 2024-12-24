@@ -398,6 +398,171 @@ class GetMessageIteratorTests(TestCase):
             b"Message-Id: <message-id-3@example.com>\nTo: to@example.com\nFrom: from.spire@example.com\nDate: 2021-04-23T12:38Z\nSubject: abc_xyz_nnn_yyy_3_datetime\n\n",  # /PS-IGNORE
         )
 
+    def test_get_message_iterator_run_multiple_times(self):
+        self.assertEqual(MailboxConfig.objects.count(), 0)
+
+        mail_server = MagicMock(spec=MailServer)
+        type(mail_server).user = "test@example.com"  # /PS-IGNORE
+
+        mock_pop3_connection = mail_server.connect_to_pop3().__enter__()
+        mock_pop3_connection.list.return_value = (
+            MagicMock(),
+            [
+                b"1 11111",
+                b"2 22222",
+                b"3 33333",
+            ],
+            MagicMock(),
+        )
+
+        def _top(which, howmuch):
+            self.assertEqual(howmuch, 0)
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["To"] = Header("to@example.com")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            msg["Date"] = Header("2021-04-23T12:38Z")
+            msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
+            msg["ChangingValue"] = Header("first-run")
+            return MagicMock(), msg.as_bytes().split(b"\n"), MagicMock()
+
+        mock_pop3_connection.top.side_effect = _top
+
+        def _retr(which):
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["To"] = Header("to@example.com")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            msg["Date"] = Header("2021-04-23T12:38Z")
+            msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
+            msg["ChangingValue"] = Header("first-run")
+            return b"+OK", msg.as_bytes().split(b"\n"), len(msg.as_bytes())
+
+        mock_pop3_connection.retr.side_effect = _retr
+
+        iterator = get_message_iterator(mail_server)
+        dtos, _ = zip(*iterator)
+
+        self.assertEqual(
+            list(dtos),
+            [
+                EmailMessageDto(
+                    run_number=1,
+                    sender=settings.SPIRE_FROM_ADDRESS,
+                    receiver="to@example.com",  # /PS-IGNORE
+                    date=datetime.datetime(2021, 4, 23, 12, 38, tzinfo=tzlocal()),
+                    subject="abc_xyz_nnn_yyy_1_datetime",
+                    body=b"",
+                    attachment=[None, None],
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-1@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_1_datetime', b'ChangingValue: first-run', b'', b''], 173)",  # /PS-IGNORE
+                ),
+                EmailMessageDto(
+                    run_number=2,
+                    sender=settings.SPIRE_FROM_ADDRESS,
+                    receiver="to@example.com",  # /PS-IGNORE
+                    date=datetime.datetime(2021, 4, 23, 12, 38, tzinfo=tzlocal()),
+                    subject="abc_xyz_nnn_yyy_2_datetime",
+                    body=b"",
+                    attachment=[None, None],
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_2_datetime', b'ChangingValue: first-run', b'', b''], 173)",  # /PS-IGNORE
+                ),
+                EmailMessageDto(
+                    run_number=3,
+                    sender=settings.SPIRE_FROM_ADDRESS,
+                    receiver="to@example.com",  # /PS-IGNORE
+                    date=datetime.datetime(2021, 4, 23, 12, 38, tzinfo=tzlocal()),
+                    subject="abc_xyz_nnn_yyy_3_datetime",
+                    body=b"",
+                    attachment=[None, None],
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-3@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_3_datetime', b'ChangingValue: first-run', b'', b''], 173)",  # /PS-IGNORE
+                ),
+            ],
+        )
+        mailbox = MailboxConfig.objects.get(username="test@example.com")  # /PS-IGNORE
+        self.assertQuerySetEqual(
+            mailbox.mail_read_statuses.order_by("message_id"),
+            [
+                "<MailReadStatus: message_id=message-id-1 status=UNREAD>",
+                "<MailReadStatus: message_id=message-id-2 status=UNREAD>",
+                "<MailReadStatus: message_id=message-id-3 status=UNREAD>",
+            ],
+            transform=repr,
+        )
+
+        def _top(which, howmuch):
+            self.assertEqual(howmuch, 0)
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["To"] = Header("to@example.com")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            msg["Date"] = Header("2021-04-23T12:38Z")
+            msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
+            msg["ChangingValue"] = Header("second-run")
+            return MagicMock(), msg.as_bytes().split(b"\n"), MagicMock()
+
+        mock_pop3_connection.top.side_effect = _top
+
+        def _retr(which):
+            msg = Message()
+            msg["Message-Id"] = Header(f"<message-id-{which}@example.com>")  # /PS-IGNORE
+            msg["To"] = Header("to@example.com")  # /PS-IGNORE
+            msg["From"] = Header(settings.SPIRE_FROM_ADDRESS)
+            msg["Date"] = Header("2021-04-23T12:38Z")
+            msg["Subject"] = Header(f"abc_xyz_nnn_yyy_{which}_datetime")
+            msg["ChangingValue"] = Header("second-run")
+            return b"+OK", msg.as_bytes().split(b"\n"), len(msg.as_bytes())
+
+        mock_pop3_connection.retr.side_effect = _retr
+
+        iterator = get_message_iterator(mail_server)
+        dtos, _ = zip(*iterator)
+
+        self.assertEqual(
+            list(dtos),
+            [
+                EmailMessageDto(
+                    run_number=1,
+                    sender=settings.SPIRE_FROM_ADDRESS,
+                    receiver="to@example.com",  # /PS-IGNORE
+                    date=datetime.datetime(2021, 4, 23, 12, 38, tzinfo=tzlocal()),
+                    subject="abc_xyz_nnn_yyy_1_datetime",
+                    body=b"",
+                    attachment=[None, None],
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-1@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_1_datetime', b'ChangingValue: second-run', b'', b''], 174)",  # /PS-IGNORE
+                ),
+                EmailMessageDto(
+                    run_number=2,
+                    sender=settings.SPIRE_FROM_ADDRESS,
+                    receiver="to@example.com",  # /PS-IGNORE
+                    date=datetime.datetime(2021, 4, 23, 12, 38, tzinfo=tzlocal()),
+                    subject="abc_xyz_nnn_yyy_2_datetime",
+                    body=b"",
+                    attachment=[None, None],
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-2@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_2_datetime', b'ChangingValue: second-run', b'', b''], 174)",  # /PS-IGNORE
+                ),
+                EmailMessageDto(
+                    run_number=3,
+                    sender=settings.SPIRE_FROM_ADDRESS,
+                    receiver="to@example.com",  # /PS-IGNORE
+                    date=datetime.datetime(2021, 4, 23, 12, 38, tzinfo=tzlocal()),
+                    subject="abc_xyz_nnn_yyy_3_datetime",
+                    body=b"",
+                    attachment=[None, None],
+                    raw_data=f"(b'+OK', [b'Message-Id: <message-id-3@example.com>', b'To: to@example.com', b'From: {settings.SPIRE_FROM_ADDRESS}', b'Date: 2021-04-23T12:38Z', b'Subject: abc_xyz_nnn_yyy_3_datetime', b'ChangingValue: second-run', b'', b''], 174)",  # /PS-IGNORE
+                ),
+            ],
+        )
+        mailbox = MailboxConfig.objects.get(username="test@example.com")  # /PS-IGNORE
+        self.assertQuerySetEqual(
+            mailbox.mail_read_statuses.order_by("message_id"),
+            [
+                "<MailReadStatus: message_id=message-id-1 status=UNREAD>",
+                "<MailReadStatus: message_id=message-id-2 status=UNREAD>",
+                "<MailReadStatus: message_id=message-id-3 status=UNREAD>",
+            ],
+            transform=repr,
+        )
+
     def test_get_message_iterator_invalid_senders(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
