@@ -29,8 +29,11 @@ services:
       - lite-hmrc-postgres
       - celery
       - celery-beat
+      - spire-to-dit-mailserver
+      - hmrc-to-dit-mailserver
     expose:
       - 8000
+    entrypoint: dockerize -wait tcp://lite-hmrc-postgres:5432 -wait tcp://spire-to-dit-mailserver:1110 -wait tcp://hmrc-to-dit-mailserver:1110
     command: pipenv run ./manage.py runserver 0.0.0.0:8000
 
     healthcheck:
