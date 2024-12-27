@@ -3,6 +3,7 @@ from urllib.parse import quote
 
 import requests
 from django.conf import settings
+from django.test import override_settings
 from django.urls import reverse
 
 from mail.tests.libraries.client import LiteHMRCTestClient
@@ -20,6 +21,9 @@ def get_smtp_body():
     return response.json()["items"][0]["MIME"]["Parts"][1]["Body"]
 
 
+@override_settings(
+    EMAIL_HOSTNAME=settings.TEST_EMAIL_HOSTNAME,
+)
 class EndToEndTests(LiteHMRCTestClient):
     @mock.patch("mail.celery_tasks.cache")
     def test_send_email_to_hmrc_e2e(self, mock_cache):
