@@ -1,20 +1,18 @@
 import os
 import sys
 import uuid
-import sentry_sdk
-
-from django_log_formatter_ecs import ECSFormatter
-from environ import Env
 from pathlib import Path
-from sentry_sdk.integrations.django import DjangoIntegration
 from urllib.parse import urlencode
-from django_log_formatter_asim import ASIMFormatter
-
-from dbt_copilot_python.network import setup_allowed_hosts
-from dbt_copilot_python.database import database_url_from_env
-from dbt_copilot_python.utility import is_copilot
 
 import dj_database_url
+import sentry_sdk
+from dbt_copilot_python.database import database_url_from_env
+from dbt_copilot_python.network import setup_allowed_hosts
+from dbt_copilot_python.utility import is_copilot
+from django_log_formatter_asim import ASIMFormatter
+from django_log_formatter_ecs import ECSFormatter
+from environ import Env
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -354,7 +352,6 @@ else:
     # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
     DATABASES = {"default": env.db()}
     REDIS_BASE_URL = env("REDIS_BASE_URL", default=None)
-    INSTALLED_APPS.append("elasticapm.contrib.django")
     DB_ANONYMISER_AWS_ENDPOINT_URL = AWS_ENDPOINT_URL
     DB_ANONYMISER_AWS_ACCESS_KEY_ID = env("DB_ANONYMISER_AWS_ACCESS_KEY_ID", default=None)
     DB_ANONYMISER_AWS_SECRET_ACCESS_KEY = env("DB_ANONYMISER_AWS_SECRET_ACCESS_KEY", default=None)
