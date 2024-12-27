@@ -1,22 +1,7 @@
 version: 2.1
 
-jobs:
-  tests:
-    docker:
-      - image: cimg/python:3.9.18
-      - image: circleci/redis:3.2-alpine
-      - image: circleci/postgres:12
-        environment:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-      - image: mailhog/mailhog
-
-    environment:
-      DEBUG: True
-      PIPENV_VENV_IN_PROJECT: 'enabled'
-
-    working_directory: ~/lite-hmrc
-
+commands:
+  setup:
     steps:
       - checkout
       - run:
@@ -27,33 +12,39 @@ jobs:
       - run:
           name: Set Environment File
           command: cp local.env .env
-
       # Download and cache dependencies
       # ensure this step occurs *before* installing dependencies
       - restore_cache:
           key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-
       - run:
           name: Install Dependencies
           command: pipenv sync --dev
-
       - save_cache:
           paths:
             - ./venv
           key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
 
-      - run:
-          name: Check migrations are made
-          command: pipenv run ./manage.py makemigrations --check
-
+jobs:
+  tests:
+    docker:
+      - image: cimg/python:3.9.18
+      - image: cimg/redis:6.2
+      - image: cimg/postgres:12.20
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+    environment:
+      DEBUG: True
+      PIPENV_VENV_IN_PROJECT: 'enabled'
+    working_directory: ~/lite-hmrc
+    steps:
+      - setup
       - run:
           name: Run tests
-          command: pipenv run pytest --cov=. --cov-config=.coveragerc
-
+          command: pipenv run pytest --cov=. --cov-config=.coveragerc -k "not end_to_end"
       - run:
           name: Rename coverage file
           command: mkdir coverage-output && cp .coverage coverage-output/.coverage
-
       - persist_to_workspace:
           root: coverage-output
           paths:
@@ -62,21 +53,32 @@ jobs:
   tests_postgres13:
     docker:
       - image: cimg/python:3.9.18
-      - image: circleci/redis:3.2-alpine
-      - image: circleci/postgres:13
+      - image: cimg/redis:6.2
+      - image: cimg/postgres:13.16
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-      - image: mailhog/mailhog
-
     environment:
       DEBUG: True
       PIPENV_VENV_IN_PROJECT: 'enabled'
-
     working_directory: ~/lite-hmrc
+    steps:
+      - setup
+      - run:
+          name: Run tests on Postgres 13
+          command: pipenv run pytest -k "not end_to_end"
 
+  tests_e2e:
+    machine:
+      image: ubuntu-2204:current
+      docker_layer_caching: true
+    resource_class: small
+    environment:
+      PIPENV_YES: 1
     steps:
       - checkout
+      - attach_workspace:
+          at: ~/repo/tmp
       - run:
           name: Git Submodule Checkout
           command: |
@@ -84,66 +86,56 @@ jobs:
             git submodule update --init
       - run:
           name: Set Environment File
-          command: cp local.env .env
-
-      # Download and cache dependencies
-      # ensure this step occurs *before* installing dependencies
-      - restore_cache:
-          key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-
+          command: cp docker.env .env
       - run:
-          name: Install Dependencies
-          command: pipenv sync --dev
+          name: Run tests
+          command: docker compose run --build lite-hmrc-intg pipenv run pytest -k end_to_end
 
-      - save_cache:
-          paths:
-            - ./venv
-          key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-
+  check_migrations:
+    docker:
+      - image: cimg/python:3.9.18
+      - image: cimg/redis:6.2
+      - image: cimg/postgres:12.20
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+    environment:
+      DEBUG: True
+      PIPENV_VENV_IN_PROJECT: 'enabled'
+    working_directory: ~/lite-hmrc
+    steps:
+      - setup
       - run:
           name: Check migrations are made
           command: pipenv run ./manage.py makemigrations --check
-
-      - run:
-          name: Run tests on Postgres 13
-          command: pipenv run pytest
 
   linting:
     docker:
       - image: cimg/python:3.9.18
     steps:
       - checkout
-
       - run: pipenv install pre-commit
-
       - restore_cache:
           key: dependencies-{{ .Branch }}-{{ checksum "Pipfile.lock" }}-{{ checksum ".pre-commit-config.yaml" }}
-
       - run:
           name: Install Dependencies
           command: pipenv sync --dev
-
       - run:
           name: Prospector
           command: pipenv run prospector -W pylint -W pep257
-
       - run:
           name: Black
           command: pipenv run black . --check --diff
-
       - run:
           name: isort
           command: pipenv run isort --check --diff .
-
       - run:
           name: Bandit
           command: |
             pipenv run bandit -c bandit.yaml -r .
-
       - run:
           name: Ruff
           command: pipenv run pre-commit run ruff --from-ref origin/HEAD --to-ref HEAD
-
       - save_cache:
           paths:
             - ./venv
@@ -157,40 +149,29 @@ jobs:
       - image: cimg/python:3.9.18
     steps:
       - checkout
-
       - attach_workspace:
           at: ~/lite-hmrc/tmp
-
       - run: pip install coverage diff_cover
-
       - run: cp tmp/.coverage .
-
       - run: coverage xml
-
       - run: coverage html
-
       - store_artifacts:
           path: htmlcov
-
       - run: diff-cover coverage.xml --compare-branch=origin/master --html-report coverage-report.html
-
       - store_artifacts:
           path: coverage-report.html
-
       - run: zip -r coverage.zip htmlcov coverage-report.html
-
       - store_artifacts:
           path: coverage.zip
-
       - run: diff-cover coverage.xml --compare-branch=origin/master --fail-under=100
 
-
 workflows:
-  version: 2
   test:
     jobs:
       - tests
       - tests_postgres13
+      - tests_e2e
+      - check_migrations
       - linting
       - check_coverage:
           requires:

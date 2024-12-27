@@ -5,33 +5,49 @@ from django.conf import settings
 from django.test import override_settings
 from django.urls import reverse
 
+from mail.celery_tasks import send_licence_details_to_hmrc
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 def clear_stmp_mailbox():
-    response = requests.get(f"{settings.MAILHOG_URL}/api/v2/messages")
-    for message in response.json()["items"]:
-        idx = message["ID"]
-        requests.delete(f"{settings.MAILHOG_URL}/api/v1/messages/{idx}")
+    requests.delete(f"http://{settings.TEST_EMAIL_HOSTNAME}:8025/api/v1/messages")
 
 
 def get_smtp_body():
-    response = requests.get(f"{settings.MAILHOG_URL}/api/v2/messages")
-    return response.json()["items"][0]["MIME"]["Parts"][1]["Body"]
+    response = requests.get(f"http://{settings.TEST_EMAIL_HOSTNAME}:8025/api/v1/messages")
+    assert response.status_code == 200, response.content
+    mail_id = response.json()["messages"][0]["ID"]
+
+    response = requests.get(f"http://{settings.TEST_EMAIL_HOSTNAME}:8025/api/v1/message/{mail_id}")
+    assert response.status_code == 200
+    part_id = response.json()["Attachments"][0]["PartID"]
+
+    response = requests.get(f"http://{settings.TEST_EMAIL_HOSTNAME}:8025/api/v1/message/{mail_id}/part/{part_id}")
+    assert response.status_code == 200
+
+    return response.content.decode("ascii")
 
 
 @override_settings(
     EMAIL_HOSTNAME=settings.TEST_EMAIL_HOSTNAME,
+    EMAIL_USER="spire-to-dit-user",
+    EMAIL_PASSWORD="password",
 )
 class EndToEndTests(LiteHMRCTestClient):
     def test_send_email_to_hmrc_e2e(self):
         clear_stmp_mailbox()
-        self.client.get(reverse("mail:set_all_to_reply_sent"))
-        self.client.post(
-            reverse("mail:update_licence"), data=self.licence_payload_json, content_type="application/json"
+        response = self.client.post(
+            reverse("mail:update_licence"),
+            data=self.licence_payload_json,
+            content_type="application/json",
         )
-        self.client.get(reverse("mail:send_updates_to_hmrc"))
-        body = get_smtp_body().replace("\r", "")
+        self.assertEqual(
+            response.status_code,
+            200,
+        )
+        send_licence_details_to_hmrc.delay()
+        body = get_smtp_body()
+        body = body.replace("\r", "")
         ymdhm_timestamp = body.split("\n")[0].split("\\")[5]
         run_number = body.split("\n")[0].split("\\")[6]
         expected_mail_body = rf"""1\fileHeader\SPIRE\CHIEF\licenceData\{ymdhm_timestamp}\{run_number}\N
@@ -49,8 +65,15 @@ class EndToEndTests(LiteHMRCTestClient):
 13\line\7\\\\\Old Chemical\Q\\111\\20.0\\\\\\
 14\line\8\\\\\A bottle of water\Q\\076\\1.0\\\\\\
 15\end\licence\14
-16\fileTrailer\1"""
-        assert body == expected_mail_body  # nosec
+16\fileTrailer\1
+"""
+        self.assertEqual(
+            body,
+            expected_mail_body,
+        )
         encoded_reference_code = quote("GBSIEL/2020/0000001/P", safe="")
         response = self.client.get(f"{reverse('mail:licence')}?id={encoded_reference_code}")
-        assert response.json()["status"] == "reply_pending"  # nosec
+        self.assertEqual(
+            response.json()["status"],
+            "reply_pending",
+        )

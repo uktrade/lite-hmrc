@@ -14,6 +14,11 @@ from mail.models import LicencePayload
 class BuildEmailMessageTest(testcases.TestCase):
     maxDiff = None
 
+    @override_settings(
+        HMRC_ADDRESS="hmrc@example.com",  # /PS-IGNORE
+        SPIRE_ADDRESS="spire@example.com",  # /PS-IGNORE
+        EMAIL_USER="email.user@example.com",  # /PS-IGNORE
+    )
     def test_build_email_message(self):
         attachment = "30 \U0001d5c4\U0001d5c6/\U0001d5c1 \u5317\u4EB0"
         email_message_dto = EmailMessageDto(
@@ -29,7 +34,6 @@ class BuildEmailMessageTest(testcases.TestCase):
 
         mime_multipart = builders.build_email_message(email_message_dto)
         mime_multipart.set_boundary("===============8537751789001939036==")
-
         self.assertEqual(
             mime_multipart.as_string(),
             (
@@ -38,19 +42,23 @@ class BuildEmailMessageTest(testcases.TestCase):
                 f"From: {settings.EMAIL_USER}\n"
                 f"To: {settings.SPIRE_ADDRESS}\n"
                 "Subject: Some subject\n"
-                "name: Some subject\n\n"
+                "name: Some subject\n"
+                "\n"
                 "--===============8537751789001939036==\n"
                 'Content-Type: text/plain; charset="iso-8859-1"\n'
                 "MIME-Version: 1.0\n"
-                "Content-Transfer-Encoding: quoted-printable\n\n"
-                "\n\n\n"
+                "Content-Transfer-Encoding: quoted-printable\n"
+                "\n"
+                "\n"
+                "\n"
+                "\n"
                 "--===============8537751789001939036==\n"
                 "Content-Type: application/octet-stream\n"
                 "MIME-Version: 1.0\n"
-                "Content-Transfer-Encoding: base64\n"
-                'Content-Disposition: attachment; filename="some filename"\n'
                 "Content-Transfer-Encoding: 7bit\n"
-                "name: Some subject\n\n"
+                'Content-Disposition: attachment; filename="some filename"\n'
+                "name: Some subject\n"
+                "\n"
                 "30 km/h Bei Jing \n"
                 "--===============8537751789001939036==--\n"
             ),
@@ -104,7 +112,7 @@ class TestBuildICMSLicenceDataFAOIL(testcases.TestCase):
                         "line_3": "line_3",
                         "line_4": "line_4",
                         "line_5": "line_5",
-                        "postcode": "S118ZZ",
+                        "postcode": "S118ZZ",  # /PS-IGNORE
                     },
                 },
                 "country_group": "G001",
@@ -171,14 +179,14 @@ class TestBuildICMSLicenceDataFADFL(testcases.TestCase):
                 "line_3": "line_3",
                 "line_4": "line_4",
                 "line_5": "",
-                "postcode": "S881ZZ",
+                "postcode": "S881ZZ",  # /PS-IGNORE
             },
         }
 
         restrictions = "Sample restrictions"
 
         LicencePayload.objects.create(
-            lite_id="4277dd90-7ac0-4f48-b228-94c4a2fc61b2",
+            lite_id="4277dd90-7ac0-4f48-b228-94c4a2fc61b2",  # /PS-IGNORE
             reference="IMA/2022/00002",
             action=LicenceActionEnum.INSERT,
             data={
@@ -242,7 +250,7 @@ class TestBuildICMSLicenceDataFASIL(testcases.TestCase):
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
-                "postcode": "S227ZZ",
+                "postcode": "S227ZZ",  # /PS-IGNORE
             },
         }
 
@@ -258,7 +266,7 @@ class TestBuildICMSLicenceDataFASIL(testcases.TestCase):
         ]
 
         LicencePayload.objects.create(
-            lite_id="4277dd90-7ac0-4f48-b228-94c4a2fc61b2",
+            lite_id="4277dd90-7ac0-4f48-b228-94c4a2fc61b2",  # /PS-IGNORE
             reference="IMA/2022/00003",
             action=LicenceActionEnum.INSERT,
             data={
@@ -305,7 +313,7 @@ class TestBuildICMSLicenceDataSanction(testcases.TestCase):
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
-                "postcode": "S227ZZ",
+                "postcode": "S227ZZ",  # /PS-IGNORE
             },
         }
 
@@ -317,7 +325,7 @@ class TestBuildICMSLicenceDataSanction(testcases.TestCase):
         ]
 
         LicencePayload.objects.create(
-            lite_id="4277dd90-7ac0-4f48-b228-94c4a2fc61b2",
+            lite_id="4277dd90-7ac0-4f48-b228-94c4a2fc61b2",  # /PS-IGNORE
             reference="IMA/2022/00004",
             action=LicenceActionEnum.INSERT,
             data={

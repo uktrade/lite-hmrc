@@ -1,7 +1,6 @@
 import datetime
 import json
 import logging
-
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -268,8 +267,8 @@ def build_email_message(email_message_dto: EmailMessageDto) -> MIMEMultipart:
         "Content-Disposition",
         f'attachment; filename="{email_message_dto.attachment[0]}"',
     )
-    payload.add_header("Content-Transfer-Encoding", "7bit")
     payload.add_header("name", email_message_dto.subject)
+    payload.replace_header("Content-Transfer-Encoding", "7bit")
     multipart_msg.attach(payload)
     logger.info("Message headers: %s, Payload headers: %s", multipart_msg.items(), payload.items())
     return multipart_msg
