@@ -1,4 +1,3 @@
-from unittest import mock
 from urllib.parse import quote
 
 import requests
@@ -25,9 +24,7 @@ def get_smtp_body():
     EMAIL_HOSTNAME=settings.TEST_EMAIL_HOSTNAME,
 )
 class EndToEndTests(LiteHMRCTestClient):
-    @mock.patch("mail.celery_tasks.cache")
-    def test_send_email_to_hmrc_e2e(self, mock_cache):
-        mock_cache.add.return_value = True
+    def test_send_email_to_hmrc_e2e(self):
         clear_stmp_mailbox()
         self.client.get(reverse("mail:set_all_to_reply_sent"))
         self.client.post(
