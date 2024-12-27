@@ -91,6 +91,29 @@ jobs:
           name: Run tests
           command: docker compose run --build lite-hmrc-intg pipenv run pytest -k end_to_end
 
+  tests_e2e_postgres13:
+    machine:
+      image: ubuntu-2204:current
+      docker_layer_caching: true
+    resource_class: small
+    environment:
+      PIPENV_YES: 1
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/repo/tmp
+      - run:
+          name: Git Submodule Checkout
+          command: |
+            git submodule sync
+            git submodule update --init
+      - run:
+          name: Set Environment File
+          command: cp docker.env .env
+      - run:
+          name: Run tests
+          command: docker compose -f docker-compose.yml -f docker-compose.postgres13.yml run --build lite-hmrc-intg pipenv run pytest -k end_to_end
+
   check_migrations:
     docker:
       - image: cimg/python:3.9.18
@@ -171,6 +194,7 @@ workflows:
       - tests
       - tests_postgres13
       - tests_e2e
+      - tests_e2e_postgres13
       - check_migrations
       - linting
       - check_coverage:

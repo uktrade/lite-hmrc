@@ -1,15 +1,10 @@
-version: "3.8"
-
 services:
   lite-hmrc-postgres:
+    image: "postgres:12"
     restart: unless-stopped
-    container_name: "lite-hmrc-postgres"
     environment:
-      - LITEHMRC_DB_USER=postgres
-      - LITEHMRC_DB_PASSWORD=password
-      - LITEHMRC_DB_SCHEMA=postgres
       - POSTGRES_PASSWORD=password
-    build: './database'
+      - POSTGRES_DB=postgres
     expose:
       - 5432
     ports:
