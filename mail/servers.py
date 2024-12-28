@@ -1,6 +1,7 @@
 import logging
 import poplib
 import smtplib
+from contextlib import contextmanager
 
 from django.conf import settings
 
@@ -40,6 +41,7 @@ class MailServer(object):
         return self.auth.user
 
 
+@contextmanager
 def get_smtp_connection():
     """Connect to an SMTP server, specified by environment variables."""
     # Note that EMAIL_HOSTNAME is not Django's EMAIL_HOST setting.
@@ -49,19 +51,14 @@ def get_smtp_connection():
     password = settings.EMAIL_PASSWORD
 
     logging.info("SMTP=%r:%r, USERNAME=%r", hostname, port, username)
-    conn = smtplib.SMTP(hostname, port, timeout=60)
-    conn.starttls()
-    conn.login(username, password)
-
-    return conn
+    with smtplib.SMTP(hostname, port, timeout=60) as conn:
+        conn.starttls()
+        conn.login(username, password)
+        yield conn
 
 
 def smtp_send(message):
-    conn = get_smtp_connection()
-    try:
-        # Result is an empty dict on success.
+    with get_smtp_connection() as conn:
         result = conn.send_message(message)
-    finally:
-        conn.quit()
 
     return result
