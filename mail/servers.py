@@ -45,15 +45,12 @@ def get_smtp_connection():
     # Note that EMAIL_HOSTNAME is not Django's EMAIL_HOST setting.
     hostname = settings.EMAIL_HOSTNAME
     port = str(settings.EMAIL_SMTP_PORT)
-    use_tls = settings.EMAIL_USE_TLS
     username = settings.EMAIL_USER
     password = settings.EMAIL_PASSWORD
-    logging.info("SMTP=%r:%r, TLS=%r, USERNAME=%r", hostname, port, use_tls, username)
+
+    logging.info("SMTP=%r:%r, USERNAME=%r", hostname, port, username)
     conn = smtplib.SMTP(hostname, port, timeout=60)
-
-    if use_tls:
-        conn.starttls()
-
+    conn.starttls()
     conn.login(username, password)
 
     return conn

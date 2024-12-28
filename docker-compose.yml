@@ -38,22 +38,34 @@ services:
       start_period: 5s
 
   spire-to-dit-mailserver:
-    image: axllent/mailpit
+    build:
+      context: ./conf/mail_servers/
+      args:
+        - CN=spire-to-dit-mailserver
     environment:
       - MP_POP3_AUTH_FILE=/config/passwd
-      - MP_SMTP_AUTH_ALLOW_INSECURE=true
+      - MP_POP3_TLS_CERT=/certs/cert.pem
+      - MP_POP3_TLS_KEY=/certs/key.pem
       - MP_SMTP_AUTH_FILE=/config/passwd
+      - MP_SMTP_TLS_CERT=/certs/cert.pem
+      - MP_SMTP_TLS_KEY=/certs/key.pem
     ports:
       - 8025:8025
     volumes:
       - ./conf/mail_servers/spire-to-dit-mailserver/:/config
 
   hmrc-to-dit-mailserver:
-    image: axllent/mailpit
+    build:
+      context: ./conf/mail_servers/
+      args:
+        - CN=hmrc-to-dit-mailserver
     environment:
       - MP_POP3_AUTH_FILE=/config/passwd
-      - MP_SMTP_AUTH_ALLOW_INSECURE=true
+      - MP_POP3_TLS_CERT=/certs/cert.pem
+      - MP_POP3_TLS_KEY=/certs/key.pem
       - MP_SMTP_AUTH_FILE=/config/passwd
+      - MP_SMTP_TLS_CERT=/certs/cert.pem
+      - MP_SMTP_TLS_KEY=/certs/key.pem
     ports:
       - 8026:8025
     volumes:

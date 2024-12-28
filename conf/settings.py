@@ -137,7 +137,6 @@ TEST_EMAIL_HOSTNAME = env("TEST_EMAIL_HOSTNAME", default="spire-to-dit-mailserve
 
 SPIRE_ADDRESS = env("SPIRE_ADDRESS", default="test-spire-address@example.com")  # /PS-IGNORE
 HMRC_ADDRESS = env("HMRC_ADDRESS", default="test-hmrc-address@example.com")  # /PS-IGNORE
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 
 TIME_TESTS = env.bool("TIME_TESTS", default=False)
 
