@@ -18,6 +18,7 @@ pytest-cov = "*"
 requests-mock = "*"
 watchdog = {extras = ["watchmedo"], version = "*"}
 freezegun = "*"
+pytest-mock = "*"
 
 [packages]
 djangorestframework = "~=3.15.2"

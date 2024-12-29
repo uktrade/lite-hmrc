@@ -1,4 +1,6 @@
 import logging
+from email.parser import BytesHeaderParser
+from email.utils import parseaddr
 from poplib import POP3_SSL, error_proto
 from typing import Callable, Iterator, List, Tuple
 
@@ -8,6 +10,17 @@ from mail.enums import MailReadStatuses
 from mail.libraries.email_message_dto import EmailMessageDto
 from mail.libraries.helpers import to_mail_message_dto
 from mail.models import Mail, MailboxConfig, MailReadStatus
+
+
+def is_from_valid_sender(msg_header, valid_addresses):
+    parser = BytesHeaderParser()
+    header = parser.parsebytes(b"\n".join(msg_header))
+
+    _, from_address = parseaddr(str(header["From"]))
+    logging.info("Found from address %s", from_address)
+    valid_addresses = [address.replace("From: ", "") for address in valid_addresses]
+
+    return from_address in valid_addresses
 
 
 def get_message_id(pop3_connection, listing_msg):
@@ -26,16 +39,14 @@ def get_message_id(pop3_connection, listing_msg):
     # 0 indicates the number of lines of message to be retrieved after the header
     msg_header = pop3_connection.top(msg_num, 0)
 
-    spire_from_address = settings.SPIRE_FROM_ADDRESS.encode("utf-8")
-    hmrc_dit_reply_address = settings.HMRC_TO_DIT_REPLY_ADDRESS.encode("utf-8")
-
-    if spire_from_address not in msg_header[1] and hmrc_dit_reply_address not in msg_header[1]:
+    if not is_from_valid_sender(msg_header[1], [settings.SPIRE_FROM_ADDRESS, settings.HMRC_TO_DIT_REPLY_ADDRESS]):
         logging.warning(
             "Found mail with message_num %s that is not from SPIRE (%s) or HMRC (%s), skipping ...",
             msg_num,
-            spire_from_address,
-            hmrc_dit_reply_address,
+            settings.SPIRE_FROM_ADDRESS,
+            settings.HMRC_TO_DIT_REPLY_ADDRESS,
         )
+        logging.debug("Mail was from %s", msg_header[1])
         return None, msg_num
 
     message_id = None
