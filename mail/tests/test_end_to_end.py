@@ -3,6 +3,7 @@ from base64 import b64encode
 
 import pytest
 import requests
+import requests_mock
 from django.conf import settings
 from django.urls import reverse
 from freezegun import freeze_time
@@ -38,6 +39,8 @@ def set_settings(settings, outgoing_email_user):
 
     settings.HMRC_TO_DIT_REPLY_ADDRESS = "hmrctodit@example.com"
     settings.HMRC_ADDRESS = "hmrctodit@example.com"
+
+    settings.LITE_API_URL = "https://lite.example.com"
 
 
 @pytest.fixture()
@@ -272,6 +275,88 @@ def test_receive_lite_licence_reply_from_hmrc_e2e(
     assert get_smtp_message_count() == 0
 
 
+def test_receive_lite_usage_data_from_hmrc_e2e(
+    client,
+    usage_data_file_name,
+    usage_data_file_body,
+    licence_payload_json,
+    settings,
+):
+    assert not Mail.objects.exists()
+    assert not UsageData.objects.exists()
+
+    response = client.post(
+        reverse("mail:update_licence"),
+        data=licence_payload_json,
+        content_type="application/json",
+    )
+
+    send_licence_details_to_hmrc.delay()
+
+    response = requests.post(
+        "http://hmrc-to-dit-mailserver:8025/api/v1/send",
+        json={
+            "From": {"Email": settings.HMRC_TO_DIT_REPLY_ADDRESS, "Name": "HMRC"},
+            "Subject": usage_data_file_name,
+            "To": [{"Email": "lite@example.com", "Name": "LITE"}],  # /PS-IGNORE
+            "Attachments": [
+                {
+                    "Content": b64encode(usage_data_file_body).decode("ascii"),
+                    "Filename": usage_data_file_name,
+                }
+            ],
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    with requests_mock.Mocker() as m:
+        mock_licences_put = m.put(
+            f"{settings.LITE_API_URL}/licences/hmrc-integration/",
+            json={
+                "licences": {
+                    "accepted": [
+                        {
+                            "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
+                            "goods": [
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed1"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed2"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed3"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed4"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed5"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed6"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed7"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed9"},
+                            ],
+                        },
+                    ],
+                    "rejected": [],
+                },
+            },
+            status_code=status.HTTP_207_MULTI_STATUS,
+        )
+        manage_inbox.delay()
+
+    assert Mail.objects.count() == 2
+    assert Mail.objects.filter(extract_type=ExtractTypeEnum.USAGE_DATA).count() == 1
+    usage_data_mail = Mail.objects.get(extract_type=ExtractTypeEnum.USAGE_DATA)
+
+    assert UsageData.objects.count() == 1
+    usage_data = UsageData.objects.get()
+    assert usage_data.mail == usage_data_mail
+
+    assert mock_licences_put.last_request.json() == {
+        "licences": [
+            {
+                "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
+                "action": "open",
+                "completion_date": "",
+                "goods": [{"id": "f95ded2a-354f-46f1-a572-c7f97d63bed1", "usage": "4", "value": "9", "currency": ""}],
+            }
+        ],
+        "usage_data_id": str(usage_data.pk),
+    }
+
+
 def test_receive_spire_licence_data_and_send_to_hmrc_e2e(
     spire_to_dit_mailserver_api_url,
     licence_data_file_name,
@@ -382,7 +467,7 @@ def test_receive_spire_licence_reply_from_hmrc_e2e(
     assert normalise_line_endings(body) == normalise_line_endings(licence_reply_file_body.decode("ascii"))
 
 
-def test_receive_spire_licence_reply_from_hmrc_e2e(
+def test_receive_spire_usage_data_from_hmrc_e2e(
     usage_data_file_name,
     usage_data_file_body,
     get_smtp_message_count,
