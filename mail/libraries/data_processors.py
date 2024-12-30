@@ -43,6 +43,8 @@ def serialize_email_message(dto: EmailMessageDto) -> Mail or None:
     serializer_class = get_serializer_for_dto(extract_type)
     serializer = serializer_class(instance=instance, data=data, partial=partial)
 
+    logging.debug("About to serialize using %s", serializer_class)
+
     if not serializer.is_valid():
         logging.error("Failed to serialize email (subject: %s) -> %s", dto.subject, serializer.errors)
         raise ValidationError(serializer.errors)
@@ -63,6 +65,7 @@ def convert_dto_data_for_serialization(dto: EmailMessageDto, extract_type) -> di
     :return: new dto for different extract type; corresponding Serializer;
             and existing mail if extract type is of reply. Both serializer and mail could be None
     """
+    logging.debug("Converting data for %s", extract_type)
     if extract_type == ExtractTypeEnum.LICENCE_DATA:
         data = convert_data_for_licence_data(dto)
     elif extract_type == ExtractTypeEnum.LICENCE_REPLY:

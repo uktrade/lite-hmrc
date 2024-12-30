@@ -13,7 +13,7 @@ from mail.auth import BasicAuthentication
 from mail.celery_tasks import manage_inbox, send_licence_details_to_hmrc
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.libraries.helpers import read_file
-from mail.models import LicenceData, LicencePayload, Mail
+from mail.models import LicenceData, LicencePayload, Mail, UsageData
 from mail.servers import MailServer
 
 pytestmark = pytest.mark.django_db
@@ -37,6 +37,7 @@ def set_settings(settings, outgoing_email_user):
     settings.OUTGOING_EMAIL_USER = outgoing_email_user
 
     settings.HMRC_TO_DIT_REPLY_ADDRESS = "hmrctodit@example.com"
+    settings.HMRC_ADDRESS = "hmrctodit@example.com"
 
 
 @pytest.fixture()
@@ -84,6 +85,16 @@ def licence_reply_file_name():
 @pytest.fixture()
 def licence_reply_file_body(licence_reply_file_name):
     return read_file(f"mail/tests/files/end_to_end/{licence_reply_file_name}", mode="rb")
+
+
+@pytest.fixture()
+def usage_data_file_name():
+    return "ILBDOTI_live_CHIEF_usageData_1_202001010000"
+
+
+@pytest.fixture()
+def usage_data_file_body(usage_data_file_name):
+    return read_file(f"mail/tests/files/end_to_end/{usage_data_file_name}", mode="rb")
 
 
 @pytest.fixture(autouse=True)
@@ -369,3 +380,56 @@ def test_receive_spire_licence_reply_from_hmrc_e2e(
 
     body = get_smtp_body()
     assert normalise_line_endings(body) == normalise_line_endings(licence_reply_file_body.decode("ascii"))
+
+
+def test_receive_spire_licence_reply_from_hmrc_e2e(
+    usage_data_file_name,
+    usage_data_file_body,
+    get_smtp_message_count,
+    get_smtp_message,
+    get_smtp_body,
+):
+    assert not Mail.objects.exists()
+    assert not UsageData.objects.exists()
+
+    response = requests.post(
+        "http://hmrc-to-dit-mailserver:8025/api/v1/send",
+        json={
+            "From": {"Email": settings.HMRC_TO_DIT_REPLY_ADDRESS, "Name": "HMRC"},
+            "Subject": usage_data_file_name,
+            "To": [{"Email": "lite@example.com", "Name": "LITE"}],  # /PS-IGNORE
+            "Attachments": [
+                {
+                    "Content": b64encode(usage_data_file_body).decode("ascii"),
+                    "Filename": usage_data_file_name,
+                }
+            ],
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    manage_inbox.delay()
+
+    assert Mail.objects.count() == 1
+    mail = Mail.objects.get()
+    assert mail.extract_type == ExtractTypeEnum.USAGE_DATA
+    assert mail.status == ReceptionStatusEnum.REPLY_SENT
+    assert mail.edi_filename == usage_data_file_name
+    assert normalise_line_endings(mail.edi_data) == normalise_line_endings(usage_data_file_body.decode("ascii"))
+
+    assert UsageData.objects.count() == 1
+    usage_data = UsageData.objects.get()
+    assert usage_data.mail == mail
+    assert usage_data.spire_run_number == 1
+    assert usage_data.hmrc_run_number == 1
+    assert not usage_data.has_lite_data
+    assert usage_data.has_spire_data
+
+    assert get_smtp_message_count() == 1
+
+    _, message = get_smtp_message()
+    assert message["To"] == [{"Name": "", "Address": "spire@example.com"}]
+    assert message["Subject"] == usage_data_file_name
+
+    body = get_smtp_body()
+    assert normalise_line_endings(body) == normalise_line_endings(usage_data_file_body.decode("ascii"))

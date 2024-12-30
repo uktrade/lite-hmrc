@@ -52,16 +52,21 @@ def convert_data_for_licence_data_reply(dto: EmailMessageDto) -> dict:
 
 
 def convert_data_for_usage_data(dto: EmailMessageDto) -> dict:
+    logging.debug("Converting %s", dto)
     data = {
         "usage_data": {},
         "edi_filename": process_attachment(dto.attachment)[0],
         "edi_data": process_attachment(dto.attachment)[1],
     }
-    data["usage_data"]["spire_run_number"] = (
-        new_spire_run_number(int(dto.run_number)) if convert_sender_to_source(dto.sender) in VALID_SENDERS else None
-    )
+    run_number = None
+    source = convert_sender_to_source(dto.sender)
+    logging.debug("Source for %s is %s", dto.sender, source)
+    if source in VALID_SENDERS:
+        run_number = new_spire_run_number(int(dto.run_number))
+    data["usage_data"]["spire_run_number"] = run_number
     data["usage_data"]["hmrc_run_number"] = dto.run_number
     data["usage_data"]["licence_ids"] = get_licence_ids(data["edi_data"])
+    logging.debug("Converted to usage data %s", data)
     return data
 
 
