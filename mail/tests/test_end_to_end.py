@@ -16,6 +16,8 @@ from mail.libraries.helpers import read_file
 from mail.models import LicenceData, LicencePayload, Mail
 from mail.servers import MailServer
 
+pytestmark = pytest.mark.django_db
+
 
 @pytest.fixture()
 def outgoing_email_user():
@@ -30,6 +32,7 @@ def set_settings(settings, outgoing_email_user):
 
     settings.INCOMING_EMAIL_USER = "spire@example.com"
     settings.SPIRE_FROM_ADDRESS = "spire@example.com"
+    settings.SPIRE_ADDRESS = "spire@example.com"
 
     settings.OUTGOING_EMAIL_USER = outgoing_email_user
 
@@ -83,7 +86,7 @@ def licence_reply_file_body(licence_reply_file_name):
     return read_file(f"mail/tests/files/end_to_end/{licence_reply_file_name}", mode="rb")
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def hmrc_to_dit_mailserver(mocker):
     auth = BasicAuthentication(
         user="hmrc-to-dit-user",
@@ -100,7 +103,7 @@ def hmrc_to_dit_mailserver(mocker):
     )
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def spire_to_dit_mailserver(mocker):
     auth = BasicAuthentication(
         user="spire-to-dit-user",
@@ -119,6 +122,17 @@ def spire_to_dit_mailserver(mocker):
 
 def normalise_line_endings(string):
     return string.replace("\r", "").strip()
+
+
+@pytest.fixture()
+def get_smtp_message_count(outbox_mailserver_api_url):
+    def _get_smtp_message_count():
+        response = requests.get(f"{outbox_mailserver_api_url}messages")
+        assert response.status_code == 200, response.content
+
+        return len(response.json()["messages"])
+
+    return _get_smtp_message_count
 
 
 @pytest.fixture()
@@ -150,9 +164,16 @@ def get_smtp_body(outbox_mailserver_api_url, get_smtp_message):
     return _get_smtp_body
 
 
-@pytest.mark.django_db()
 @freeze_time("2020-01-01")
-def test_send_lite_licence_data_to_hmrc_e2e(client, licence_payload_json, licence_data_file_body, get_smtp_body):
+def test_send_lite_licence_data_to_hmrc_e2e(
+    client,
+    licence_payload_json,
+    licence_data_file_name,
+    licence_data_file_body,
+    get_smtp_message_count,
+    get_smtp_message,
+    get_smtp_body,
+):
     assert not LicencePayload.objects.exists()
 
     response = client.post(
@@ -186,16 +207,20 @@ def test_send_lite_licence_data_to_hmrc_e2e(client, licence_payload_json, licenc
 
     assert licence_data.mail == mail
 
+    assert get_smtp_message_count() == 1
+
+    _, message = get_smtp_message()
+    assert message["To"] == [{"Name": "", "Address": "hmrc@example.com"}]
+    assert message["Subject"] == licence_data_file_name
+
     body = get_smtp_body()
     assert normalise_line_endings(body) == normalise_line_endings(licence_data_file_body.decode("ascii"))
 
 
-@pytest.mark.django_db()
 def test_receive_lite_licence_reply_from_hmrc_e2e(
-    hmrc_to_dit_mailserver,
-    spire_to_dit_mailserver,
     licence_reply_file_body,
     licence_reply_file_name,
+    get_smtp_message_count,
 ):
     mail = Mail.objects.create(
         extract_type=ExtractTypeEnum.LICENCE_REPLY,
@@ -233,15 +258,15 @@ def test_receive_lite_licence_reply_from_hmrc_e2e(
     assert mail.response_filename == licence_reply_file_name
     assert mail.response_subject == licence_reply_file_name
 
+    assert get_smtp_message_count() == 0
 
-@pytest.mark.django_db()
+
 def test_receive_spire_licence_data_and_send_to_hmrc_e2e(
-    hmrc_to_dit_mailserver,
-    spire_to_dit_mailserver,
     spire_to_dit_mailserver_api_url,
     licence_data_file_name,
     licence_data_file_body,
     outgoing_email_user,
+    get_smtp_message_count,
     get_smtp_message,
     get_smtp_body,
 ):
@@ -280,8 +305,67 @@ def test_receive_spire_licence_data_and_send_to_hmrc_e2e(
     assert licence_data.source_run_number == 1
     assert not licence_data.licence_payloads.exists()
 
+    assert get_smtp_message_count() == 1
+
     _, smtp_message = get_smtp_message()
     assert smtp_message["To"] == [{"Address": outgoing_email_user, "Name": ""}]
+    assert smtp_message["Subject"] == licence_data_file_name
 
     body = get_smtp_body()
     assert normalise_line_endings(body) == normalise_line_endings(licence_data_file_body.decode("ascii"))
+
+
+def test_receive_spire_licence_reply_from_hmrc_e2e(
+    licence_data_file_name,
+    licence_data_file_body,
+    licence_reply_file_name,
+    licence_reply_file_body,
+    get_smtp_message_count,
+    get_smtp_message,
+    get_smtp_body,
+):
+    mail = Mail.objects.create(
+        extract_type=ExtractTypeEnum.LICENCE_DATA,
+        status=ReceptionStatusEnum.REPLY_PENDING,
+        edi_filename=licence_data_file_name,
+        edi_data=licence_data_file_body.decode("ascii"),
+    )
+    licence_data = LicenceData.objects.create(
+        mail=mail,
+        source=SourceEnum.SPIRE,
+        hmrc_run_number=1,
+        source_run_number=1,
+    )
+
+    response = requests.post(
+        "http://hmrc-to-dit-mailserver:8025/api/v1/send",
+        json={
+            "From": {"Email": settings.HMRC_TO_DIT_REPLY_ADDRESS, "Name": "HMRC"},
+            "Subject": licence_reply_file_name,
+            "To": [{"Email": "lite@example.com", "Name": "LITE"}],  # /PS-IGNORE
+            "Attachments": [
+                {
+                    "Content": b64encode(licence_reply_file_body).decode("ascii"),
+                    "Filename": licence_reply_file_name,
+                }
+            ],
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    manage_inbox.delay()
+
+    mail.refresh_from_db()
+    assert mail.status == ReceptionStatusEnum.REPLY_SENT
+    assert mail.extract_type == ExtractTypeEnum.LICENCE_REPLY
+    assert mail.response_filename == licence_reply_file_name
+    assert normalise_line_endings(mail.response_data) == normalise_line_endings(licence_reply_file_body.decode("ascii"))
+
+    assert get_smtp_message_count() == 1
+
+    _, message = get_smtp_message()
+    assert message["To"] == [{"Name": "", "Address": "spire@example.com"}]
+    assert message["Subject"] == licence_reply_file_name
+
+    body = get_smtp_body()
+    assert normalise_line_endings(body) == normalise_line_endings(licence_reply_file_body.decode("ascii"))
