@@ -26,9 +26,10 @@ services:
       - celery-beat
       - spire-to-dit-mailserver
       - hmrc-to-dit-mailserver
+      - outbox-mailserver
     expose:
       - 8000
-    entrypoint: dockerize -wait tcp://lite-hmrc-postgres:5432 -wait tcp://spire-to-dit-mailserver:1110 -wait tcp://hmrc-to-dit-mailserver:1110
+    entrypoint: dockerize -wait tcp://lite-hmrc-postgres:5432 -wait tcp://spire-to-dit-mailserver:1110 -wait tcp://hmrc-to-dit-mailserver:1110 -wait tcp://outbox-mailserver:1110
     command: pipenv run ./manage.py runserver 0.0.0.0:8000
     healthcheck:
       test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
@@ -70,6 +71,23 @@ services:
       - 8026:8025
     volumes:
       - ./conf/mail_servers/hmrc-to-dit-mailserver/:/config
+
+  outbox-mailserver:
+    build:
+      context: ./conf/mail_servers/
+      args:
+        - CN=outbox-mailserver
+    environment:
+      - MP_POP3_AUTH_FILE=/config/passwd
+      - MP_POP3_TLS_CERT=/certs/cert.pem
+      - MP_POP3_TLS_KEY=/certs/key.pem
+      - MP_SMTP_AUTH_FILE=/config/passwd
+      - MP_SMTP_TLS_CERT=/certs/cert.pem
+      - MP_SMTP_TLS_KEY=/certs/key.pem
+    ports:
+      - 8027:8025
+    volumes:
+      - ./conf/mail_servers/outbox-mailserver/:/config
 
   celery:
     build: .

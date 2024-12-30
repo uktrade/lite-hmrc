@@ -17,6 +17,7 @@ def celery_app():
     celeryapp.autodiscover_tasks(related_name="celery_tasks")
     celeryapp.conf["CELERY_ALWAYS_EAGER"] = True
     celeryapp.conf["CELERY_TASK_STORE_EAGER_RESULT"] = True
+    celeryapp.conf["CELERY_TASK_EAGER_PROPAGATES"] = True
 
     celeryapp.conf["beat_schedule"] = {
         # send licence details to hmrc, periodic task every 10min

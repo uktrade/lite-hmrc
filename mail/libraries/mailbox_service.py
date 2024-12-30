@@ -16,8 +16,9 @@ def is_from_valid_sender(msg_header, valid_addresses):
     parser = BytesHeaderParser()
     header = parser.parsebytes(b"\n".join(msg_header))
 
-    _, from_address = parseaddr(str(header["From"]))
-    logging.info("Found from address %s", from_address)
+    logging.info("Parsing address header From: %s", header["From"])
+    name, from_address = parseaddr(str(header["From"]))
+    logging.info("Found from address %s, %s", name, from_address)
     valid_addresses = [address.replace("From: ", "") for address in valid_addresses]
 
     return from_address in valid_addresses

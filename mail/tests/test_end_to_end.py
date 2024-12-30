@@ -17,11 +17,21 @@ from mail.models import LicenceData, LicencePayload, Mail
 from mail.servers import MailServer
 
 
+@pytest.fixture()
+def outgoing_email_user():
+    return "hmrc@example.com"
+
+
 @pytest.fixture(autouse=True)
-def set_settings(settings):
+def set_settings(settings, outgoing_email_user):
     settings.EMAIL_HOSTNAME = settings.TEST_EMAIL_HOSTNAME
-    settings.EMAIL_USER = "spire-to-dit-user"
+    settings.EMAIL_USER = "outbox-user"
     settings.EMAIL_PASSWORD = "password"
+
+    settings.INCOMING_EMAIL_USER = "spire@example.com"
+    settings.SPIRE_FROM_ADDRESS = "spire@example.com"
+
+    settings.OUTGOING_EMAIL_USER = outgoing_email_user
 
     settings.HMRC_TO_DIT_REPLY_ADDRESS = "hmrctodit@example.com"
 
@@ -37,14 +47,15 @@ def spire_to_dit_mailserver_api_url():
 
 
 @pytest.fixture()
-def smtp_mailserver_api_url(settings):
-    return f"http://{settings.TEST_EMAIL_HOSTNAME}:8025/api/v1/"
+def outbox_mailserver_api_url():
+    return "http://outbox-mailserver:8025/api/v1/"
 
 
 @pytest.fixture(autouse=True)
-def clear_mailboxes(hmrc_to_dit_mailserver_api_url, spire_to_dit_mailserver_api_url):
+def clear_mailboxes(hmrc_to_dit_mailserver_api_url, spire_to_dit_mailserver_api_url, outbox_mailserver_api_url):
     requests.delete(f"{hmrc_to_dit_mailserver_api_url}messages")
     requests.delete(f"{spire_to_dit_mailserver_api_url}messages")
+    requests.delete(f"{outbox_mailserver_api_url}messages")
 
 
 @pytest.fixture()
@@ -53,8 +64,13 @@ def licence_payload_json():
 
 
 @pytest.fixture()
-def licence_data_file_body():
-    return read_file("mail/tests/files/end_to_end/CHIEF_LIVE_SPIRE_licenceData_1_202001010000")
+def licence_data_file_name():
+    return "CHIEF_LIVE_SPIRE_licenceData_1_202001010000"
+
+
+@pytest.fixture()
+def licence_data_file_body(licence_data_file_name):
+    return read_file(f"mail/tests/files/end_to_end/{licence_data_file_name}", mode="rb")
 
 
 @pytest.fixture()
@@ -106,17 +122,27 @@ def normalise_line_endings(string):
 
 
 @pytest.fixture()
-def get_smtp_body(smtp_mailserver_api_url):
-    def _get_smtp_body():
-        response = requests.get(f"{smtp_mailserver_api_url}messages")
+def get_smtp_message(outbox_mailserver_api_url):
+    def _get_smtp_message():
+        response = requests.get(f"{outbox_mailserver_api_url}messages")
         assert response.status_code == 200, response.content
         mail_id = response.json()["messages"][0]["ID"]
 
-        response = requests.get(f"{smtp_mailserver_api_url}message/{mail_id}")
+        response = requests.get(f"{outbox_mailserver_api_url}message/{mail_id}")
         assert response.status_code == 200
-        part_id = response.json()["Attachments"][0]["PartID"]
 
-        response = requests.get(f"{smtp_mailserver_api_url}message/{mail_id}/part/{part_id}")
+        return mail_id, response.json()
+
+    return _get_smtp_message
+
+
+@pytest.fixture()
+def get_smtp_body(outbox_mailserver_api_url, get_smtp_message):
+    def _get_smtp_body():
+        mail_id, smtp_message = get_smtp_message()
+        part_id = smtp_message["Attachments"][0]["PartID"]
+
+        response = requests.get(f"{outbox_mailserver_api_url}message/{mail_id}/part/{part_id}")
         assert response.status_code == 200
 
         return response.content.decode("ascii")
@@ -161,7 +187,7 @@ def test_send_lite_licence_data_to_hmrc_e2e(client, licence_payload_json, licenc
     assert licence_data.mail == mail
 
     body = get_smtp_body()
-    assert normalise_line_endings(body) == normalise_line_endings(licence_data_file_body)
+    assert normalise_line_endings(body) == normalise_line_endings(licence_data_file_body.decode("ascii"))
 
 
 @pytest.mark.django_db()
@@ -183,7 +209,7 @@ def test_receive_lite_licence_reply_from_hmrc_e2e(
         source=SourceEnum.LITE,
     )
 
-    requests.post(
+    response = requests.post(
         "http://hmrc-to-dit-mailserver:8025/api/v1/send",
         json={
             "From": {"Email": settings.HMRC_TO_DIT_REPLY_ADDRESS, "Name": "HMRC"},
@@ -197,6 +223,7 @@ def test_receive_lite_licence_reply_from_hmrc_e2e(
             ],
         },
     )
+    assert response.status_code == status.HTTP_200_OK
 
     manage_inbox.delay()
 
@@ -205,3 +232,56 @@ def test_receive_lite_licence_reply_from_hmrc_e2e(
     assert normalise_line_endings(mail.response_data) == normalise_line_endings(licence_reply_file_body.decode("ascii"))
     assert mail.response_filename == licence_reply_file_name
     assert mail.response_subject == licence_reply_file_name
+
+
+@pytest.mark.django_db()
+def test_receive_spire_licence_data_and_send_to_hmrc_e2e(
+    hmrc_to_dit_mailserver,
+    spire_to_dit_mailserver,
+    spire_to_dit_mailserver_api_url,
+    licence_data_file_name,
+    licence_data_file_body,
+    outgoing_email_user,
+    get_smtp_message,
+    get_smtp_body,
+):
+    assert not Mail.objects.exists()
+    assert not LicenceData.objects.exists()
+
+    response = requests.post(
+        f"{spire_to_dit_mailserver_api_url}send",
+        json={
+            "From": {"Email": settings.INCOMING_EMAIL_USER, "Name": "SPIRE"},
+            "Subject": licence_data_file_name,
+            "To": [{"Email": "lite@example.com", "Name": "LITE"}],  # /PS-IGNORE
+            "Attachments": [
+                {
+                    "Content": b64encode(licence_data_file_body).decode("ascii"),
+                    "Filename": licence_data_file_name,
+                }
+            ],
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    manage_inbox.delay()
+
+    assert Mail.objects.count() == 1
+    mail = Mail.objects.get()
+    assert mail.status == ReceptionStatusEnum.REPLY_PENDING
+    assert mail.edi_filename == licence_data_file_name
+    assert normalise_line_endings(mail.edi_data) == normalise_line_endings(licence_data_file_body.decode("ascii"))
+
+    assert LicenceData.objects.count() == 1
+    licence_data = LicenceData.objects.get()
+    assert licence_data.mail == mail
+    assert licence_data.source == SourceEnum.SPIRE
+    assert licence_data.hmrc_run_number == 1
+    assert licence_data.source_run_number == 1
+    assert not licence_data.licence_payloads.exists()
+
+    _, smtp_message = get_smtp_message()
+    assert smtp_message["To"] == [{"Address": outgoing_email_user, "Name": ""}]
+
+    body = get_smtp_body()
+    assert normalise_line_endings(body) == normalise_line_endings(licence_data_file_body.decode("ascii"))
