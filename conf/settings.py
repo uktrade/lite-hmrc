@@ -298,8 +298,11 @@ if IS_ENV_GOV_PAAS:
 
         CACHES = {
             "default": {
-                "BACKEND": "django.core.cache.backends.redis.RedisCache",
+                "BACKEND": "django_redis.cache.RedisCache",
                 "LOCATION": REDIS_BASE_URL,
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                },
             }
         }
 
@@ -332,8 +335,11 @@ elif IS_ENV_DBT_PLATFORM:
 
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "BACKEND": "django_redis.cache.RedisCache",
             "LOCATION": REDIS_BASE_URL,
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
         }
     }
 
@@ -379,8 +385,11 @@ else:
 
         CACHES = {
             "default": {
-                "BACKEND": "django.core.cache.backends.redis.RedisCache",
+                "BACKEND": "django_redis.cache.RedisCache",
                 "LOCATION": REDIS_BASE_URL,
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                },
             }
         }
 

@@ -1,12 +1,9 @@
-import time
 import urllib.parse
-
 from smtplib import SMTPException
 from typing import List, MutableMapping, Tuple
 
 from celery import Task, shared_task
 from celery.utils.log import get_task_logger
-from contextlib import contextmanager
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
@@ -78,28 +75,11 @@ def _log_error(message, lite_usage_data_id):
     logger.error("Failed to send LITE UsageData [{%s}] to LITE API -> {%s}", lite_usage_data_id, message)
 
 
-MAX_ATTEMPTS = 3
+MAX_RETRIES = 3
 RETRY_BACKOFF = 180
 LOCK_EXPIRE = 60 * 10  # secs (10 min)
 CELERY_SEND_LICENCE_UPDATES_TASK_NAME = "mail.celery_tasks.send_licence_details_to_hmrc"
 CELERY_MANAGE_INBOX_TASK_NAME = "mail.celery_tasks.manage_inbox"
-
-
-class SMTPConnectionBusy(SMTPException):
-    pass
-
-
-@contextmanager
-def cache_lock(lock_id):
-    timeout_at = time.monotonic() + LOCK_EXPIRE - 3
-    # cache.add fails if the key already exists.
-    # return True if lock is acquired, False otherwise
-    status = cache.add(lock_id, "lock_acquired", LOCK_EXPIRE)
-    try:
-        yield status
-    finally:
-        if time.monotonic() < timeout_at and status:
-            cache.delete(lock_id)
 
 
 class SendEmailBaseTask(Task):
@@ -116,8 +96,11 @@ class SendEmailBaseTask(Task):
 
 
 @shared_task(
-    autoretry_for=(SMTPConnectionBusy, SMTPException),
-    max_retries=MAX_ATTEMPTS,
+    autoretry_for=(
+        ConnectionResetError,
+        SMTPException,
+    ),
+    max_retries=MAX_RETRIES,
     retry_backoff=RETRY_BACKOFF,
     base=SendEmailBaseTask,
     serializer="pickle",
@@ -134,25 +117,20 @@ def send_email_task(message):
     This is achieved by deferring all email sending functionality to this task.
     Before sending email it first tries to acquire a lock.
       - If there are no active connections then it acquires lock and sends email.
-        In some cases we need to update state which is handled in subtask linked to this task.
-      - If there is active connection (lock acquisition fails) then it raises an exception
-        which triggers a retry.
-        If all retries fail then manual intervention may be required (unlikely)
+      - If there is already an active connection then it will block until it is closed.
+      - In some cases we need to update state which is handled in subtask linked to this task.
+      - If all retries fail then manual intervention may be required (unlikely)
     """
 
     global_lock_id = "global_send_email_lock"
 
-    with cache_lock(global_lock_id) as lock_acquired:
-        if not lock_acquired:
-            logger.exception("Another SMTP connection is active, will be retried after backing off")
-            raise SMTPConnectionBusy()
-
+    with cache.lock(global_lock_id, timeout=LOCK_EXPIRE):
         logger.info("Lock acquired, proceeding to send email from %s to %s", message["From"], message["To"])
 
         try:
             smtp_send(message)
-        except SMTPException:
-            logger.exception("An unexpected error occurred when sending email -> %s")
+        except (SMTPException, ConnectionResetError):
+            logger.exception("An unexpected error occurred when sending email")
             raise
 
         logger.info("Email sent successfully to %s", message["To"])
@@ -238,7 +216,7 @@ class SendLicenceDetailsBaseTask(Task):
 
 @shared_task(
     autoretry_for=(EdifactValidationError,),
-    max_retries=MAX_ATTEMPTS,
+    max_retries=MAX_RETRIES,
     retry_backoff=RETRY_BACKOFF,
     base=SendLicenceDetailsBaseTask,
 )
@@ -293,7 +271,7 @@ def send_licence_details_to_hmrc():
 
 @shared_task(
     autoretry_for=(Exception,),
-    max_retries=MAX_ATTEMPTS,
+    max_retries=MAX_RETRIES,
     retry_backoff=True,
     base=SendUsageDataBaseTask,
 )
@@ -369,7 +347,7 @@ def send_licence_usage_figures_to_lite_api(lite_usage_data_id):
 # Scan Inbox for SPIRE and HMRC Emails
 @shared_task(
     autoretry_for=(Exception,),
-    max_retries=MAX_ATTEMPTS,
+    max_retries=MAX_RETRIES,
     retry_backoff=RETRY_BACKOFF,
 )
 def manage_inbox():
@@ -378,10 +356,6 @@ def manage_inbox():
     logger.info("Polling inbox for updates")
     try:
         check_and_route_emails()
-    except Exception as exc:  # noqa
-        logger.error(
-            "An unexpected error occurred when polling inbox for updates -> %s",
-            type(exc).__name__,
-            exc_info=True,
-        )
-        raise exc
+    except Exception:  # noqa
+        logger.exception("An unexpected error occurred when polling inbox for updates")
+        raise
