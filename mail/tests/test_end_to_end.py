@@ -26,10 +26,25 @@ def set_settings(settings):
     settings.HMRC_TO_DIT_REPLY_ADDRESS = "hmrctodit@example.com"
 
 
+@pytest.fixture()
+def hmrc_to_dit_mailserver_api_url():
+    return "http://hmrc-to-dit-mailserver:8025/api/v1/"
+
+
+@pytest.fixture()
+def spire_to_dit_mailserver_api_url():
+    return "http://spire-to-dit-mailserver:8025/api/v1/"
+
+
+@pytest.fixture()
+def smtp_mailserver_api_url(settings):
+    return f"http://{settings.TEST_EMAIL_HOSTNAME}:8025/api/v1/"
+
+
 @pytest.fixture(autouse=True)
-def clear_mailboxes():
-    requests.delete("http://hmrc-to-dit-mailserver:8025/api/v1/messages")
-    requests.delete("http://spire-to-dit-mailserver:8025/api/v1/messages")
+def clear_mailboxes(hmrc_to_dit_mailserver_api_url, spire_to_dit_mailserver_api_url):
+    requests.delete(f"{hmrc_to_dit_mailserver_api_url}messages")
+    requests.delete(f"{spire_to_dit_mailserver_api_url}messages")
 
 
 @pytest.fixture()
@@ -52,28 +67,66 @@ def licence_reply_file_body(licence_reply_file_name):
     return read_file(f"mail/tests/files/end_to_end/{licence_reply_file_name}", mode="rb")
 
 
+@pytest.fixture()
+def hmrc_to_dit_mailserver(mocker):
+    auth = BasicAuthentication(
+        user="hmrc-to-dit-user",
+        password="password",
+    )
+    hmrc_to_dit_mailserver = MailServer(
+        auth,
+        hostname="hmrc-to-dit-mailserver",
+        pop3_port=1110,
+    )
+    mocker.patch(
+        "mail.libraries.routing_controller.get_hmrc_to_dit_mailserver",
+        return_value=hmrc_to_dit_mailserver,
+    )
+
+
+@pytest.fixture()
+def spire_to_dit_mailserver(mocker):
+    auth = BasicAuthentication(
+        user="spire-to-dit-user",
+        password="password",
+    )
+    spire_to_dit_mailserver = MailServer(
+        auth,
+        hostname="spire-to-dit-mailserver",
+        pop3_port=1110,
+    )
+    mocker.patch(
+        "mail.libraries.routing_controller.get_spire_to_dit_mailserver",
+        return_value=spire_to_dit_mailserver,
+    )
+
+
 def normalise_line_endings(string):
     return string.replace("\r", "").strip()
 
 
-def get_smtp_body():
-    response = requests.get(f"http://{settings.TEST_EMAIL_HOSTNAME}:8025/api/v1/messages")
-    assert response.status_code == 200, response.content
-    mail_id = response.json()["messages"][0]["ID"]
+@pytest.fixture()
+def get_smtp_body(smtp_mailserver_api_url):
+    def _get_smtp_body():
+        response = requests.get(f"{smtp_mailserver_api_url}messages")
+        assert response.status_code == 200, response.content
+        mail_id = response.json()["messages"][0]["ID"]
 
-    response = requests.get(f"http://{settings.TEST_EMAIL_HOSTNAME}:8025/api/v1/message/{mail_id}")
-    assert response.status_code == 200
-    part_id = response.json()["Attachments"][0]["PartID"]
+        response = requests.get(f"{smtp_mailserver_api_url}message/{mail_id}")
+        assert response.status_code == 200
+        part_id = response.json()["Attachments"][0]["PartID"]
 
-    response = requests.get(f"http://{settings.TEST_EMAIL_HOSTNAME}:8025/api/v1/message/{mail_id}/part/{part_id}")
-    assert response.status_code == 200
+        response = requests.get(f"{smtp_mailserver_api_url}message/{mail_id}/part/{part_id}")
+        assert response.status_code == 200
 
-    return response.content.decode("ascii")
+        return response.content.decode("ascii")
+
+    return _get_smtp_body
 
 
 @pytest.mark.django_db()
 @freeze_time("2020-01-01")
-def test_send_lite_licence_data_to_hmrc_e2e(client, licence_payload_json, licence_data_file_body):
+def test_send_lite_licence_data_to_hmrc_e2e(client, licence_payload_json, licence_data_file_body, get_smtp_body):
     assert not LicencePayload.objects.exists()
 
     response = client.post(
@@ -112,48 +165,24 @@ def test_send_lite_licence_data_to_hmrc_e2e(client, licence_payload_json, licenc
 
 
 @pytest.mark.django_db()
-def test_receive_lite_licence_reply_from_hmrc_e2e(mocker, licence_reply_file_body, licence_reply_file_name):
-    auth = BasicAuthentication(
-        user="hmrc-to-dit-user",
-        password="password",
-    )
-    hmrc_to_dit_mailserver = MailServer(
-        auth,
-        hostname="hmrc-to-dit-mailserver",
-        pop3_port=1110,
-    )
-    mocker.patch(
-        "mail.libraries.routing_controller.get_hmrc_to_dit_mailserver",
-        return_value=hmrc_to_dit_mailserver,
-    )
-
-    auth = BasicAuthentication(
-        user="spire-to-dit-user",
-        password="password",
-    )
-    spire_to_dit_mailserver = MailServer(
-        auth,
-        hostname="spire-to-dit-mailserver",
-        pop3_port=1110,
-    )
-    mocker.patch(
-        "mail.libraries.routing_controller.get_spire_to_dit_mailserver",
-        return_value=spire_to_dit_mailserver,
-    )
-
+def test_receive_lite_licence_reply_from_hmrc_e2e(
+    hmrc_to_dit_mailserver,
+    spire_to_dit_mailserver,
+    licence_reply_file_body,
+    licence_reply_file_name,
+):
     mail = Mail.objects.create(
         extract_type=ExtractTypeEnum.LICENCE_REPLY,
         edi_filename=licence_reply_file_name,
         edi_data=licence_reply_file_body.decode("ascii"),
         status=ReceptionStatusEnum.REPLY_PENDING,
     )
-    licence_data = LicenceData.objects.create(
+    LicenceData.objects.create(
         hmrc_run_number=1,
         mail=mail,
         source=SourceEnum.LITE,
     )
 
-    licence_reply_file_name = "ILBDOTI_live_CHIEF_licenceReply_1_202001010000"
     requests.post(
         "http://hmrc-to-dit-mailserver:8025/api/v1/send",
         json={
