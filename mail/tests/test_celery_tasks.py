@@ -87,20 +87,18 @@ class ManageInboxTests(LiteHMRCTestClient):
             manage_inbox()
         assert str(excinfo.value) == "Test Error"
 
-    @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
+    @mock.patch("mail.libraries.routing_controller.get_mail_server")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_sending_of_new_message_from_spire_success(
         self,
-        email_dtos,
+        mock_get_unread_email_message_dtos,
         mock_cache,
         mock_smtp_send,
-        mock_get_hmrc_to_dit_mailserver,
-        mock_get_spire_to_dit_mailserver,
+        mock_get_mail_server,
     ):
-        email_dtos.return_value = []
+        mock_get_unread_email_message_dtos.return_value = []
 
         # When a new message is processed from inbox it will be created with 'pending' status
         pending_mail = Mail.objects.create(
@@ -161,8 +159,7 @@ class ManageInboxTests(LiteHMRCTestClient):
         NOTIFY_USERS=["ecju@gov.uk"],  # /PS-IGNORE
         SPIRE_ADDRESS="spire@example.com",  # /PS-IGNORE
     )
-    @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
+    @mock.patch("mail.libraries.routing_controller.get_mail_server")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
@@ -170,18 +167,16 @@ class ManageInboxTests(LiteHMRCTestClient):
         self,
         send_rejected_email_flag,
         emails_data,
-        email_dtos,
+        mock_get_unread_email_message_dtos,
         mock_cache,
         mock_smtp_send,
-        mock_get_hmrc_to_dit_mailserver,
-        mock_get_spire_to_dit_mailserver,
+        mock_get_mail_server,
     ):
         """
         Test processing of licence reply from HMRC with rejected licences.
         If SEND_REJECTED_EMAIL=True then we send email notifications to users if any licences are rejected.
         """
-        mock_get_hmrc_to_dit_mailserver.return_value = MagicMock()
-        mock_get_spire_to_dit_mailserver.return_value = MagicMock()
+        mock_get_mail_server.return_value = MagicMock()
 
         run_number = 78120
         mail = MailFactory(
@@ -213,7 +208,7 @@ class ManageInboxTests(LiteHMRCTestClient):
             attachment=[licence_reply_filename, file_lines.encode("utf-8")],
             raw_data="qwerty",
         )
-        email_dtos.return_value = [
+        mock_get_unread_email_message_dtos.return_value = [
             (email_message_dto, lambda x: x),
         ]
 

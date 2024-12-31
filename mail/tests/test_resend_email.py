@@ -13,20 +13,18 @@ from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class LITEHMRCResendEmailTests(LiteHMRCTestClient):
-    @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
+    @mock.patch("mail.libraries.routing_controller.get_mail_server")
     @mock.patch("mail.management.commands.resend_email.send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_resend_licence_data_mail_to_hmrc(
         self,
-        email_dtos,
+        mock_get_unread_email_message_dtos,
         mock_cache,
         mock_smtp_send,
         mock_send,
-        mock_get_hmrc_to_dit_mailserver,
-        mock_get_spire_to_dit_mailserver,
+        mock_get_mail_server,
     ):
         """
         Tests resending of licence data mail to HMRC
@@ -53,7 +51,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
             source=SourceEnum.SPIRE,
             licence_ids=f"{source_run_number},{hmrc_run_number}",
         )
-        email_dtos.return_value = []
+        mock_get_unread_email_message_dtos.return_value = []
         check_and_route_emails()
 
         # assert that the pending mail is sent and status updated
@@ -72,20 +70,18 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         self.assertEqual(mock_send.call_count, 1)
 
     @override_settings(SEND_REJECTED_EMAIL=False)
-    @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
+    @mock.patch("mail.libraries.routing_controller.get_mail_server")
     @mock.patch("mail.management.commands.resend_email.send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_resend_licence_reply_mail_to_spire(
         self,
-        email_dtos,
+        mock_get_unread_email_message_dtos,
         mock_cache,
         mock_smtp_send,
         mock_send,
-        mock_get_hmrc_to_dit_mailserver,
-        mock_get_spire_to_dit_mailserver,
+        mock_get_mail_server,
     ):
         mock_cache.add.return_value = True
         mock_smtp_send.wraps = lambda x: x
@@ -121,7 +117,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
             ],
             raw_data="qwerty",
         )
-        email_dtos.side_effect = [
+        mock_get_unread_email_message_dtos.side_effect = [
             [
                 (email_message_dto, lambda x: x),
             ],
@@ -145,20 +141,18 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
         self.assertEqual(mail.extract_type, ExtractTypeEnum.LICENCE_REPLY)
         mock_send.assert_called_once()
 
-    @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
+    @mock.patch("mail.libraries.routing_controller.get_mail_server")
     @mock.patch("mail.management.commands.resend_email.send")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_resend_usage_data_mail_to_spire(
         self,
-        email_dtos,
+        mock_get_unread_email_message_dtos,
         mock_cache,
         mock_smtp_send,
         mock_send,
-        mock_get_hmrc_to_dit_mailserver,
-        mock_get_spire_to_dit_mailserver,
+        mock_get_mail_server,
     ):
         mock_cache.add.return_value = True
         mock_smtp_send.wraps = lambda x: x
@@ -193,7 +187,7 @@ class LITEHMRCResendEmailTests(LiteHMRCTestClient):
             ],
             raw_data="qwerty",
         )
-        email_dtos.side_effect = [
+        mock_get_unread_email_message_dtos.side_effect = [
             [
                 (email_message_dto, lambda x: x),
             ],

@@ -29,28 +29,6 @@ from mailboxes.utils import get_unread_messages_iterator
 logger = logging.getLogger(__name__)
 
 
-def get_spire_to_dit_mailserver() -> MailServer:
-    """
-    Mailbox that receives emails sent from SPIRE
-
-    These are licenceData and usageReply emails. They are processed by the service and sent to HMRC.
-    """
-    mail_server = get_mail_server("spire_to_dit")
-
-    return mail_server
-
-
-def get_hmrc_to_dit_mailserver() -> MailServer:
-    """
-    Mailbox that receives reply emails from HMRC
-
-    These are licenceReply and usageData emails
-    """
-    mail_server = get_mail_server("hmrc_to_dit")
-
-    return mail_server
-
-
 def process_unread_email_messages(unread_email_message_dtos):
     for email, mark_status in unread_email_message_dtos:
         logger.info("Processing mail with subject %s", email.subject)
@@ -78,7 +56,7 @@ def process_unread_email_messages(unread_email_message_dtos):
     check_and_notify_rejected_licences(mail)
 
 
-def process_pending_messages(hmrc_to_dit_server, spire_to_dit_server):
+def process_pending_messages():
     pending_message = check_for_pending_messages()
     if pending_message:
         logger.info(
@@ -88,34 +66,23 @@ def process_pending_messages(hmrc_to_dit_server, spire_to_dit_server):
         )
         _collect_and_send(pending_message)
 
-    logger.info(
-        "No new emails found from %s or %s",
-        hmrc_to_dit_server.user,
-        spire_to_dit_server.user,
-    )
+    logger.info("No new emails found")
 
 
 def check_and_route_emails():
     logger.info("Checking for emails")
 
-    hmrc_to_dit_server = get_hmrc_to_dit_mailserver()
-    spire_to_dit_server = get_spire_to_dit_mailserver()
-
-    if hmrc_to_dit_server == spire_to_dit_server:
-        raise ValueError("HMRC and SPIRE servers should not be the same")
-
-    unread_email_message_dtos = get_unread_email_message_dtos(hmrc_to_dit_server, number=None)
-    unread_email_message_dtos = sort_dtos_by_date(unread_email_message_dtos)
-
-    unread_reply_message_dtos = get_unread_email_message_dtos(spire_to_dit_server)
-    unread_reply_message_dtos = sort_dtos_by_date(unread_reply_message_dtos)
-
-    unread_email_message_dtos.extend(unread_reply_message_dtos)
+    unread_email_message_dtos = []
+    for server_name in settings.MAIL_SERVERS.keys():
+        server = get_mail_server(server_name)
+        dtos = get_unread_email_message_dtos(server)
+        dtos = sort_dtos_by_date(dtos)
+        unread_email_message_dtos.extend(dtos)
 
     if unread_email_message_dtos:
         process_unread_email_messages(unread_email_message_dtos)
     else:
-        process_pending_messages(hmrc_to_dit_server, spire_to_dit_server)
+        process_pending_messages()
 
     publish_queue_status()
 
