@@ -1,5 +1,6 @@
 import logging
 import threading
+from typing import Optional
 
 from django.db import transaction
 from django.utils import timezone
@@ -101,29 +102,27 @@ def get_serializer_for_dto(extract_type):
     return serializer
 
 
-def get_mail_instance(extract_type, run_number) -> Mail or None:
-    if extract_type == ExtractTypeEnum.LICENCE_REPLY:
-        last_email = LicenceData.objects.filter(hmrc_run_number=run_number).last()
+def get_mail_instance(extract_type, run_number) -> Optional[Mail]:
+    type_mapping = {
+        ExtractTypeEnum.LICENCE_REPLY: LicenceData,
+        ExtractTypeEnum.USAGE_REPLY: UsageData,
+    }
+    if extract_type not in type_mapping:
+        return
 
-        if last_email and last_email.mail.status in [
-            ReceptionStatusEnum.REPLY_SENT,
-            ReceptionStatusEnum.REPLY_RECEIVED,
-        ]:
-            logging.info("Licence update reply has already been processed")
-            return
-        return find_mail_of(
-            [ExtractTypeEnum.LICENCE_DATA, ExtractTypeEnum.LICENCE_REPLY], ReceptionStatusEnum.REPLY_PENDING
-        )
-    elif extract_type == ExtractTypeEnum.USAGE_REPLY:
-        last_email = UsageData.objects.filter(spire_run_number=run_number).last()
+    DataReplyType = type_mapping[extract_type]
+    last_email = DataReplyType.objects.filter(hmrc_run_number=run_number).last()
+    if last_email and last_email.mail.status in [
+        ReceptionStatusEnum.REPLY_SENT,
+        ReceptionStatusEnum.REPLY_RECEIVED,
+    ]:
+        logging.info("%s has already been processed", last_email)
+        return
 
-        if last_email and last_email.mail.status in [
-            ReceptionStatusEnum.REPLY_SENT,
-            ReceptionStatusEnum.REPLY_RECEIVED,
-        ]:
-            logging.info("Usage update reply has already been processed")
-            return
-        return find_mail_of([ExtractTypeEnum.USAGE_DATA], ReceptionStatusEnum.REPLY_PENDING)
+    return find_mail_of(
+        DataReplyType.EXTRACT_TYPES,
+        ReceptionStatusEnum.REPLY_PENDING,
+    )
 
 
 def to_email_message_dto_from(mail: Mail) -> EmailMessageDto:
