@@ -12,5 +12,3 @@ coverage:
         if_ci_failed: error
         only_pulls: false
     patch: off
-ignore:
-  - "mock_hmrc"

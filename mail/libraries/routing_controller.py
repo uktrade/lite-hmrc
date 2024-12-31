@@ -51,12 +51,6 @@ def get_hmrc_to_dit_mailserver() -> MailServer:
     return mail_server
 
 
-def get_mock_hmrc_mailserver() -> MailServer:
-    mail_server = get_mail_server("mock")
-
-    return mail_server
-
-
 def check_and_route_emails():
     logger.info("Checking for emails")
     hmrc_to_dit_server = get_hmrc_to_dit_mailserver()
