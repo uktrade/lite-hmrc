@@ -6,7 +6,8 @@ from edifact.parsers import usage_data_parser
 
 class UsageDataEdifactParserTests(TestCase):
     def test_parsing_usage_data(self):
-        file = "1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\2\\fileTrailer\\0" ""
+        file = """1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\
+2\\fileTrailer\\0"""
 
         self.assertEqual(
             usage_data_parser.parse(file),
