@@ -18,7 +18,7 @@ file_trailer: _LINE_NUMBER \
     "fileTrailer" \
     _BACKSLASH \
     LICENCE_USAGE_COUNT
-licence_usage_transaction: licence_usage_transaction_header licence_usage_transaction_trailer
+licence_usage_transaction: licence_usage_transaction_header licence_line+ licence_usage_transaction_trailer
 licence_usage_transaction_header: _LINE_NUMBER \
     _BACKSLASH \
     "licenceUsage" \
@@ -38,6 +38,25 @@ licence_usage_transaction_trailer: _LINE_NUMBER \
     "licenceUsage" \
     _BACKSLASH \
     RECORD_COUNT
+licence_line: licence_line_header licence_line_trailer
+licence_line_header: _LINE_NUMBER \
+    _BACKSLASH \
+    "line" \
+    _BACKSLASH \
+    LINE_NUM \
+    _BACKSLASH \
+    QUANTITY_USED \
+    _BACKSLASH \
+    VALUE_USED \
+    _BACKSLASH \
+    CURRENCY?
+licence_line_trailer: _LINE_NUMBER \
+    _BACKSLASH \
+    "end" \
+    _BACKSLASH \
+    "line" \
+    _BACKSLASH \
+    RECORD_COUNT
 
 _LINE_NUMBER: NUMBER
 TIMESTAMP: DIGIT ~ 12
@@ -50,9 +69,14 @@ LICENCE_STATUS: ("C"|"E"|"O"|"S"|"D")
 COMPLETION_DATE: TIMESTAMP
 RECORD_COUNT: NUMBER
 LICENCE_REF: (LETTER | DIGIT | "/" | "-")+
+LINE_NUM: NUMBER
+CURRENCY: LETTER ~ 3
+QUANTITY_USED: (NUMBER|FLOAT)
+VALUE_USED: (NUMBER|FLOAT)
 
 %import common.LETTER
 %import common.INT -> NUMBER
+%import common.FLOAT
 %import common.DIGIT
 %import common.WS
 %ignore WS
