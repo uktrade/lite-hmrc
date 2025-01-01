@@ -8,20 +8,16 @@ from health_check.backends import BaseHealthCheckBackend
 from health_check.exceptions import HealthCheckException
 
 from mail.enums import ReceptionStatusEnum
-from mail.libraries.routing_controller import get_hmrc_to_dit_mailserver, get_spire_to_dit_mailserver
 from mail.models import LicencePayload, Mail
+from mail_servers.utils import get_mail_server
 
 logger = logging.getLogger(__name__)
 
 
 class MailboxAuthenticationHealthCheck(BaseHealthCheckBackend):
     def check_status(self):
-        mailserver_factories = (
-            get_hmrc_to_dit_mailserver,
-            get_spire_to_dit_mailserver,
-        )
-        for mailserver_factory in mailserver_factories:
-            mailserver = mailserver_factory()
+        for server_name in settings.MAIL_SERVERS.keys():
+            mailserver = get_mail_server(server_name)
             try:
                 with mailserver.connect_to_pop3():
                     pass

@@ -19,7 +19,7 @@ from mailboxes.utils import (
     MarkStatus,
     get_message_header,
     get_message_id,
-    get_message_iterator,
+    get_unread_messages_iterator,
     get_message_number,
     get_read_messages,
     is_from_valid_sender,
@@ -284,7 +284,7 @@ class MailboxMessageTests(TestCase):
     SPIRE_FROM_ADDRESS="from.spire@example.com",  # /PS-IGNORE
 )
 class GetMessageIteratorTests(TestCase):
-    def test_get_message_iterator(self):
+    def test_get_unread_messages_iterator(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
@@ -324,7 +324,7 @@ class GetMessageIteratorTests(TestCase):
 
         mock_pop3_connection.retr.side_effect = _retr
 
-        iterator = get_message_iterator(mail_server)
+        iterator = get_unread_messages_iterator(mail_server)
         dtos, funcs = zip(*iterator)
 
         self.assertEqual(
@@ -398,7 +398,7 @@ class GetMessageIteratorTests(TestCase):
             b"Message-Id: <message-id-3@example.com>\nTo: to@example.com\nFrom: from.spire@example.com\nDate: 2021-04-23T12:38Z\nSubject: abc_xyz_nnn_yyy_3_datetime\n\n",  # /PS-IGNORE
         )
 
-    def test_get_message_iterator_run_multiple_times(self):
+    def test_get_unread_messages_iterator_run_multiple_times(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
@@ -440,7 +440,7 @@ class GetMessageIteratorTests(TestCase):
 
         mock_pop3_connection.retr.side_effect = _retr
 
-        iterator = get_message_iterator(mail_server)
+        iterator = get_unread_messages_iterator(mail_server)
         dtos, _ = zip(*iterator)
 
         self.assertEqual(
@@ -514,7 +514,7 @@ class GetMessageIteratorTests(TestCase):
 
         mock_pop3_connection.retr.side_effect = _retr
 
-        iterator = get_message_iterator(mail_server)
+        iterator = get_unread_messages_iterator(mail_server)
         dtos, _ = zip(*iterator)
 
         self.assertEqual(
@@ -563,7 +563,7 @@ class GetMessageIteratorTests(TestCase):
             transform=repr,
         )
 
-    def test_get_message_iterator_invalid_senders(self):
+    def test_get_unread_messages_iterator_invalid_senders(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
@@ -609,7 +609,7 @@ class GetMessageIteratorTests(TestCase):
 
         mock_pop3_connection.retr.side_effect = _retr
 
-        iterator = get_message_iterator(mail_server)
+        iterator = get_unread_messages_iterator(mail_server)
         dtos, _ = zip(*iterator)
 
         self.assertEqual(
@@ -637,7 +637,7 @@ class GetMessageIteratorTests(TestCase):
             transform=repr,
         )
 
-    def test_get_message_iterator_already_read(self):
+    def test_get_unread_messages_iterator_already_read(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
@@ -689,7 +689,7 @@ class GetMessageIteratorTests(TestCase):
 
         mock_pop3_connection.retr.side_effect = _retr
 
-        iterator = get_message_iterator(mail_server)
+        iterator = get_unread_messages_iterator(mail_server)
         dtos, _ = zip(*iterator)
 
         self.assertEqual(
@@ -708,7 +708,7 @@ class GetMessageIteratorTests(TestCase):
             ],
         )
 
-    def test_get_message_iterator_retr_failure(self):
+    def test_get_unread_messages_iterator_retr_failure(self):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
@@ -735,7 +735,7 @@ class GetMessageIteratorTests(TestCase):
 
         mock_pop3_connection.retr.side_effect = error_proto()
 
-        iterator = get_message_iterator(mail_server)
+        iterator = get_unread_messages_iterator(mail_server)
         self.assertEqual(list(iterator), [])
 
         mailbox = MailboxConfig.objects.get(username="test@example.com")  # /PS-IGNORE
@@ -746,7 +746,7 @@ class GetMessageIteratorTests(TestCase):
         )
 
     @patch("mailboxes.utils.to_mail_message_dto")
-    def test_get_message_iterator_message_dto_failure(self, mock_to_mail_message_dto):
+    def test_get_unread_messages_iterator_message_dto_failure(self, mock_to_mail_message_dto):
         self.assertEqual(MailboxConfig.objects.count(), 0)
 
         mail_server = MagicMock(spec=MailServer)
@@ -775,7 +775,7 @@ class GetMessageIteratorTests(TestCase):
 
         mock_to_mail_message_dto.side_effect = ValueError()
 
-        iterator = get_message_iterator(mail_server)
+        iterator = get_unread_messages_iterator(mail_server)
         self.assertEqual(list(iterator), [])
 
         mailbox = MailboxConfig.objects.get(username="test@example.com")  # /PS-IGNORE

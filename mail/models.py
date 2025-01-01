@@ -90,6 +90,11 @@ class LicenceData(models.Model):
         "LicencePayload", help_text="LicencePayload records linked to this LicenceData instance", related_name="+"
     )
 
+    EXTRACT_TYPES = [
+        ExtractTypeEnum.LICENCE_DATA,
+        ExtractTypeEnum.LICENCE_REPLY,
+    ]
+
     class Meta:
         ordering = ["mail__created_at"]
 
@@ -124,6 +129,8 @@ class UsageData(models.Model):
     lite_licences = models.JSONField(default=dict)
     spire_licences = models.JSONField(default=dict)
     lite_response = models.JSONField(default=dict)
+
+    EXTRACT_TYPES = [ExtractTypeEnum.USAGE_DATA]
 
     class Meta:
         ordering = ["mail__created_at"]

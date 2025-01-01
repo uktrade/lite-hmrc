@@ -129,7 +129,7 @@ def get_message_dto(message):
     return mail_message
 
 
-def get_message_iterator(server: MailServer) -> Iterator[Tuple[EmailMessageDto, Callable]]:
+def get_unread_messages_iterator(server: MailServer) -> Iterator[Tuple[EmailMessageDto, Callable]]:
     mailbox_config, _ = MailboxConfig.objects.get_or_create(username=server.user)
     read_messages = get_read_messages(mailbox_config)
 
