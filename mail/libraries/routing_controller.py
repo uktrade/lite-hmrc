@@ -81,9 +81,8 @@ def check_and_route_emails():
 
     if unread_email_message_dtos:
         process_unread_email_messages(unread_email_message_dtos)
-    else:
-        process_pending_messages()
 
+    process_pending_messages()
     publish_queue_status()
 
 
