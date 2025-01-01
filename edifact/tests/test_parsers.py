@@ -9,7 +9,7 @@ class UsageDataEdifactParserTests(TestCase):
         file = """1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\
 2\\licenceUsage\\LU04148/00001\\insert\\GBOIE2017/12345B\\O\\
 3\\line\\1\\0\\0\\GBP
-4\\usage\\O\\9GB000001328000-PE112345\\R\\20190112\\0\\0\\\\000262
+4\\usage\\O\\12ABC12AB1ABCD1AB1\\XXXX\\20191130\\1.000\\2.00\\\\GB123456789012\\\\GB\\\\\\\\\\
 5\\end\\line\\3
 6\\end\\licenceUsage\\5
 7\\fileTrailer\\1"""
@@ -50,12 +50,13 @@ class UsageDataEdifactParserTests(TestCase):
                                         Token("RULE", "licence_usage"),
                                         [
                                             Token("USAGE_TYPE", "O"),
-                                            Token("DECLARATION_UCR", "9GB000001328000-PE112345"),
-                                            Token("DECLARATION_PART_NUM", "R"),
-                                            Token("CONTROL_DATE", "20190112"),
-                                            Token("QUANTITY_USED", "0"),
-                                            Token("VALUE_USED", "0"),
-                                            Token("TRADER_ID", "000262"),
+                                            Token("DECLARATION_UCR", "12ABC12AB1ABCD1AB1"),
+                                            Token("DECLARATION_PART_NUM", "XXXX"),
+                                            Token("CONTROL_DATE", "20191130"),
+                                            Token("QUANTITY_USED", "1.000"),
+                                            Token("VALUE_USED", "2.00"),
+                                            Token("TRADER_ID", "GB123456789012"),
+                                            Token("ORIGIN_COUNTRY", "GB"),
                                         ],
                                     ),
                                     Tree(Token("RULE", "licence_line_trailer"), [Token("RECORD_COUNT", "3")]),

@@ -38,7 +38,7 @@ licence_usage_transaction_trailer: _LINE_NUMBER \
     "licenceUsage" \
     _BACKSLASH \
     RECORD_COUNT
-licence_line: licence_line_header licence_usage+ licence_line_trailer
+licence_line: licence_line_header licence_usage* licence_line_trailer
 licence_line_header: _LINE_NUMBER \
     _BACKSLASH \
     "line" \
@@ -75,7 +75,21 @@ licence_usage: _LINE_NUMBER \
     _BACKSLASH \
     CURRENCY? \
     _BACKSLASH \
-    TRADER_ID
+    TRADER_ID \
+    _BACKSLASH \
+    CLAIM_REF? \
+    _BACKSLASH \
+    ORIGIN_COUNTRY? \
+    _BACKSLASH \
+    CUSTOMS_MIC? \
+    _BACKSLASH \
+    CUSTOMS_MESSAGE? \
+    _BACKSLASH \
+    CONSIGNEE_NAME? \
+    _BACKSLASH \
+    DECLARATION_MRN? \
+    _BACKSLASH \
+    DEPARTURE_ICS?
 
 _LINE_NUMBER: NUMBER
 DATE: DIGIT ~ 8
@@ -101,8 +115,12 @@ CONTROL_DATE: DATE
 TRADER_ID: (LETTER | DIGIT | "/" | "-") ~ 1..17
 COUNTRY_CODE: LETTER ~ 2
 ORIGIN_COUNTRY: COUNTRY_CODE
-CUSTOMS_MESSAGE: WORD
+CUSTOMS_MIC: (LETTER | DIGIT) ~ 4
+CUSTOMS_MESSAGE: WORD+
 CLAIM_REF: WORD
+CONSIGNEE_NAME: WORD+
+DECLARATION_MRN: (LETTER | DIGIT) ~ 18
+DEPARTURE_ICS: DIGIT ~ 2
 
 %import common.LETTER
 %import common.INT -> NUMBER
