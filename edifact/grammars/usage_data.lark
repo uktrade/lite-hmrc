@@ -38,7 +38,7 @@ licence_usage_transaction_trailer: _LINE_NUMBER \
     "licenceUsage" \
     _BACKSLASH \
     RECORD_COUNT
-licence_line: licence_line_header licence_line_trailer
+licence_line: licence_line_header licence_usage+ licence_line_trailer
 licence_line_header: _LINE_NUMBER \
     _BACKSLASH \
     "line" \
@@ -57,9 +57,30 @@ licence_line_trailer: _LINE_NUMBER \
     "line" \
     _BACKSLASH \
     RECORD_COUNT
+licence_usage: _LINE_NUMBER \
+    _BACKSLASH \
+    "usage" \
+    _BACKSLASH \
+    USAGE_TYPE \
+    _BACKSLASH \
+    DECLARATION_UCR \
+    _BACKSLASH \
+    DECLARATION_PART_NUM \
+    _BACKSLASH \
+    CONTROL_DATE \
+    _BACKSLASH \
+    QUANTITY_USED \
+    _BACKSLASH \
+    VALUE_USED \
+    _BACKSLASH \
+    CURRENCY? \
+    _BACKSLASH \
+    TRADER_ID
 
 _LINE_NUMBER: NUMBER
-TIMESTAMP: DIGIT ~ 12
+DATE: DIGIT ~ 8
+TIME: DIGIT ~ 4
+TIMESTAMP: DATE TIME
 RUN_NUMBER: NUMBER
 LICENCE_USAGE_COUNT: NUMBER
 _BACKSLASH: "\\"
@@ -73,10 +94,20 @@ LINE_NUM: NUMBER
 CURRENCY: LETTER ~ 3
 QUANTITY_USED: (NUMBER|FLOAT)
 VALUE_USED: (NUMBER|FLOAT)
+USAGE_TYPE: ("A"|"C"|"L"|"M"|"O")
+DECLARATION_UCR: (LETTER | DIGIT | "/" | "-")+
+DECLARATION_PART_NUM: (LETTER | DIGIT | "/" | "-") ~ 1..4
+CONTROL_DATE: DATE
+TRADER_ID: (LETTER | DIGIT | "/" | "-") ~ 1..17
+COUNTRY_CODE: LETTER ~ 2
+ORIGIN_COUNTRY: COUNTRY_CODE
+CUSTOMS_MESSAGE: WORD
+CLAIM_REF: WORD
 
 %import common.LETTER
 %import common.INT -> NUMBER
 %import common.FLOAT
 %import common.DIGIT
+%import common.WORD
 %import common.WS
 %ignore WS
