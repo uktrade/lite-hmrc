@@ -7,16 +7,8 @@ from typing import List
 from django.conf import settings
 from django.db import IntegrityError, models
 from django.utils import timezone
-from model_utils.models import TimeStampedModel
 
-from mail.enums import (
-    ChiefSystemEnum,
-    ExtractTypeEnum,
-    LicenceActionEnum,
-    MailReadStatuses,
-    ReceptionStatusEnum,
-    SourceEnum,
-)
+from mail.enums import ChiefSystemEnum, ExtractTypeEnum, LicenceActionEnum, ReceptionStatusEnum, SourceEnum
 
 logger = logging.getLogger(__name__)
 
@@ -198,25 +190,3 @@ class TransactionMapping(models.Model):
     line_number = models.PositiveIntegerField(null=True, blank=True)
     usage_transaction = models.CharField(null=False, blank=False, max_length=35)
     usage_data = models.ForeignKey(UsageData, on_delete=models.DO_NOTHING)
-
-
-class MailboxConfig(TimeStampedModel):
-    username = models.TextField(null=False, blank=False, primary_key=True, help_text="Username of the POP3 mailbox")
-
-
-class MailReadStatus(TimeStampedModel):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    message_num = models.TextField(
-        default="",
-        help_text="Sequence number of the message as assigned by pop3 when the messages list is requested from the mailbox",
-    )
-    message_id = models.TextField(
-        default=uuid.uuid4,
-        unique=True,
-        help_text="Unique Message-ID of the message that is retrieved from the message header",
-    )
-    status = models.TextField(choices=MailReadStatuses.choices, default=MailReadStatuses.UNREAD, db_index=True)
-    mailbox = models.ForeignKey(MailboxConfig, on_delete=models.CASCADE)
-
-    def __repr__(self):
-        return f"message_id={self.message_id} status={self.status}"
