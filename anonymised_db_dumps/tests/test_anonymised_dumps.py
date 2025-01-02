@@ -1,6 +1,7 @@
 import os
+import shutil
 import subprocess
-
+import unittest
 from datetime import datetime
 
 from django.conf import settings
@@ -14,6 +15,11 @@ from mail.models import LicencePayload, Mail
 from mail.tests.factories import LicencePayloadFactory, MailFactory
 
 
+def pg_dump_is_installed():
+    return shutil.which("pg_dump") is not None
+
+
+@unittest.skipUnless(pg_dump_is_installed(), "Requires pg_dump to be installed")
 class TestAnonymiseDumps(TransactionTestCase):
     def _fixture_teardown(self):
         # NOTE: TransactionTestCase will truncate all tables by default

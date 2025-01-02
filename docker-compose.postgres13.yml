@@ -1,0 +1,3 @@
+services:
+  lite-hmrc-postgres:
+    image: "postgres:13"

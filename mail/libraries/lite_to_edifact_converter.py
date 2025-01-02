@@ -41,6 +41,8 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
     payload = licence.data
     licence_type = LITE_HMRC_LICENCE_TYPE_MAPPING.get(payload.get("type"))
 
+    logging.debug("Generating lines for %s with action %s", licence, licence.action)
+
     if licence.action == LicenceActionEnum.UPDATE:
         # An "update" is represented by a cancel for the old licence ref,
         # followed by an "insert" for the new ref.
@@ -128,10 +130,19 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
 
         yield chieftypes.Restrictions(text="Provisos may apply please see licence")
 
+        logging.debug("Payload type is %s with %s", payload.get("type"), payload.get("goods"))
         if payload.get("goods") and payload.get("type") in LicenceTypeEnum.STANDARD_LICENCES:
             for g, commodity in enumerate(payload.get("goods"), start=1):
+                logging.debug(
+                    "Creating GoodIdMapping with lite_id=%s reference=%s line_number=%s",
+                    commodity["id"],
+                    licence.reference,
+                    g,
+                )
                 GoodIdMapping.objects.get_or_create(
-                    lite_id=commodity["id"], licence_reference=licence.reference, line_number=g
+                    lite_id=commodity["id"],
+                    licence_reference=licence.reference,
+                    line_number=g,
                 )
                 controlled_by = "Q"  # usage is controlled by quantity only
                 quantity = commodity.get("quantity")

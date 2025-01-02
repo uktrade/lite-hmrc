@@ -132,10 +132,11 @@ EMAIL_HOSTNAME = env("EMAIL_HOSTNAME")
 EMAIL_USER = env("EMAIL_USER")
 EMAIL_POP3_PORT = env("EMAIL_POP3_PORT")
 EMAIL_SMTP_PORT = env("EMAIL_SMTP_PORT")
+
+TEST_EMAIL_HOSTNAME = env("TEST_EMAIL_HOSTNAME", default="outbox-mailserver")
+
 SPIRE_ADDRESS = env("SPIRE_ADDRESS", default="test-spire-address@example.com")  # /PS-IGNORE
 HMRC_ADDRESS = env("HMRC_ADDRESS", default="test-hmrc-address@example.com")  # /PS-IGNORE
-EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
-MAILHOG_URL = env.str("MAILHOG_URL", default="http://localhost:8025")
 
 TIME_TESTS = env.bool("TIME_TESTS", default=False)
 

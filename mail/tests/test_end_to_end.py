@@ -1,238 +1,520 @@
-from pathlib import Path
-from unittest import mock
-from urllib.parse import quote
+import json
+from base64 import b64encode
 
+import pytest
 import requests
+import requests_mock
 from django.conf import settings
-from django.test import override_settings, testcases
 from django.urls import reverse
+from freezegun import freeze_time
+from pytest_django.asserts import assertQuerySetEqual
+from rest_framework import status
 
-from mail.enums import ChiefSystemEnum
-from mail.models import LicenceData, LicencePayload
-from mail.tests.libraries.client import LiteHMRCTestClient
-from mail.tests.test_serializers import get_valid_fa_sil_payload, get_valid_sanctions_payload
+from mail.auth import BasicAuthentication
+from mail.celery_tasks import manage_inbox, send_licence_details_to_hmrc
+from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
+from mail.libraries.helpers import read_file
+from mail.models import LicenceData, LicencePayload, Mail, UsageData
+from mail.servers import MailServer
 
-
-def clear_stmp_mailbox():
-    response = requests.get(f"{settings.MAILHOG_URL}/api/v2/messages")
-    for message in response.json()["items"]:
-        idx = message["ID"]
-        requests.delete(f"{settings.MAILHOG_URL}/api/v1/messages/{idx}")
-
-
-def get_smtp_body():
-    response = requests.get(f"{settings.MAILHOG_URL}/api/v2/messages")
-    return response.json()["items"][0]["MIME"]["Parts"][1]["Body"]
+pytestmark = pytest.mark.django_db
 
 
-class EndToEndTests(LiteHMRCTestClient):
-    @mock.patch("mail.celery_tasks.cache")
-    def test_send_email_to_hmrc_e2e(self, mock_cache):
-        mock_cache.add.return_value = True
-        clear_stmp_mailbox()
-        self.client.get(reverse("mail:set_all_to_reply_sent"))
-        self.client.post(
-            reverse("mail:update_licence"), data=self.licence_payload_json, content_type="application/json"
-        )
-        self.client.get(reverse("mail:send_updates_to_hmrc"))
-        body = get_smtp_body().replace("\r", "")
-        ymdhm_timestamp = body.split("\n")[0].split("\\")[5]
-        run_number = body.split("\n")[0].split("\\")[6]
-        expected_mail_body = rf"""1\fileHeader\SPIRE\CHIEF\licenceData\{ymdhm_timestamp}\{run_number}\N
-2\licence\20200000001P\insert\GBSIEL/2020/0000001/P\SIE\E\20200602\20220602
-3\trader\\GB123456789000\20200602\20220602\Organisation\might 248 James Key Apt. 515 Apt.\942 West Ashleyton Farnborough\Apt. 942\West Ashleyton\Farnborough\GU40 2LX
-4\country\GB\\D
-5\foreignTrader\End User\42 Road, London, Buckinghamshire\\\\\\GB
-6\restrictions\Provisos may apply please see licence
-7\line\1\\\\\Sporting shotgun\Q\\030\\10\\\\\\
-8\line\2\\\\\Stock\Q\\111\\11.0\\\\\\
-9\line\3\\\\\Metal\Q\\025\\1.0\\\\\\
-10\line\4\\\\\Chemical\Q\\116\\20.0\\\\\\
-11\line\5\\\\\Chemical\Q\\110\\20.0\\\\\\
-12\line\6\\\\\Chemical\Q\\074\\20.0\\\\\\
-13\line\7\\\\\Old Chemical\Q\\111\\20.0\\\\\\
-14\line\8\\\\\A bottle of water\Q\\076\\1.0\\\\\\
-15\end\licence\14
-16\fileTrailer\1"""
-        assert body == expected_mail_body  # nosec
-        encoded_reference_code = quote("GBSIEL/2020/0000001/P", safe="")
-        response = self.client.get(f"{reverse('mail:licence')}?id={encoded_reference_code}")
-        assert response.json()["status"] == "reply_pending"  # nosec
+@pytest.fixture()
+def outgoing_email_user():
+    return "hmrc@example.com"
 
 
-@override_settings(CHIEF_SOURCE_SYSTEM=ChiefSystemEnum.ICMS)
-class ICMSEndToEndTests(testcases.TestCase):
-    @mock.patch("mail.celery_tasks.cache")
-    def test_icms_send_email_to_hmrc_fa_oil_e2e(self, mock_cache):
-        mock_cache.add.return_value = True
-        clear_stmp_mailbox()
-        self.client.get(reverse("mail:set_all_to_reply_sent"))
+@pytest.fixture(autouse=True)
+def set_settings(settings, outgoing_email_user):
+    settings.EMAIL_HOSTNAME = settings.TEST_EMAIL_HOSTNAME
+    settings.EMAIL_USER = "outbox-user"
+    settings.EMAIL_PASSWORD = "password"
 
-        data = {
-            "type": "OIL",
-            "action": "insert",
-            "id": "deaa301d-d978-473b-b76b-da275f28f447",
-            "reference": "IMA/2022/00001",
-            "licence_reference": "GBOIL2222222C",
-            "start_date": "2022-06-06",
-            "end_date": "2025-05-30",
-            "organisation": {
-                "eori_number": "GB112233445566000",
-                "name": "org name",
-                "address": {
-                    "line_1": "line_1",
-                    "line_2": "line_2",
-                    "line_3": "line_3",
-                    "line_4": "line_4",
-                    "line_5": "line_5",
-                    "postcode": "S118ZZ",  # /PS-IGNORE
-                },
-            },
-            "country_group": "G001",
-            "restrictions": "Some restrictions.\n\n Some more restrictions",
-            "goods": [
+    settings.INCOMING_EMAIL_USER = "spire@example.com"
+    settings.SPIRE_FROM_ADDRESS = "spire@example.com"
+    settings.SPIRE_ADDRESS = "spire@example.com"
+
+    settings.OUTGOING_EMAIL_USER = outgoing_email_user
+
+    settings.HMRC_TO_DIT_REPLY_ADDRESS = "hmrctodit@example.com"
+    settings.HMRC_ADDRESS = "hmrctodit@example.com"
+
+    settings.LITE_API_URL = "https://lite.example.com"
+
+
+@pytest.fixture()
+def hmrc_to_dit_mailserver_api_url():
+    return "http://hmrc-to-dit-mailserver:8025/api/v1/"
+
+
+@pytest.fixture()
+def spire_to_dit_mailserver_api_url():
+    return "http://spire-to-dit-mailserver:8025/api/v1/"
+
+
+@pytest.fixture()
+def outbox_mailserver_api_url():
+    return "http://outbox-mailserver:8025/api/v1/"
+
+
+@pytest.fixture(autouse=True)
+def clear_mailboxes(hmrc_to_dit_mailserver_api_url, spire_to_dit_mailserver_api_url, outbox_mailserver_api_url):
+    requests.delete(f"{hmrc_to_dit_mailserver_api_url}messages")
+    requests.delete(f"{spire_to_dit_mailserver_api_url}messages")
+    requests.delete(f"{outbox_mailserver_api_url}messages")
+
+
+@pytest.fixture()
+def licence_payload_json():
+    return json.loads(read_file("mail/tests/files/licence_payload_file", encoding="utf-8"))
+
+
+@pytest.fixture()
+def licence_data_file_name():
+    return "CHIEF_LIVE_SPIRE_licenceData_1_202001010000"
+
+
+@pytest.fixture()
+def licence_data_file_body(licence_data_file_name):
+    return read_file(f"mail/tests/files/end_to_end/{licence_data_file_name}", mode="rb")
+
+
+@pytest.fixture()
+def licence_reply_file_name():
+    return "ILBDOTI_live_CHIEF_licenceReply_1_202001010000"
+
+
+@pytest.fixture()
+def licence_reply_file_body(licence_reply_file_name):
+    return read_file(f"mail/tests/files/end_to_end/{licence_reply_file_name}", mode="rb")
+
+
+@pytest.fixture()
+def usage_data_file_name():
+    return "ILBDOTI_live_CHIEF_usageData_1_202001010000"
+
+
+@pytest.fixture()
+def usage_data_file_body(usage_data_file_name):
+    return read_file(f"mail/tests/files/end_to_end/{usage_data_file_name}", mode="rb")
+
+
+@pytest.fixture(autouse=True)
+def hmrc_to_dit_mailserver(mocker):
+    auth = BasicAuthentication(
+        user="hmrc-to-dit-user",
+        password="password",
+    )
+    hmrc_to_dit_mailserver = MailServer(
+        auth,
+        hostname="hmrc-to-dit-mailserver",
+        pop3_port=1110,
+    )
+    mocker.patch(
+        "mail.libraries.routing_controller.get_hmrc_to_dit_mailserver",
+        return_value=hmrc_to_dit_mailserver,
+    )
+
+
+@pytest.fixture(autouse=True)
+def spire_to_dit_mailserver(mocker):
+    auth = BasicAuthentication(
+        user="spire-to-dit-user",
+        password="password",
+    )
+    spire_to_dit_mailserver = MailServer(
+        auth,
+        hostname="spire-to-dit-mailserver",
+        pop3_port=1110,
+    )
+    mocker.patch(
+        "mail.libraries.routing_controller.get_spire_to_dit_mailserver",
+        return_value=spire_to_dit_mailserver,
+    )
+
+
+def normalise_line_endings(string):
+    return string.replace("\r", "").strip()
+
+
+@pytest.fixture()
+def get_smtp_message_count(outbox_mailserver_api_url):
+    def _get_smtp_message_count():
+        response = requests.get(f"{outbox_mailserver_api_url}messages")
+        assert response.status_code == 200, response.content
+
+        return len(response.json()["messages"])
+
+    return _get_smtp_message_count
+
+
+@pytest.fixture()
+def get_smtp_message(outbox_mailserver_api_url):
+    def _get_smtp_message():
+        response = requests.get(f"{outbox_mailserver_api_url}messages")
+        assert response.status_code == 200, response.content
+        mail_id = response.json()["messages"][0]["ID"]
+
+        response = requests.get(f"{outbox_mailserver_api_url}message/{mail_id}")
+        assert response.status_code == 200
+
+        return mail_id, response.json()
+
+    return _get_smtp_message
+
+
+@pytest.fixture()
+def get_smtp_body(outbox_mailserver_api_url, get_smtp_message):
+    def _get_smtp_body():
+        mail_id, smtp_message = get_smtp_message()
+        part_id = smtp_message["Attachments"][0]["PartID"]
+
+        response = requests.get(f"{outbox_mailserver_api_url}message/{mail_id}/part/{part_id}")
+        assert response.status_code == 200
+
+        return response.content.decode("ascii")
+
+    return _get_smtp_body
+
+
+@freeze_time("2020-01-01")
+def test_send_lite_licence_data_to_hmrc_e2e(
+    client,
+    licence_payload_json,
+    licence_data_file_name,
+    licence_data_file_body,
+    get_smtp_message_count,
+    get_smtp_message,
+    get_smtp_body,
+):
+    assert not LicencePayload.objects.exists()
+
+    response = client.post(
+        reverse("mail:update_licence"),
+        data=licence_payload_json,
+        content_type="application/json",
+    )
+    assert response.status_code == status.HTTP_201_CREATED
+    assert LicencePayload.objects.count() == 1
+    licence_payload = LicencePayload.objects.get()
+    assert not licence_payload.is_processed
+
+    assert not LicenceData.objects.exists()
+
+    assert not Mail.objects.exists()
+
+    send_licence_details_to_hmrc.delay()
+
+    licence_payload.refresh_from_db()
+    assert licence_payload.is_processed
+
+    assert LicenceData.objects.count() == 1
+    licence_data = LicenceData.objects.get()
+    assert licence_data.hmrc_run_number == 1
+    assert licence_data.source == SourceEnum.LITE
+    assertQuerySetEqual(licence_data.licence_payloads.all(), [licence_payload])
+
+    assert Mail.objects.count() == 1
+    mail = Mail.objects.get()
+    assert mail.status == ReceptionStatusEnum.REPLY_PENDING
+
+    assert licence_data.mail == mail
+
+    assert get_smtp_message_count() == 1
+
+    _, message = get_smtp_message()
+    assert message["To"] == [{"Name": "", "Address": "hmrc@example.com"}]
+    assert message["Subject"] == licence_data_file_name
+
+    body = get_smtp_body()
+    assert normalise_line_endings(body) == normalise_line_endings(licence_data_file_body.decode("ascii"))
+
+
+def test_receive_lite_licence_reply_from_hmrc_e2e(
+    licence_reply_file_body,
+    licence_reply_file_name,
+    get_smtp_message_count,
+):
+    mail = Mail.objects.create(
+        extract_type=ExtractTypeEnum.LICENCE_REPLY,
+        edi_filename=licence_reply_file_name,
+        edi_data=licence_reply_file_body.decode("ascii"),
+        status=ReceptionStatusEnum.REPLY_PENDING,
+    )
+    LicenceData.objects.create(
+        hmrc_run_number=1,
+        mail=mail,
+        source=SourceEnum.LITE,
+    )
+
+    response = requests.post(
+        "http://hmrc-to-dit-mailserver:8025/api/v1/send",
+        json={
+            "From": {"Email": settings.HMRC_TO_DIT_REPLY_ADDRESS, "Name": "HMRC"},
+            "Subject": licence_reply_file_name,
+            "To": [{"Email": "lite@example.com", "Name": "LITE"}],  # /PS-IGNORE
+            "Attachments": [
                 {
-                    "description": (
-                        "Firearms, component parts thereof, or ammunition of"
-                        " any applicable commodity code, other than those"
-                        " falling under Section 5 of the Firearms Act 1968"
-                        " as amended."
-                    ),
+                    "Content": b64encode(licence_reply_file_body).decode("ascii"),
+                    "Filename": licence_reply_file_name,
                 }
             ],
-        }
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
 
-        resp = self.client.post(reverse("mail:update_licence"), data={"licence": data}, content_type="application/json")
-        self.assertEqual(resp.status_code, 201)
+    manage_inbox.delay()
 
-        self.client.get(reverse("mail:send_updates_to_hmrc"))
-        body = get_smtp_body().replace("\r", "")
-        ymdhm_timestamp = body.split("\n")[0].split("\\")[5]
+    mail.refresh_from_db()
+    assert mail.status == ReceptionStatusEnum.REPLY_SENT
+    assert normalise_line_endings(mail.response_data) == normalise_line_endings(licence_reply_file_body.decode("ascii"))
+    assert mail.response_filename == licence_reply_file_name
+    assert mail.response_subject == licence_reply_file_name
 
-        # Replace the hardcoded date in the test file with the one in the email.
-        test_file = Path("mail/tests/files/icms/licence_data_files/fa_oil_insert")
-        expected_content = test_file.read_text().replace("202201011011", ymdhm_timestamp).strip()
-        self.assertEqual(expected_content, body)
+    assert get_smtp_message_count() == 0
 
-        encoded_reference_code = quote("IMA/2022/00001", safe="")
-        response = self.client.get(f"{reverse('mail:licence')}?id={encoded_reference_code}")
-        self.assertEqual(response.json()["status"], "reply_pending")
 
-        # Check licence_payload records have been created
-        ld = LicenceData.objects.get(hmrc_run_number=1)
+def test_receive_lite_usage_data_from_hmrc_e2e(
+    client,
+    usage_data_file_name,
+    usage_data_file_body,
+    licence_payload_json,
+    settings,
+):
+    assert not Mail.objects.exists()
+    assert not UsageData.objects.exists()
 
-        assert ld.licence_payloads.count() == 1
-        licence_payload: LicencePayload = ld.licence_payloads.first()
-        assert licence_payload.reference == "IMA/2022/00001"
+    response = client.post(
+        reverse("mail:update_licence"),
+        data=licence_payload_json,
+        content_type="application/json",
+    )
 
-    @mock.patch("mail.celery_tasks.cache")
-    def test_icms_send_email_to_hmrc_fa_dfl_e2e(self, mock_cache):
-        mock_cache.add.return_value = True
-        clear_stmp_mailbox()
-        self.client.get(reverse("mail:set_all_to_reply_sent"))
+    send_licence_details_to_hmrc.delay()
 
-        org_data = {
-            "eori_number": "GB665544332211000",
-            "name": "DFL Organisation",
-            "address": {
-                "line_1": "line_1",
-                "line_2": "line_2",
-                "line_3": "line_3",
-                "line_4": "line_4",
-                "line_5": "",
-                "postcode": "S881ZZ",
+    response = requests.post(
+        "http://hmrc-to-dit-mailserver:8025/api/v1/send",
+        json={
+            "From": {"Email": settings.HMRC_TO_DIT_REPLY_ADDRESS, "Name": "HMRC"},
+            "Subject": usage_data_file_name,
+            "To": [{"Email": "lite@example.com", "Name": "LITE"}],  # /PS-IGNORE
+            "Attachments": [
+                {
+                    "Content": b64encode(usage_data_file_body).decode("ascii"),
+                    "Filename": usage_data_file_name,
+                }
+            ],
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    with requests_mock.Mocker() as m:
+        mock_licences_put = m.put(
+            f"{settings.LITE_API_URL}/licences/hmrc-integration/",
+            json={
+                "licences": {
+                    "accepted": [
+                        {
+                            "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
+                            "goods": [
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed1"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed2"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed3"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed4"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed5"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed6"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed7"},
+                                {"id": "f95ded2a-354f-46f1-a572-c7f97d63bed9"},
+                            ],
+                        },
+                    ],
+                    "rejected": [],
+                },
             },
-        }
-        restrictions = "Sample restrictions"
+            status_code=status.HTTP_207_MULTI_STATUS,
+        )
+        manage_inbox.delay()
 
-        data = {
-            "type": "DFL",
-            "action": "insert",
-            "id": "4277dd90-7ac0-4f48-b228-94c4a2fc61b2",
-            "reference": "IMA/2022/00002",
-            "licence_reference": "GBSIL1111111C",
-            "start_date": "2022-01-14",
-            "end_date": "2022-07-14",
-            "organisation": org_data,
-            "country_code": "US",
-            "restrictions": restrictions,
-            "goods": [{"description": "Sample goods description"}],
-        }
-        resp = self.client.post(reverse("mail:update_licence"), data={"licence": data}, content_type="application/json")
-        self.assertEqual(resp.status_code, 201)
+    assert Mail.objects.count() == 2
+    assert Mail.objects.filter(extract_type=ExtractTypeEnum.USAGE_DATA).count() == 1
+    usage_data_mail = Mail.objects.get(extract_type=ExtractTypeEnum.USAGE_DATA)
 
-        data = {
-            "type": "DFL",
-            "action": "insert",
-            "id": "f4142c5a-19f8-40b4-a9a8-46362eaa85c6",
-            "reference": "IMA/2022/00003",
-            "licence_reference": "GBSIL9089278D",
-            "start_date": "2022-01-14",
-            "end_date": "2022-07-14",
-            "organisation": org_data,
-            "country_code": "US",
-            "restrictions": restrictions,
-            "goods": [{"description": "Sample goods description 2"}],
-        }
-        resp = self.client.post(reverse("mail:update_licence"), data={"licence": data}, content_type="application/json")
-        self.assertEqual(resp.status_code, 201)
+    assert UsageData.objects.count() == 1
+    usage_data = UsageData.objects.get()
+    assert usage_data.mail == usage_data_mail
 
-        self.client.get(reverse("mail:send_updates_to_hmrc"))
-        body = get_smtp_body().replace("\r", "")
-        ymdhm_timestamp = body.split("\n")[0].split("\\")[5]
+    assert mock_licences_put.last_request.json() == {
+        "licences": [
+            {
+                "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
+                "action": "open",
+                "completion_date": "",
+                "goods": [{"id": "f95ded2a-354f-46f1-a572-c7f97d63bed1", "usage": "4", "value": "9", "currency": ""}],
+            }
+        ],
+        "usage_data_id": str(usage_data.pk),
+    }
 
-        # Replace the hardcoded date in the test file with the one in the email.
-        test_file = Path("mail/tests/files/icms/licence_data_files/fa_dfl_insert")
-        expected_content = test_file.read_text().replace("202201011011", ymdhm_timestamp).strip()
-        self.assertEqual(expected_content, body)
 
-        for ref in ["IMA/2022/00002", "IMA/2022/00003"]:
-            encoded_reference_code = quote(ref, safe="")
-            response = self.client.get(f"{reverse('mail:licence')}?id={encoded_reference_code}")
-            self.assertEqual(response.json()["status"], "reply_pending", f"{ref} has incorrect status")
+def test_receive_spire_licence_data_and_send_to_hmrc_e2e(
+    spire_to_dit_mailserver_api_url,
+    licence_data_file_name,
+    licence_data_file_body,
+    outgoing_email_user,
+    get_smtp_message_count,
+    get_smtp_message,
+    get_smtp_body,
+):
+    assert not Mail.objects.exists()
+    assert not LicenceData.objects.exists()
 
-    @mock.patch("mail.celery_tasks.cache")
-    def test_icms_send_email_to_hmrc_fa_sil_e2e(self, mock_cache):
-        mock_cache.add.return_value = True
-        clear_stmp_mailbox()
-        self.client.get(reverse("mail:set_all_to_reply_sent"))
+    response = requests.post(
+        f"{spire_to_dit_mailserver_api_url}send",
+        json={
+            "From": {"Email": settings.INCOMING_EMAIL_USER, "Name": "SPIRE"},
+            "Subject": licence_data_file_name,
+            "To": [{"Email": "lite@example.com", "Name": "LITE"}],  # /PS-IGNORE
+            "Attachments": [
+                {
+                    "Content": b64encode(licence_data_file_body).decode("ascii"),
+                    "Filename": licence_data_file_name,
+                }
+            ],
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
 
-        data = get_valid_fa_sil_payload()
-        resp = self.client.post(reverse("mail:update_licence"), data={"licence": data}, content_type="application/json")
-        self.assertEqual(resp.status_code, 201)
+    manage_inbox.delay()
 
-        self.client.get(reverse("mail:send_updates_to_hmrc"))
-        body = get_smtp_body().replace("\r", "")
-        ymdhm_timestamp = body.split("\n")[0].split("\\")[5]
+    assert Mail.objects.count() == 1
+    mail = Mail.objects.get()
+    assert mail.status == ReceptionStatusEnum.REPLY_PENDING
+    assert mail.edi_filename == licence_data_file_name
+    assert normalise_line_endings(mail.edi_data) == normalise_line_endings(licence_data_file_body.decode("ascii"))
 
-        # Replace the hardcoded date in the test file with the one in the email.
-        test_file = Path("mail/tests/files/icms/licence_data_files/fa_sil_insert")
-        expected_content = test_file.read_text().replace("202201011011", ymdhm_timestamp).strip()
-        self.assertEqual(expected_content, body)
+    assert LicenceData.objects.count() == 1
+    licence_data = LicenceData.objects.get()
+    assert licence_data.mail == mail
+    assert licence_data.source == SourceEnum.SPIRE
+    assert licence_data.hmrc_run_number == 1
+    assert licence_data.source_run_number == 1
+    assert not licence_data.licence_payloads.exists()
 
-        encoded_reference_code = quote("IMA/2022/00003", safe="")
-        response = self.client.get(f"{reverse('mail:licence')}?id={encoded_reference_code}")
-        self.assertEqual(response.json()["status"], "reply_pending")
+    assert get_smtp_message_count() == 1
 
-    @mock.patch("mail.celery_tasks.cache")
-    def test_icms_send_email_to_hmrc_sanctions_e2e(self, mock_cache):
-        mock_cache.add.return_value = True
-        clear_stmp_mailbox()
-        self.client.get(reverse("mail:set_all_to_reply_sent"))
+    _, smtp_message = get_smtp_message()
+    assert smtp_message["To"] == [{"Address": outgoing_email_user, "Name": ""}]
+    assert smtp_message["Subject"] == licence_data_file_name
 
-        data = get_valid_sanctions_payload()
-        resp = self.client.post(reverse("mail:update_licence"), data={"licence": data}, content_type="application/json")
-        self.assertEqual(resp.status_code, 201)
+    body = get_smtp_body()
+    assert normalise_line_endings(body) == normalise_line_endings(licence_data_file_body.decode("ascii"))
 
-        self.client.get(reverse("mail:send_updates_to_hmrc"))
-        body = get_smtp_body().replace("\r", "")
-        ymdhm_timestamp = body.split("\n")[0].split("\\")[5]
 
-        # Replace the hardcoded date in the test file with the one in the email.
-        test_file = Path("mail/tests/files/icms/licence_data_files/sanction_insert")
-        expected_content = test_file.read_text().replace("202201011011", ymdhm_timestamp).strip()
-        self.assertEqual(expected_content, body)
+def test_receive_spire_licence_reply_from_hmrc_e2e(
+    licence_data_file_name,
+    licence_data_file_body,
+    licence_reply_file_name,
+    licence_reply_file_body,
+    get_smtp_message_count,
+    get_smtp_message,
+    get_smtp_body,
+):
+    mail = Mail.objects.create(
+        extract_type=ExtractTypeEnum.LICENCE_DATA,
+        status=ReceptionStatusEnum.REPLY_PENDING,
+        edi_filename=licence_data_file_name,
+        edi_data=licence_data_file_body.decode("ascii"),
+    )
+    licence_data = LicenceData.objects.create(
+        mail=mail,
+        source=SourceEnum.SPIRE,
+        hmrc_run_number=1,
+        source_run_number=1,
+    )
 
-        encoded_reference_code = quote("IMA/2022/00004", safe="")
-        response = self.client.get(f"{reverse('mail:licence')}?id={encoded_reference_code}")
-        self.assertEqual(response.json()["status"], "reply_pending")
+    response = requests.post(
+        "http://hmrc-to-dit-mailserver:8025/api/v1/send",
+        json={
+            "From": {"Email": settings.HMRC_TO_DIT_REPLY_ADDRESS, "Name": "HMRC"},
+            "Subject": licence_reply_file_name,
+            "To": [{"Email": "lite@example.com", "Name": "LITE"}],  # /PS-IGNORE
+            "Attachments": [
+                {
+                    "Content": b64encode(licence_reply_file_body).decode("ascii"),
+                    "Filename": licence_reply_file_name,
+                }
+            ],
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    manage_inbox.delay()
+
+    mail.refresh_from_db()
+    assert mail.status == ReceptionStatusEnum.REPLY_SENT
+    assert mail.extract_type == ExtractTypeEnum.LICENCE_REPLY
+    assert mail.response_filename == licence_reply_file_name
+    assert normalise_line_endings(mail.response_data) == normalise_line_endings(licence_reply_file_body.decode("ascii"))
+
+    assert get_smtp_message_count() == 1
+
+    _, message = get_smtp_message()
+    assert message["To"] == [{"Name": "", "Address": "spire@example.com"}]
+    assert message["Subject"] == licence_reply_file_name
+
+    body = get_smtp_body()
+    assert normalise_line_endings(body) == normalise_line_endings(licence_reply_file_body.decode("ascii"))
+
+
+def test_receive_spire_usage_data_from_hmrc_e2e(
+    usage_data_file_name,
+    usage_data_file_body,
+    get_smtp_message_count,
+    get_smtp_message,
+    get_smtp_body,
+):
+    assert not Mail.objects.exists()
+    assert not UsageData.objects.exists()
+
+    response = requests.post(
+        "http://hmrc-to-dit-mailserver:8025/api/v1/send",
+        json={
+            "From": {"Email": settings.HMRC_TO_DIT_REPLY_ADDRESS, "Name": "HMRC"},
+            "Subject": usage_data_file_name,
+            "To": [{"Email": "lite@example.com", "Name": "LITE"}],  # /PS-IGNORE
+            "Attachments": [
+                {
+                    "Content": b64encode(usage_data_file_body).decode("ascii"),
+                    "Filename": usage_data_file_name,
+                }
+            ],
+        },
+    )
+    assert response.status_code == status.HTTP_200_OK
+
+    manage_inbox.delay()
+
+    assert Mail.objects.count() == 1
+    mail = Mail.objects.get()
+    assert mail.extract_type == ExtractTypeEnum.USAGE_DATA
+    assert mail.status == ReceptionStatusEnum.REPLY_SENT
+    assert mail.edi_filename == usage_data_file_name
+    assert normalise_line_endings(mail.edi_data) == normalise_line_endings(usage_data_file_body.decode("ascii"))
+
+    assert UsageData.objects.count() == 1
+    usage_data = UsageData.objects.get()
+    assert usage_data.mail == mail
+    assert usage_data.spire_run_number == 1
+    assert usage_data.hmrc_run_number == 1
+    assert not usage_data.has_lite_data
+    assert usage_data.has_spire_data
+
+    assert get_smtp_message_count() == 1
+
+    _, message = get_smtp_message()
+    assert message["To"] == [{"Name": "", "Address": "spire@example.com"}]
+    assert message["Subject"] == usage_data_file_name
+
+    body = get_smtp_body()
+    assert normalise_line_endings(body) == normalise_line_endings(usage_data_file_body.decode("ascii"))

@@ -1,3 +1,5 @@
+import logging
+
 from django.utils import timezone
 
 from mail.models import GoodIdMapping, LicenceIdMapping, TransactionMapping, UsageData
@@ -30,11 +32,18 @@ def combine_lite_and_spire_usage_responses(mail) -> str:  # noqa
     if lite_response:
         if lite_response.get("licences").get("accepted"):
             for licence in lite_response.get("licences").get("accepted"):
+                logging.debug("Found accepted licences in response with goods %s", licence.get("goods"))
                 if licence.get("goods"):
                     for good in licence.get("goods"):
                         licence_reference = LicenceIdMapping.objects.get(lite_id=licence["id"]).reference
                         good_mapping = GoodIdMapping.objects.get(
                             licence_reference=licence_reference, lite_id=good["id"]
+                        )
+                        logging.debug(
+                            "Trying to find transaction mapping with %s, %s, %s",
+                            licence_reference,
+                            good_mapping.line_number,
+                            usage_data,
                         )
                         transaction_id = TransactionMapping.objects.get(
                             licence_reference=licence_reference,

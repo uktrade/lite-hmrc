@@ -242,14 +242,13 @@ class SendEmailTestTests(TestCase):
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.servers.get_smtp_connection")
     def test_sends_email(self, mock_get_smtp_connection, mock_cache):
-        mock_conn = mock_get_smtp_connection()
+        mock_conn = mock_get_smtp_connection().__enter__()
         message = {
             "From": "from@example.com",
             "To": "to@example.com",
         }
         send_email_task.apply(args=[message])
         mock_conn.send_message.assert_called_with(message)
-        mock_conn.quit.assert_called()
         mock_cache.lock.assert_called_with("global_send_email_lock", timeout=600)
 
     @parameterized.expand(
@@ -261,7 +260,7 @@ class SendEmailTestTests(TestCase):
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.servers.get_smtp_connection")
     def test_sends_email_failed_then_succeeds(self, exception_class, mock_get_smtp_connection, mock_cache):
-        mock_conn = mock_get_smtp_connection()
+        mock_conn = mock_get_smtp_connection().__enter__()
         message = {
             "From": "from@example.com",
             "To": "to@example.com",
@@ -270,7 +269,6 @@ class SendEmailTestTests(TestCase):
         send_email_task.apply(args=[message])
         mock_conn.send_message.assert_called_with(message)
         self.assertEqual(mock_conn.send_message.call_count, 2)
-        self.assertEqual(mock_conn.quit.call_count, 2)
         mock_cache.lock.assert_called_with("global_send_email_lock", timeout=600)
 
     @parameterized.expand(
@@ -282,7 +280,7 @@ class SendEmailTestTests(TestCase):
     @mock.patch("mail.celery_tasks.cache")
     @mock.patch("mail.servers.get_smtp_connection")
     def test_sends_email_max_retry_failures(self, exception_class, mock_get_smtp_connection, mock_cache):
-        mock_conn = mock_get_smtp_connection()
+        mock_conn = mock_get_smtp_connection().__enter__()
         message = {
             "From": "from@example.com",
             "To": "to@example.com",
@@ -294,7 +292,6 @@ class SendEmailTestTests(TestCase):
             mock_conn.send_message.call_count,
             MAX_RETRIES + 1,
         )
-        self.assertEqual(mock_conn.quit.call_count, MAX_RETRIES + 1)
         mock_cache.lock.assert_called_with("global_send_email_lock", timeout=600)
 
     @mock.patch("mail.servers.get_smtp_connection")
@@ -316,7 +313,7 @@ class SendEmailTestTests(TestCase):
             }
             results.append(call)
 
-        mock_conn = mock_get_smtp_connection()
+        mock_conn = mock_get_smtp_connection().__enter__()
         mock_conn.send_message.side_effect = _sleepy
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -335,6 +332,7 @@ class SendEmailTestTests(TestCase):
         future_1.result()
         future_2.result()
 
+        assert len(results) == 2
         first_call, second_call = results
 
         # We don't particularly care about the exact order of these calls

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.test import override_settings
 from rest_framework.exceptions import ValidationError
 
 from mail.libraries.data_processors import serialize_email_message, to_email_message_dto_from
@@ -6,6 +7,13 @@ from mail.libraries.email_message_dto import EmailMessageDto
 from mail.tests.libraries.data_processors_base import DataProcessorsTestBase
 
 
+@override_settings(
+    SPIRE_ADDRESS="spire@example.com",
+    HMRC_ADDRESS="hmrc@example.com",
+    EMAIL_USER="email.user@example.com",
+    INCOMING_EMAIL_USER="incoming.user@example.com",
+    OUTGOING_EMAIL_USER="outgoing.user@example.com",
+)
 class SerializeEmailMessageTests(DataProcessorsTestBase):
     def test_successful_usage_data_inbound_dto_converts_to_outbound_dto(self):
         email_message_dto = EmailMessageDto(
@@ -63,9 +71,9 @@ class SerializeEmailMessageTests(DataProcessorsTestBase):
         dto = to_email_message_dto_from(mail)
 
         self.assertEqual(dto.run_number, self.licence_data.hmrc_run_number + 1)
-        self.assertEqual(dto.sender, settings.EMAIL_USER)
+        self.assertEqual(dto.sender, settings.INCOMING_EMAIL_USER)
         self.assertEqual(dto.attachment[0], "ILBDOTI_live_CHIEF_licenceData_29_201902080025")
         self.assertEqual(dto.subject, "ILBDOTI_live_CHIEF_licenceData_29_201902080025")
-        self.assertEqual(dto.receiver, settings.HMRC_ADDRESS)
+        self.assertEqual(dto.receiver, settings.OUTGOING_EMAIL_USER)
         self.assertEqual(dto.body, None)
         self.assertEqual(dto.raw_data, None)

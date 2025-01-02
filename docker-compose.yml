@@ -1,15 +1,10 @@
-version: "3.8"
-
 services:
   lite-hmrc-postgres:
+    image: "postgres:12"
     restart: unless-stopped
-    container_name: "lite-hmrc-postgres"
     environment:
-      - LITEHMRC_DB_USER=postgres
-      - LITEHMRC_DB_PASSWORD=password
-      - LITEHMRC_DB_SCHEMA=postgres
       - POSTGRES_PASSWORD=password
-    build: './database'
+      - POSTGRES_DB=postgres
     expose:
       - 5432
     ports:
@@ -29,10 +24,13 @@ services:
       - lite-hmrc-postgres
       - celery
       - celery-beat
+      - spire-to-dit-mailserver
+      - hmrc-to-dit-mailserver
+      - outbox-mailserver
     expose:
       - 8000
+    entrypoint: dockerize -wait tcp://lite-hmrc-postgres:5432 -wait tcp://spire-to-dit-mailserver:1110 -wait tcp://hmrc-to-dit-mailserver:1110 -wait tcp://outbox-mailserver:1110
     command: pipenv run ./manage.py runserver 0.0.0.0:8000
-
     healthcheck:
       test: [ "CMD-SHELL", "python -m dbt_copilot_python.celery_health_check.healthcheck" ]
       interval: 10s
@@ -40,11 +38,56 @@ services:
       retries: 2
       start_period: 5s
 
-  mailhog:
+  spire-to-dit-mailserver:
+    build:
+      context: ./conf/mail_servers/
+      args:
+        - CN=spire-to-dit-mailserver
+    environment:
+      - MP_POP3_AUTH_FILE=/config/passwd
+      - MP_POP3_TLS_CERT=/certs/cert.pem
+      - MP_POP3_TLS_KEY=/certs/key.pem
+      - MP_SMTP_AUTH_FILE=/config/passwd
+      - MP_SMTP_TLS_CERT=/certs/cert.pem
+      - MP_SMTP_TLS_KEY=/certs/key.pem
     ports:
-      - 8025:8025  # HTTP
-      - 587:1025  # SMTP
-    image: mailhog/mailhog
+      - 8025:8025
+    volumes:
+      - ./conf/mail_servers/spire-to-dit-mailserver/:/config
+
+  hmrc-to-dit-mailserver:
+    build:
+      context: ./conf/mail_servers/
+      args:
+        - CN=hmrc-to-dit-mailserver
+    environment:
+      - MP_POP3_AUTH_FILE=/config/passwd
+      - MP_POP3_TLS_CERT=/certs/cert.pem
+      - MP_POP3_TLS_KEY=/certs/key.pem
+      - MP_SMTP_AUTH_FILE=/config/passwd
+      - MP_SMTP_TLS_CERT=/certs/cert.pem
+      - MP_SMTP_TLS_KEY=/certs/key.pem
+    ports:
+      - 8026:8025
+    volumes:
+      - ./conf/mail_servers/hmrc-to-dit-mailserver/:/config
+
+  outbox-mailserver:
+    build:
+      context: ./conf/mail_servers/
+      args:
+        - CN=outbox-mailserver
+    environment:
+      - MP_POP3_AUTH_FILE=/config/passwd
+      - MP_POP3_TLS_CERT=/certs/cert.pem
+      - MP_POP3_TLS_KEY=/certs/key.pem
+      - MP_SMTP_AUTH_FILE=/config/passwd
+      - MP_SMTP_TLS_CERT=/certs/cert.pem
+      - MP_SMTP_TLS_KEY=/certs/key.pem
+    ports:
+      - 8027:8025
+    volumes:
+      - ./conf/mail_servers/outbox-mailserver/:/config
 
   celery:
     build: .
