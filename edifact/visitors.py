@@ -1,6 +1,8 @@
 from lark import Discard, Token
 from lark.visitors import Transformer, Visitor, v_args
 
+from mail.enums import LicenceStatusEnum
+from mail.libraries.helpers import get_good_id, get_licence_id, get_licence_status
 from mail.libraries.usage_data_decomposition import id_owner
 from mail.models import TransactionMapping
 
@@ -58,3 +60,66 @@ class TransactionMapper(Visitor):
             licence_reference=self.licence_ref,
             usage_transaction=self.transaction_ref,
         )
+
+
+@v_args(inline=True)
+class JsonPayload(Transformer):
+    def file(self, *licence_usage_transactions):
+        return {"licences": list(licence_usage_transactions)}
+
+    def file_header(self, *args):
+        return Discard
+
+    def file_trailer(self, *args):
+        return Discard
+
+    def licence_usage_transaction(self, licence_usage_transaction_header, licence_lines):
+        licence_reference, licence_status_code, completion_date = licence_usage_transaction_header
+
+        action = get_licence_status(str(licence_status_code))
+        if not action == LicenceStatusEnum.OPEN:
+            return Discard
+
+        licence_id = get_licence_id(str(licence_reference))
+        licence_payload = {
+            "action": str(action),
+            "completion_date": completion_date,
+            "id": licence_id,
+        }
+        licence_payload["goods"] = []
+        for licence_line in licence_lines:
+            line_num = licence_line.pop("line_num")
+            licence_line = {
+                **licence_line,
+                "id": get_good_id(line_num, licence_reference),
+            }
+            licence_payload["goods"].append(licence_line)
+        return licence_payload
+
+    def licence_usage_transaction_header(self, licence_reference, licence_status_code, completion_date=""):
+        return licence_reference, licence_status_code, completion_date
+
+    def TRANSACTION_REF(self, *args):
+        return Discard
+
+    def licence_usage_transaction_trailer(self, *args):
+        return Discard
+
+    def licence_line(self, *licence_line_headers):
+        return licence_line_headers
+
+    def licence_line_header(self, line_num, quantity_used, value_used, currency=""):
+        good_payload = {
+            "line_num": str(line_num),
+            "usage": str(quantity_used),
+            "value": str(value_used),
+            "currency": str(currency),
+        }
+
+        return good_payload
+
+    def licence_usage(self, *args):
+        return Discard
+
+    def licence_line_trailer(self, *args):
+        return Discard
