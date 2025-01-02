@@ -4,9 +4,10 @@ from django.test import TestCase
 from lark import Token, Tree
 
 from edifact.parsers import usage_data_parser
-from edifact.visitors import RunNumberUpdater, SourceSplitter
+from edifact.visitors import RunNumberUpdater, SourceSplitter, TransactionMapper
 from mail.enums import SourceEnum
-from mail.models import LicenceIdMapping
+from mail.models import LicenceIdMapping, TransactionMapping
+from mail.tests.factories import UsageDataFactory
 
 
 class RunNumberUpdaterTests(TestCase):
@@ -223,3 +224,63 @@ class SourceSplitterTests(TestCase):
         )
 
         self.assertEqual(transformed, expected)
+
+
+class TransactionMapperTests(TestCase):
+    def test_creates_transaction_mappings(self):
+        file = """1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\
+2\\licenceUsage\\LU04148/00001\\insert\\GBOIE2017/12345B\\O\\
+3\\line\\1\\0\\0\\GBP
+4\\usage\\O\\12ABC12AB1ABCD1AB1\\XXXX\\20191130\\1.000\\2.00\\\\GB123456789012\\\\GB\\\\\\\\\\
+5\\end\\line\\3
+6\\end\\licenceUsage\\5
+7\\fileTrailer\\1"""
+
+        self.assertFalse(TransactionMapping.objects.exists())
+
+        usage_data = UsageDataFactory()
+
+        tree = usage_data_parser.parse(file)
+
+        TransactionMapper(usage_data).visit_topdown(tree)
+
+        self.assertEqual(
+            TransactionMapping.objects.count(),
+            1,
+        )
+        transaction_mapping = TransactionMapping.objects.get()
+        self.assertEqual(transaction_mapping.line_number, 1)
+        self.assertEqual(transaction_mapping.usage_data, usage_data)
+        self.assertEqual(transaction_mapping.licence_reference, "GBOIE2017/12345B")
+        self.assertEqual(transaction_mapping.usage_transaction, "LU04148/00001")
+
+    def test_transaction_mappings_already_exists(self):
+        file = """1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\
+2\\licenceUsage\\LU04148/00001\\insert\\GBOIE2017/12345B\\O\\
+3\\line\\1\\0\\0\\GBP
+4\\usage\\O\\12ABC12AB1ABCD1AB1\\XXXX\\20191130\\1.000\\2.00\\\\GB123456789012\\\\GB\\\\\\\\\\
+5\\end\\line\\3
+6\\end\\licenceUsage\\5
+7\\fileTrailer\\1"""
+
+        usage_data = UsageDataFactory()
+        TransactionMapping.objects.create(
+            line_number=1,
+            usage_data=usage_data,
+            licence_reference="GBOIE2017/12345B",
+            usage_transaction="LU04148/00001",
+        )
+
+        tree = usage_data_parser.parse(file)
+
+        TransactionMapper(usage_data).visit_topdown(tree)
+
+        self.assertEqual(
+            TransactionMapping.objects.count(),
+            1,
+        )
+        transaction_mapping = TransactionMapping.objects.get()
+        self.assertEqual(transaction_mapping.line_number, 1)
+        self.assertEqual(transaction_mapping.usage_data, usage_data)
+        self.assertEqual(transaction_mapping.licence_reference, "GBOIE2017/12345B")
+        self.assertEqual(transaction_mapping.usage_transaction, "LU04148/00001")
