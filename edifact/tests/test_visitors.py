@@ -4,9 +4,9 @@ from django.test import TestCase
 from lark import Token, Tree
 
 from edifact.parsers import usage_data_parser
-from edifact.visitors import RunNumberUpdater, SourceSplitter, TransactionMapper
+from edifact.visitors import JsonPayload, RunNumberUpdater, SourceSplitter, TransactionMapper
 from mail.enums import SourceEnum
-from mail.models import LicenceIdMapping, TransactionMapping
+from mail.models import GoodIdMapping, LicenceIdMapping, LicencePayload, TransactionMapping
 from mail.tests.factories import UsageDataFactory
 
 
@@ -284,3 +284,89 @@ class TransactionMapperTests(TestCase):
         self.assertEqual(transaction_mapping.usage_data, usage_data)
         self.assertEqual(transaction_mapping.licence_reference, "GBOIE2017/12345B")
         self.assertEqual(transaction_mapping.usage_transaction, "LU04148/00001")
+
+
+class JsonPayloadTests(TestCase):
+    def test_json_payload(self):
+        LicencePayload.objects.create(reference="GBOGE2011/56789", lite_id="00000000-0000-0000-0000-000000000001")
+        LicencePayload.objects.create(reference="GBOGE2017/98765", lite_id="00000000-0000-0000-0000-000000000002")
+        LicencePayload.objects.create(reference="GBOGE2015/87654", lite_id="00000000-0000-0000-0000-000000000003")
+
+        GoodIdMapping.objects.create(
+            licence_reference="GBOGE2011/56789",
+            line_number=2,
+            lite_id="00000000-0000-0000-0000-000000000001",
+        )
+        GoodIdMapping.objects.create(
+            licence_reference="GBOGE2015/87654",
+            line_number=1,
+            lite_id="00000000-0000-0000-0000-000000000002",
+        )
+
+        file = """1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\
+2\\licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\
+3\\line\\2\\17\\0\\
+4\\usage\\O\\9GB000004988000-4750437112345\\G\\20190111\\0\\0\\\\000104\\\\\\\\\\\\\\
+5\\usage\\O\\9GB000004988000-4750436912345\\Y\\20190111\\0\\0\\\\000104\\\\\\\\\\\\\\
+6\\end\\line\\4
+7\\end\\licenceUsage\\6
+8\\licenceUsage\\LU04148/00006\\insert\\GBOGE2017/98765\\O\\
+9\\line\\1\\0\\0\\
+10\\usage\\O\\9GB000002816000-273993\\L\\20190109\\0\\0\\\\000316\\\\\\\\\\\\\\
+11\\end\\line\\3
+12\\end\\licenceUsage\\5
+13\\licenceUsage\\LU04148/00007\\insert\\GBOGE2015/87654\\O\\
+14\\line\\1\\1000000\\0\\GBP
+15\\usage\\O\\9GB000003133000-784920212345\\E\\20190111\\0\\0\\\\000640\\\\\\\\\\\\\\
+16\\usage\\O\\9GB000003133000-784918012345\\D\\20190111\\0\\0\\\\000640\\\\\\\\\\\\\\
+17\\end\\line\\4
+18\\end\\licenceUsage\\6
+19\\licenceUsage\\LU04148/00008\\insert\\GBOGE2015/87654\\E\\
+20\\line\\1\\9999\\0\\GBP
+21\\usage\\O\\9GB000003333333-784920212345\\E\\20190111\\0\\0\\\\000640\\\\\\\\\\\\\\
+23\\end\\line\\4
+24\\end\\licenceUsage\\6
+25\\fileTrailer\\4
+"""
+
+        tree = usage_data_parser.parse(file)
+        payload = JsonPayload().transform(tree)
+
+        expected_payload = {
+            "licences": [
+                {
+                    "id": "00000000-0000-0000-0000-000000000001",
+                    "action": "open",
+                    "completion_date": "",
+                    "goods": [
+                        {
+                            "id": "00000000-0000-0000-0000-000000000001",
+                            "usage": "17",
+                            "value": "0",
+                            "currency": "",
+                        }
+                    ],
+                },
+                {
+                    "id": "00000000-0000-0000-0000-000000000002",
+                    "action": "open",
+                    "completion_date": "",
+                    "goods": [{"id": None, "usage": "0", "value": "0", "currency": ""}],
+                },
+                {
+                    "id": "00000000-0000-0000-0000-000000000003",
+                    "action": "open",
+                    "completion_date": "",
+                    "goods": [
+                        {
+                            "id": "00000000-0000-0000-0000-000000000002",
+                            "usage": "1000000",
+                            "value": "0",
+                            "currency": "GBP",
+                        }
+                    ],
+                },
+            ]
+        }
+
+        self.assertEqual(payload, expected_payload)
