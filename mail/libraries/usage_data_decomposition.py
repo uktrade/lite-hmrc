@@ -33,18 +33,6 @@ def split_edi_data_by_id(data, usage_data: UsageData = None) -> (list, list):
                     usage_transaction=transaction_id,
                 )
 
-            if (
-                licence_owner == SourceEnum.LITE
-                and not TransactionMapping.objects.filter(usage_transaction=transaction_id).exists()
-                and "end\\licenceUsage" in line
-            ):
-                TransactionMapping.objects.get_or_create(
-                    line_number=None,
-                    usage_data=usage_data,
-                    licence_reference=licence_id,
-                    usage_transaction=transaction_id,
-                )
-
         if "fileTrailer" in line:
             spire_blocks.append(block)
             break
