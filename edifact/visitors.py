@@ -1,3 +1,5 @@
+import itertools
+
 from lark import Discard, Token
 from lark.visitors import Transformer, Visitor, v_args
 
@@ -23,8 +25,8 @@ class SourceSplitter(Transformer):
         super().__init__(*args, **kwargs)
 
     def licence_usage_transaction(self, tree):
-        licence_usage_transaction_header, _, _ = tree.children
-        _, licence_ref, _ = licence_usage_transaction_header.children
+        licence_usage_transaction_header = tree.children[0]
+        licence_ref = licence_usage_transaction_header.children[2]
 
         source = id_owner(licence_ref)
         if not source == self.desired_source:
@@ -45,11 +47,9 @@ class TransactionMapper(Visitor):
         self.usage_data = usage_data
         super().__init__(*args, **kwargs)
 
-    def visit(self, *args, **kwargs):
-        raise NotImplementedError("This should only be called topdown")
-
     def licence_usage_transaction_header(self, tree):
-        self.transaction_ref, self.licence_ref, _ = tree.children
+        self.transaction_ref = str(tree.children[0])
+        self.licence_ref = str(tree.children[2])
 
     def licence_line_header(self, tree):
         line_num, *_ = tree.children
@@ -96,7 +96,7 @@ class JsonPayload(Transformer):
             licence_payload["goods"].append(licence_line)
         return licence_payload
 
-    def licence_usage_transaction_header(self, licence_reference, licence_status_code, completion_date=""):
+    def licence_usage_transaction_header(self, action, licence_reference, licence_status_code, completion_date=""):
         return licence_reference, licence_status_code, completion_date
 
     def TRANSACTION_REF(self, *args):
@@ -123,3 +123,117 @@ class JsonPayload(Transformer):
 
     def licence_line_trailer(self, *args):
         return Discard
+
+
+@v_args(inline=True)
+class Edifact(Transformer):
+    def _to_line(self, line_type, fields, tokens):
+        data = {token.type: str(token) for token in tokens}
+        data = "\\".join([data.get(field, "") for field in fields])
+        return f"\\{line_type}\\{data}"
+
+    def _flatten(self, lists):
+        if not isinstance(lists, list):
+            return [lists]
+        return list(itertools.chain.from_iterable(self._flatten(l) for l in lists))
+
+    def file(self, *args):
+        lines = self._flatten(list(args))
+        lines = [f"{line_number}{line}" for line_number, line in enumerate(lines, start=1)]
+        lines = "\n".join(lines)
+        return lines
+
+    def file_header(self, *args):
+        return self._to_line(
+            "fileHeader",
+            [
+                "SOURCE_SYSTEM",
+                "DESTINATION_SYSTEM",
+                "DATA_ID",
+                "CREATION_DATE_TIME",
+                "RUN_NUMBER",
+                "RESET_RUN_NUMBER",
+            ],
+            args,
+        )
+
+    def file_trailer(self, *args):
+        return self._to_line(
+            "fileTrailer",
+            [
+                "LICENCE_USAGE_COUNT",
+            ],
+            args,
+        )
+
+    def licence_usage_transaction_header(self, *args):
+        return self._to_line(
+            "licenceUsage",
+            [
+                "TRANSACTION_REF",
+                "ACTION",
+                "LICENCE_REF",
+                "LICENCE_STATUS",
+                "COMPLETION_DATE",
+            ],
+            args,
+        )
+
+    def licence_usage_transaction(self, *args):
+        return self._flatten(list(args))
+
+    def licence_usage_transaction_trailer(self, *args):
+        return self._to_line(
+            "end\\licenceUsage",
+            [
+                "RECORD_COUNT",
+            ],
+            args,
+        )
+
+    def licence_line_header(self, *args):
+        return self._to_line(
+            "line",
+            [
+                "LINE_NUM",
+                "QUANTITY_USED",
+                "VALUE_USED",
+                "CURRENCY",
+            ],
+            args,
+        )
+
+    def licence_line(self, *args):
+        return self._flatten(list(args))
+
+    def licence_line_trailer(self, *args):
+        return self._to_line(
+            "end\\line",
+            [
+                "RECORD_COUNT",
+            ],
+            args,
+        )
+
+    def licence_usage(self, *args):
+        return self._to_line(
+            "usage",
+            [
+                "USAGE_TYPE",
+                "DECLARATION_UCR",
+                "DECLARATION_PART_NUM",
+                "CONTROL_DATE",
+                "QUANTITY_USED",
+                "VALUE_USED",
+                "CURRENCY",
+                "TRADER_ID",
+                "CLAIM_REF",
+                "ORIGIN_COUNTRY",
+                "CUSTOMS_MIC",
+                "CUSTOMS_MESSAGE",
+                "CONSIGNEE_NAME",
+                "DECLARATION_MRN",
+                "DEPARTURE_ICS",
+            ],
+            args,
+        )
