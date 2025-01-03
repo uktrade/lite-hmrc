@@ -1,77 +1,70 @@
-file: file_header licence_usage_transaction+ file_trailer
-
 _m{x}: _BACKSLASH x
-
 _o{x}: _BACKSLASH [x]
+_line{x}: _LINE_NUMBER x _TRAIL
+_end_line{x}: _LINE_NUMBER x _TRAIL?
 
-file_header: _LINE_NUMBER \
-    _m{"fileHeader"} \
-    _m{SOURCE_SYSTEM} \
-    _m{DESTINATION_SYSTEM} \
-    _m{DATA_ID} \
-    _m{CREATION_DATE_TIME} \
-    _m{RUN_NUMBER} \
-    _o{RESET_RUN_NUM} \
-    _TRAIL
+file: _line{file_header} \
+      licence_usage_transaction+ \
+      _end_line{file_trailer}
 
-file_trailer: _LINE_NUMBER \
-    _m{"fileTrailer"} \
-    _m{LICENCE_USAGE_COUNT} \
-    _TRAIL?
+file_header: _m{"fileHeader"} \
+             _m{SOURCE_SYSTEM} \
+             _m{DESTINATION_SYSTEM} \
+             _m{DATA_ID} \
+             _m{CREATION_DATE_TIME} \
+             _m{RUN_NUMBER} \
+             _o{RESET_RUN_NUM}
 
-licence_usage_transaction: licence_usage_transaction_header licence_line+ licence_usage_transaction_trailer
+file_trailer: _m{"fileTrailer"} \
+              _m{LICENCE_USAGE_COUNT}
 
-licence_usage_transaction_header: _LINE_NUMBER \
-    _m{"licenceUsage"} \
-    _m{TRANSACTION_REF} \
-    _m{ACTION} \
-    _m{LICENCE_REF} \
-    _m{LICENCE_STATUS} \
-    _o{COMPLETION_DATE} \
-    _TRAIL
+licence_usage_transaction: _line{licence_usage_transaction_header} \
+                           licence_line+ \
+                           _line{licence_usage_transaction_trailer}
 
-licence_usage_transaction_trailer: _LINE_NUMBER \
-    _m{"end"} \
-    _m{"licenceUsage"} \
-    _m{RECORD_COUNT} \
-    _TRAIL
+licence_usage_transaction_header: _m{"licenceUsage"} \
+                                  _m{TRANSACTION_REF} \
+                                  _m{ACTION} \
+                                  _m{LICENCE_REF} \
+                                  _m{LICENCE_STATUS} \
+                                  _o{COMPLETION_DATE}
 
-licence_line: licence_line_header licence_usage* licence_line_trailer
+licence_usage_transaction_trailer: _m{"end"} \
+                                   _m{"licenceUsage"} \
+                                   _m{RECORD_COUNT}
 
-licence_line_header: _LINE_NUMBER \
-    _m{"line"} \
-    _m{LINE_NUM} \
-    _m{QUANTITY_USED} \
-    _m{VALUE_USED} \
-    _o{CURRENCY} \
-    _TRAIL
+licence_line: _line{licence_line_header} \
+              _line{licence_usage}* \
+              _line{licence_line_trailer}
 
-licence_line_trailer: _LINE_NUMBER \
-    _m{"end"} \
-    _m{"line"} \
-    _m{RECORD_COUNT} \
-    _TRAIL
+licence_line_header: _m{"line"} \
+                     _m{LINE_NUM} \
+                     _m{QUANTITY_USED} \
+                     _m{VALUE_USED} \
+                     _o{CURRENCY}
 
-licence_usage: _LINE_NUMBER \
-    _m{"usage"} \
-    _m{USAGE_TYPE} \
-    _m{DECLARATION_UCR} \
-    _m{DECLARATION_PART_NUM} \
-    _m{CONTROL_DATE} \
-    _m{QUANTITY_USED} \
-    _o{VALUE_USED} \
-    _o{CURRENCY} \
-    _o{TRADER_ID} \
-    _o{CLAIM_REF} \
-    _o{ORIGIN_COUNTRY} \
-    _o{CUSTOMS_MIC} \
-    _o{CUSTOMS_MESSAGE} \
-    _optional_licence_usage? \
-    _TRAIL
+licence_line_trailer: _m{"end"} \
+                      _m{"line"} \
+                      _m{RECORD_COUNT}
+
+licence_usage: _m{"usage"} \
+               _m{USAGE_TYPE} \
+               _m{DECLARATION_UCR} \
+               _m{DECLARATION_PART_NUM} \
+               _m{CONTROL_DATE} \
+               _m{QUANTITY_USED} \
+               _o{VALUE_USED} \
+               _o{CURRENCY} \
+               _o{TRADER_ID} \
+               _o{CLAIM_REF} \
+               _o{ORIGIN_COUNTRY} \
+               _o{CUSTOMS_MIC} \
+               _o{CUSTOMS_MESSAGE} \
+               _optional_licence_usage?
 
 _optional_licence_usage: _o{CONSIGNEE_NAME} \
-    _o{DECLARATION_MRN} \
-    _o{DEPARTURE_ICS}
+                         _o{DECLARATION_MRN} \
+                         _o{DEPARTURE_ICS}
 
 _LINE_NUMBER: NUMBER
 DATE: DIGIT ~ 8
