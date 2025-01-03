@@ -1,7 +1,7 @@
 import itertools
 
 from lark import Discard, Token
-from lark.visitors import Transformer, Visitor, v_args
+from lark.visitors import Interpreter, Transformer, v_args
 
 from mail.enums import LicenceStatusEnum
 from mail.libraries.helpers import get_good_id, get_licence_id, get_licence_status
@@ -42,24 +42,35 @@ class SourceSplitter(Transformer):
         return tree
 
 
-class TransactionMapper(Visitor):
+class TransactionMapper(Interpreter):
     def __init__(self, usage_data, *args, **kwargs):
         self.usage_data = usage_data
         super().__init__(*args, **kwargs)
 
+    def licence_usage_transaction(self, tree):
+        (transaction_ref, licence_ref), line_num, _ = self.visit_children(tree)
+        TransactionMapping.objects.get_or_create(
+            line_number=line_num,
+            usage_data=self.usage_data,
+            licence_reference=licence_ref,
+            usage_transaction=transaction_ref,
+        )
+
     def licence_usage_transaction_header(self, tree):
-        self.transaction_ref = str(tree.children[0])
-        self.licence_ref = str(tree.children[2])
+        transaction_ref = str(tree.children[0])
+        licence_ref = str(tree.children[2])
+
+        return transaction_ref, licence_ref
+
+    def licence_line(self, tree):
+        values = self.visit_children(tree)
+
+        return values[0]
 
     def licence_line_header(self, tree):
         line_num, *_ = tree.children
 
-        TransactionMapping.objects.get_or_create(
-            line_number=line_num,
-            usage_data=self.usage_data,
-            licence_reference=self.licence_ref,
-            usage_transaction=self.transaction_ref,
-        )
+        return line_num[0]
 
 
 @v_args(inline=True)
