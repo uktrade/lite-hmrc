@@ -2,6 +2,7 @@ import uuid
 
 from django.test import TestCase
 from lark import Token, Tree
+from parameterized import parameterized
 
 from edifact.parsers import usage_data_parser
 from edifact.visitors import Edifact, JsonPayload, RunNumberUpdater, SourceSplitter, TransactionMapper
@@ -317,23 +318,9 @@ class TransactionMapperTests(TestCase):
 
 
 class JsonPayloadTests(TestCase):
-    def test_json_payload(self):
-        LicencePayload.objects.create(reference="GBOGE2011/56789", lite_id="00000000-0000-0000-0000-000000000001")
-        LicencePayload.objects.create(reference="GBOGE2017/98765", lite_id="00000000-0000-0000-0000-000000000002")
-        LicencePayload.objects.create(reference="GBOGE2015/87654", lite_id="00000000-0000-0000-0000-000000000003")
-
-        GoodIdMapping.objects.create(
-            licence_reference="GBOGE2011/56789",
-            line_number=2,
-            lite_id="00000000-0000-0000-0000-000000000001",
-        )
-        GoodIdMapping.objects.create(
-            licence_reference="GBOGE2015/87654",
-            line_number=1,
-            lite_id="00000000-0000-0000-0000-000000000002",
-        )
-
-        file = """1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\
+    FILES = [
+        (
+            """1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\
 2\\licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\
 3\\line\\2\\17\\0\\
 4\\usage\\O\\9GB000004988000-4750437112345\\G\\20190111\\0\\0\\\\000104\\\\\\\\\\\\\\
@@ -357,49 +344,202 @@ class JsonPayloadTests(TestCase):
 23\\end\\line\\4
 24\\end\\licenceUsage\\6
 25\\fileTrailer\\4
-"""
+""",
+            {
+                "licences": [
+                    {
+                        "id": "00000000-0000-0000-0000-000000000001",
+                        "action": "open",
+                        "completion_date": "",
+                        "goods": [
+                            {
+                                "id": "00000000-0000-0000-0000-000000000001",
+                                "usage": "17",
+                                "value": "0",
+                                "currency": "",
+                            }
+                        ],
+                    },
+                    {
+                        "id": "00000000-0000-0000-0000-000000000002",
+                        "action": "open",
+                        "completion_date": "",
+                        "goods": [{"id": None, "usage": "0", "value": "0", "currency": ""}],
+                    },
+                    {
+                        "id": "00000000-0000-0000-0000-000000000003",
+                        "action": "open",
+                        "completion_date": "",
+                        "goods": [
+                            {
+                                "id": "00000000-0000-0000-0000-000000000002",
+                                "usage": "1000000",
+                                "value": "0",
+                                "currency": "GBP",
+                            }
+                        ],
+                    },
+                ]
+            },
+        ),
+        (
+            """1\\fileHeader\\CHIEF\\SPIRE\\usageData\\202010010315\\1111\\
+2\\licenceUsage\\LU01111/00027\\insert\\GBSIEL/2020/0000006/P\\O\\
+3\\line\\1\\1.000\\2.00\\
+4\\usage\\O\\24AAAAAAAAAAAAAAAA\\XXXX\\20200926\\1.000\\\\\\GB111111111111\\\\GB\\\\\\\\\\
+5\\end\\line\\3
+6\\end\\licenceUsage\\5
+7\\licenceUsage\\LU01111/00032\\insert\\GBSIEL/2020/0000008/P\\O\\
+8\\line\\1\\3.000\\4.00\\
+9\\usage\\O\\24AAAAAAAAAAAAAAAB\\XXXX\\20200925\\100.000\\\\\\GB111111111111\\\\NA\\\\\\\\\\
+10\\end\\line\\3
+11\\end\\licenceUsage\\5
+12\\licenceUsage\\LU01111/00039\\insert\\GBSIEL/2020/0000001/P\\O\\
+13\\line\\1\\5.000\\6.00\\
+14\\usage\\O\\24AAAAAAAAAAAAAAAC\\XXXX\\20200927\\34800.000\\\\\\GB111111111111\\\\GB\\\\\\\\\\
+15\\end\\line\\3
+16\\end\\licenceUsage\\5
+17\\licenceUsage\\LU01111/00054\\insert\\GBSIEL/2020/0001111/P\\O\\
+18\\line\\1\\7.000\\8.00\\
+19\\usage\\O\\24AAAAAAAAAAAAAAAD\\XXXX\\20200930\\1.000\\\\\\GB111111111111\\\\GB\\\\\\\\\\
+20\\end\\line\\3
+21\\end\\licenceUsage\\5
+22\\licenceUsage\\LU01111/00070\\insert\\GBSIEL/2021/0000003/P\\O\\
+23\\line\\2\\9.000\\10.00\\
+24\\usage\\O\\24AAAAAAAAAAAAAAAE\\XXXX\\20200930\\6.000\\\\\\GB111111111111\\\\GB\\\\\\\\\\
+25\\end\\line\\3
+26\\end\\licenceUsage\\5
+27\\licenceUsage\\LU01111/00094\\insert\\GBSIEL/2021/0000006/P\\O\\
+28\\line\\1\\11.000\\12.00\\
+29\\usage\\O\\24AAAAAAAAAAAAAAAF\\XXXX\\20200930\\80.000\\\\\\GB111111111111\\\\NA\\\\\\\\\\
+30\\usage\\O\\24AAAAAAAAAAAAAAAG\\XXXX\\20200930\\100.000\\\\\\GB111111111111\\\\NA\\\\\\\\\\
+31\\end\\line\\4
+32\\end\\licenceUsage\\6
+33\\licenceUsage\\LU01111/00120\\insert\\GBSIEL/2020/0000007/P\\O\\
+34\\line\\1\\13.000\\14.00\\
+35\\usage\\O\\24AAAAAAAAAAAAAAAH\\XXXX\\20200929\\1.000\\\\\\GB111111111111\\\\GB\\\\\\\\\\
+36\\end\\line\\3
+37\\end\\licenceUsage\\5
+38\\licenceUsage\\LU01111/00126\\insert\\GBSIEL/2020/0001006/P\\O\\
+39\\line\\1\\15.000\\16.00\\
+40\\usage\\O\\24AAAAAAAAAAAAAAAI\\XXXX\\20200924\\6.000\\\\\\GB111111111111\\\\NA\\\\\\\\\\
+41\\end\\line\\3
+42\\line\\4\\17.000\\18.00\\
+43\\usage\\O\\24AAAAAAAAAAAAAAAJ\\XXXX\\20200924\\2.000\\\\\\GB111111111111\\\\NA\\\\\\\\\\
+44\\end\\line\\3
+45\\end\\licenceUsage\\8
+46\\licenceUsage\\LU01111/00133\\insert\\GBSIEL/2020/0001446/P\\O\\
+47\\line\\1\\19.000\\20.00\\
+48\\usage\\O\\24AAAAAAAAAAAAAAAK\\XXXX\\20200925\\2.000\\\\\\GB111111111111\\\\GB\\\\\\\\\\
+49\\end\\line\\3
+50\\end\\licenceUsage\\5
+51\\licenceUsage\\LU01111/00181\\insert\\GBSIEL/2021/0001327/P\\O\\
+52\\line\\1\\21.000\\22.00\\
+53\\usage\\O\\24AAAAAAAAAAAAAAAL\\XXXX\\20200930\\90.000\\\\\\GB111111111111\\\\NA\\\\\\\\\\
+54\\end\\line\\3
+55\\end\\licenceUsage\\5
+56\\licenceUsage\\LU01111/00263\\insert\\GBSIEL/2021/0000043/P\\O\\
+57\\line\\1\\23.000\\24.00\\
+58\\usage\\O\\24AAAAAAAAAAAAAAAM\\XXXX\\20200930\\3.000\\\\\\GB111111111111\\\\GB\\\\\\\\\\
+59\\end\\line\\3
+60\\end\\licenceUsage\\5
+61\\fileTrailer\\11""",
+            {
+                "licences": [
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "1.000", "value": "2.00", "currency": "", "id": None}],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "3.000", "value": "4.00", "currency": "", "id": None}],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "5.000", "value": "6.00", "currency": "", "id": None}],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "7.000", "value": "8.00", "currency": "", "id": None}],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "9.000", "value": "10.00", "currency": "", "id": None}],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "11.000", "value": "12.00", "currency": "", "id": None}],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "13.000", "value": "14.00", "currency": "", "id": None}],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [
+                            {"usage": "15.000", "value": "16.00", "currency": "", "id": None},
+                            {"usage": "17.000", "value": "18.00", "currency": "", "id": None},
+                        ],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "19.000", "value": "20.00", "currency": "", "id": None}],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "21.000", "value": "22.00", "currency": "", "id": None}],
+                    },
+                    {
+                        "action": "open",
+                        "completion_date": "",
+                        "id": None,
+                        "goods": [{"usage": "23.000", "value": "24.00", "currency": "", "id": None}],
+                    },
+                ]
+            },
+        ),
+    ]
+
+    @parameterized.expand(FILES)
+    def test_json_payload(self, file, expected):
+        LicencePayload.objects.create(reference="GBOGE2011/56789", lite_id="00000000-0000-0000-0000-000000000001")
+        LicencePayload.objects.create(reference="GBOGE2017/98765", lite_id="00000000-0000-0000-0000-000000000002")
+        LicencePayload.objects.create(reference="GBOGE2015/87654", lite_id="00000000-0000-0000-0000-000000000003")
+
+        GoodIdMapping.objects.create(
+            licence_reference="GBOGE2011/56789",
+            line_number=2,
+            lite_id="00000000-0000-0000-0000-000000000001",
+        )
+        GoodIdMapping.objects.create(
+            licence_reference="GBOGE2015/87654",
+            line_number=1,
+            lite_id="00000000-0000-0000-0000-000000000002",
+        )
 
         tree = usage_data_parser.parse(file)
         payload = JsonPayload().transform(tree)
-
-        expected_payload = {
-            "licences": [
-                {
-                    "id": "00000000-0000-0000-0000-000000000001",
-                    "action": "open",
-                    "completion_date": "",
-                    "goods": [
-                        {
-                            "id": "00000000-0000-0000-0000-000000000001",
-                            "usage": "17",
-                            "value": "0",
-                            "currency": "",
-                        }
-                    ],
-                },
-                {
-                    "id": "00000000-0000-0000-0000-000000000002",
-                    "action": "open",
-                    "completion_date": "",
-                    "goods": [{"id": None, "usage": "0", "value": "0", "currency": ""}],
-                },
-                {
-                    "id": "00000000-0000-0000-0000-000000000003",
-                    "action": "open",
-                    "completion_date": "",
-                    "goods": [
-                        {
-                            "id": "00000000-0000-0000-0000-000000000002",
-                            "usage": "1000000",
-                            "value": "0",
-                            "currency": "GBP",
-                        }
-                    ],
-                },
-            ]
-        }
-
-        self.assertEqual(payload, expected_payload)
+        self.assertEqual(payload, expected)
 
 
 class EditfactTests(TestCase):

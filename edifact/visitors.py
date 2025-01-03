@@ -9,6 +9,12 @@ from mail.libraries.usage_data_decomposition import id_owner
 from mail.models import TransactionMapping
 
 
+def flatten(lists):
+    if not isinstance(lists, (list, tuple)):
+        return [lists]
+    return list(itertools.chain.from_iterable(flatten(l) for l in lists))
+
+
 class RunNumberUpdater(Transformer):
     def __init__(self, spire_run_number, *args, **kwargs):
         self.spire_run_number = spire_run_number
@@ -84,7 +90,7 @@ class JsonPayload(Transformer):
     def file_trailer(self, *args):
         return Discard
 
-    def licence_usage_transaction(self, licence_usage_transaction_header, licence_lines):
+    def licence_usage_transaction(self, licence_usage_transaction_header, *licence_lines):
         licence_reference, licence_status_code, completion_date = licence_usage_transaction_header
 
         action = get_licence_status(str(licence_status_code))
@@ -98,7 +104,7 @@ class JsonPayload(Transformer):
             "id": licence_id,
         }
         licence_payload["goods"] = []
-        for licence_line in licence_lines:
+        for licence_line in flatten(licence_lines):
             line_num = licence_line.pop("line_num")
             licence_line = {
                 **licence_line,
@@ -143,13 +149,8 @@ class Edifact(Transformer):
         data = "\\".join([data.get(field, "") for field in fields])
         return f"\\{line_type}\\{data}"
 
-    def _flatten(self, lists):
-        if not isinstance(lists, list):
-            return [lists]
-        return list(itertools.chain.from_iterable(self._flatten(l) for l in lists))
-
     def file(self, *args):
-        lines = self._flatten(list(args))
+        lines = flatten(args)
         lines = [f"{line_number}{line}" for line_number, line in enumerate(lines, start=1)]
         lines = "\n".join(lines)
         return lines
@@ -191,7 +192,7 @@ class Edifact(Transformer):
         )
 
     def licence_usage_transaction(self, *args):
-        return self._flatten(list(args))
+        return flatten(args)
 
     def licence_usage_transaction_trailer(self, *args):
         return self._to_line(
@@ -215,7 +216,7 @@ class Edifact(Transformer):
         )
 
     def licence_line(self, *args):
-        return self._flatten(list(args))
+        return flatten(args)
 
     def licence_line_trailer(self, *args):
         return self._to_line(
