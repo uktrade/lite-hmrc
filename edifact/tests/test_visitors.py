@@ -4,7 +4,7 @@ from django.test import TestCase
 from lark import Token, Tree
 
 from edifact.parsers import usage_data_parser
-from edifact.visitors import JsonPayload, RunNumberUpdater, SourceSplitter, TransactionMapper
+from edifact.visitors import Edifact, JsonPayload, RunNumberUpdater, SourceSplitter, TransactionMapper
 from mail.enums import SourceEnum
 from mail.models import GoodIdMapping, LicenceIdMapping, LicencePayload, TransactionMapping
 from mail.tests.factories import UsageDataFactory
@@ -26,7 +26,16 @@ class RunNumberUpdaterTests(TestCase):
         expected = Tree(
             Token("RULE", "file"),
             [
-                Tree(Token("RULE", "file_header"), [Token("TIMESTAMP", "201901130300"), Token("RUN_NUMBER", "12345")]),
+                Tree(
+                    Token("RULE", "file_header"),
+                    [
+                        Token("SOURCE_SYSTEM", "CHIEF"),
+                        Token("DESTINATION_SYSTEM", "SPIRE"),
+                        Token("DATA_ID", "usageData"),
+                        Token("CREATION_DATE_TIME", "201901130300"),
+                        Token("RUN_NUMBER", "12345"),
+                    ],
+                ),
                 Tree(
                     Token("RULE", "licence_usage_transaction"),
                     [
@@ -34,6 +43,7 @@ class RunNumberUpdaterTests(TestCase):
                             Token("RULE", "licence_usage_transaction_header"),
                             [
                                 Token("TRANSACTION_REF", "LU04148/00001"),
+                                Token("ACTION", "insert"),
                                 Token("LICENCE_REF", "GBOIE2017/12345B"),
                                 Token("LICENCE_STATUS", "O"),
                             ],
@@ -102,7 +112,16 @@ class SourceSplitterTests(TestCase):
         expected = Tree(
             Token("RULE", "file"),
             [
-                Tree(Token("RULE", "file_header"), [Token("TIMESTAMP", "201901130300"), Token("RUN_NUMBER", "49543")]),
+                Tree(
+                    Token("RULE", "file_header"),
+                    [
+                        Token("SOURCE_SYSTEM", "CHIEF"),
+                        Token("DESTINATION_SYSTEM", "SPIRE"),
+                        Token("DATA_ID", "usageData"),
+                        Token("CREATION_DATE_TIME", "201901130300"),
+                        Token("RUN_NUMBER", "49543"),
+                    ],
+                ),
                 Tree(
                     Token("RULE", "licence_usage_transaction"),
                     [
@@ -110,6 +129,7 @@ class SourceSplitterTests(TestCase):
                             Token("RULE", "licence_usage_transaction_header"),
                             [
                                 Token("TRANSACTION_REF", "LU04148/00001"),
+                                Token("ACTION", "insert"),
                                 Token("LICENCE_REF", "GBOIE2017/SPIRE"),
                                 Token("LICENCE_STATUS", "O"),
                             ],
@@ -176,7 +196,16 @@ class SourceSplitterTests(TestCase):
         expected = Tree(
             Token("RULE", "file"),
             [
-                Tree(Token("RULE", "file_header"), [Token("TIMESTAMP", "201901130300"), Token("RUN_NUMBER", "49543")]),
+                Tree(
+                    Token("RULE", "file_header"),
+                    [
+                        Token("SOURCE_SYSTEM", "CHIEF"),
+                        Token("DESTINATION_SYSTEM", "SPIRE"),
+                        Token("DATA_ID", "usageData"),
+                        Token("CREATION_DATE_TIME", "201901130300"),
+                        Token("RUN_NUMBER", "49543"),
+                    ],
+                ),
                 Tree(
                     Token("RULE", "licence_usage_transaction"),
                     [
@@ -184,6 +213,7 @@ class SourceSplitterTests(TestCase):
                             Token("RULE", "licence_usage_transaction_header"),
                             [
                                 Token("TRANSACTION_REF", "LU04148/00002"),
+                                Token("ACTION", "insert"),
                                 Token("LICENCE_REF", "GBSIE2017/LITE"),
                                 Token("LICENCE_STATUS", "O"),
                             ],
@@ -370,3 +400,36 @@ class JsonPayloadTests(TestCase):
         }
 
         self.assertEqual(payload, expected_payload)
+
+
+class EditfactTests(TestCase):
+    def test_edifact(self):
+        file = """1\\fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\
+2\\licenceUsage\\LU04148/00005\\insert\\GBOGE2011/56789\\O\\
+3\\line\\2\\17\\0\\
+4\\usage\\O\\9GB000004988000-4750437112345\\G\\20190111\\0\\0\\\\000104\\\\\\\\\\\\\\
+5\\usage\\O\\9GB000004988000-4750436912345\\Y\\20190111\\0\\0\\\\000104\\\\\\\\\\\\\\
+6\\end\\line\\4
+7\\end\\licenceUsage\\6
+8\\licenceUsage\\LU04148/00006\\insert\\GBOGE2017/98765\\O\\
+9\\line\\1\\0\\0\\
+10\\usage\\O\\9GB000002816000-273993\\L\\20190109\\0\\0\\\\000316\\\\\\\\\\\\\\
+11\\end\\line\\3
+12\\end\\licenceUsage\\5
+13\\licenceUsage\\LU04148/00007\\insert\\GBOGE2015/87654\\O\\
+14\\line\\1\\1000000\\0\\GBP
+15\\usage\\O\\9GB000003133000-784920212345\\E\\20190111\\0\\0\\\\000640\\\\\\\\\\\\\\
+16\\usage\\O\\9GB000003133000-784918012345\\D\\20190111\\0\\0\\\\000640\\\\\\\\\\\\\\
+17\\end\\line\\4
+18\\end\\licenceUsage\\6
+19\\licenceUsage\\LU04148/00008\\insert\\GBOGE2015/87654\\E\\
+20\\line\\1\\9999\\0\\GBP
+21\\usage\\O\\9GB000003333333-784920212345\\E\\20190111\\0\\0\\\\000640\\\\\\\\\\\\\\
+22\\end\\line\\4
+23\\end\\licenceUsage\\6
+24\\fileTrailer\\4"""
+
+        tree = usage_data_parser.parse(file)
+        edifact = Edifact().transform(tree)
+
+        self.assertEqual(file, edifact)
