@@ -23,7 +23,6 @@ class RunNumberUpdaterTests(TestCase):
 
         tree = usage_data_parser.parse(file)
         transformed = RunNumberUpdater(spire_run_number=12345).transform(tree)
-
         expected = Tree(
             Token("RULE", "file"),
             [
@@ -35,6 +34,7 @@ class RunNumberUpdaterTests(TestCase):
                         Token("DATA_ID", "usageData"),
                         Token("CREATION_DATE_TIME", "201901130300"),
                         Token("RUN_NUMBER", "12345"),
+                        None,
                     ],
                 ),
                 Tree(
@@ -47,6 +47,7 @@ class RunNumberUpdaterTests(TestCase):
                                 Token("ACTION", "insert"),
                                 Token("LICENCE_REF", "GBOIE2017/12345B"),
                                 Token("LICENCE_STATUS", "O"),
+                                None,
                             ],
                         ),
                         Tree(
@@ -70,8 +71,15 @@ class RunNumberUpdaterTests(TestCase):
                                         Token("CONTROL_DATE", "20191130"),
                                         Token("QUANTITY_USED", "1.000"),
                                         Token("VALUE_USED", "2.00"),
+                                        None,
                                         Token("TRADER_ID", "GB123456789012"),
+                                        None,
                                         Token("ORIGIN_COUNTRY", "GB"),
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
                                     ],
                                 ),
                                 Tree(Token("RULE", "licence_line_trailer"), [Token("RECORD_COUNT", "3")]),
@@ -121,6 +129,7 @@ class SourceSplitterTests(TestCase):
                         Token("DATA_ID", "usageData"),
                         Token("CREATION_DATE_TIME", "201901130300"),
                         Token("RUN_NUMBER", "49543"),
+                        None,
                     ],
                 ),
                 Tree(
@@ -133,6 +142,7 @@ class SourceSplitterTests(TestCase):
                                 Token("ACTION", "insert"),
                                 Token("LICENCE_REF", "GBOIE2017/SPIRE"),
                                 Token("LICENCE_STATUS", "O"),
+                                None,
                             ],
                         ),
                         Tree(
@@ -156,8 +166,15 @@ class SourceSplitterTests(TestCase):
                                         Token("CONTROL_DATE", "20191130"),
                                         Token("QUANTITY_USED", "1.000"),
                                         Token("VALUE_USED", "2.00"),
+                                        None,
                                         Token("TRADER_ID", "GB123456789012"),
+                                        None,
                                         Token("ORIGIN_COUNTRY", "GB"),
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
                                     ],
                                 ),
                                 Tree(Token("RULE", "licence_line_trailer"), [Token("RECORD_COUNT", "3")]),
@@ -205,6 +222,7 @@ class SourceSplitterTests(TestCase):
                         Token("DATA_ID", "usageData"),
                         Token("CREATION_DATE_TIME", "201901130300"),
                         Token("RUN_NUMBER", "49543"),
+                        None,
                     ],
                 ),
                 Tree(
@@ -217,6 +235,7 @@ class SourceSplitterTests(TestCase):
                                 Token("ACTION", "insert"),
                                 Token("LICENCE_REF", "GBSIE2017/LITE"),
                                 Token("LICENCE_STATUS", "O"),
+                                None,
                             ],
                         ),
                         Tree(
@@ -240,8 +259,15 @@ class SourceSplitterTests(TestCase):
                                         Token("CONTROL_DATE", "20191130"),
                                         Token("QUANTITY_USED", "1.000"),
                                         Token("VALUE_USED", "2.00"),
+                                        None,
                                         Token("TRADER_ID", "GB123456789012"),
+                                        None,
                                         Token("ORIGIN_COUNTRY", "GB"),
+                                        None,
+                                        None,
+                                        None,
+                                        None,
+                                        None,
                                     ],
                                 ),
                                 Tree(Token("RULE", "licence_line_trailer"), [Token("RECORD_COUNT", "3")]),
