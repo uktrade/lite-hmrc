@@ -21,7 +21,14 @@ class UsageDataEdifactParserTests(TestCase):
                 Token("RULE", "file"),
                 [
                     Tree(
-                        Token("RULE", "file_header"), [Token("TIMESTAMP", "201901130300"), Token("RUN_NUMBER", "49543")]
+                        Token("RULE", "file_header"),
+                        [
+                            Token("SOURCE_SYSTEM", "CHIEF"),
+                            Token("DESTINATION_SYSTEM", "SPIRE"),
+                            Token("DATA_ID", "usageData"),
+                            Token("CREATION_DATE_TIME", "201901130300"),
+                            Token("RUN_NUMBER", "49543"),
+                        ],
                     ),
                     Tree(
                         Token("RULE", "licence_usage_transaction"),
@@ -30,6 +37,7 @@ class UsageDataEdifactParserTests(TestCase):
                                 Token("RULE", "licence_usage_transaction_header"),
                                 [
                                     Token("TRANSACTION_REF", "LU04148/00001"),
+                                    Token("ACTION", "insert"),
                                     Token("LICENCE_REF", "GBOIE2017/12345B"),
                                     Token("LICENCE_STATUS", "O"),
                                 ],
