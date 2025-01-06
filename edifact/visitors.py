@@ -95,19 +95,11 @@ class JsonPayload(Transformer):
     def file_trailer(self, *args):
         return Discard
 
-    def licence_usage_transaction(self, licence_usage_transaction_header, *licence_lines):
-        licence_reference, licence_status_code, completion_date = licence_usage_transaction_header
-
-        action = get_licence_status(licence_status_code)
-        if not action == LicenceStatusEnum.OPEN:
+    def licence_usage_transaction(self, licence_payload, *licence_lines):
+        if not licence_payload:
             return Discard
 
-        licence_id = get_licence_id(licence_reference)
-        licence_payload = {
-            "action": self._stringify(action),
-            "completion_date": self._stringify(completion_date),
-            "id": licence_id,
-        }
+        licence_reference = licence_payload.pop("licence_reference")
         licence_payload["goods"] = []
         for licence_line in flatten(licence_lines):
             line_num = licence_line.pop("line_num")
@@ -116,10 +108,23 @@ class JsonPayload(Transformer):
                 "id": get_good_id(line_num, licence_reference),
             }
             licence_payload["goods"].append(licence_line)
+
         return licence_payload
 
     def licence_usage_transaction_header(self, action, licence_reference, licence_status_code, completion_date=""):
-        return licence_reference, licence_status_code, completion_date
+        action = get_licence_status(licence_status_code)
+        if not action == LicenceStatusEnum.OPEN:
+            return None
+
+        licence_id = get_licence_id(str(licence_reference))
+        licence_payload = {
+            "action": self._stringify(action),
+            "completion_date": self._stringify(completion_date),
+            "id": licence_id,
+            "licence_reference": licence_reference,
+        }
+
+        return licence_payload
 
     def TRANSACTION_REF(self, *args):
         return Discard
