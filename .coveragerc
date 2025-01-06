@@ -9,6 +9,7 @@ omit =
     mail/management/commands/dev_process_licence_payload.py
     mail/management/commands/dev_send_licence_data_to_icms.py
     mail/management/commands/check_mailserver_connections.py
+    edifact/management/commands/validate_usage_data_parser.py
     **/resend_edi_data_email.py
     mail/admin.py
     ./django_db_anonymiser/*
