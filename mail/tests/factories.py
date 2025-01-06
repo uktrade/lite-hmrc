@@ -1,9 +1,9 @@
-import factory
-
 from uuid import uuid4
 
+import factory
+
 from mail.enums import LicenceActionEnum, SourceEnum
-from mail.models import LicenceData, LicencePayload, Mail
+from mail.models import LicenceData, LicencePayload, Mail, UsageData
 
 
 class MailFactory(factory.django.DjangoModelFactory):
@@ -33,3 +33,12 @@ class LicencePayloadFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = LicencePayload
+
+
+class UsageDataFactory(factory.django.DjangoModelFactory):
+    hmrc_run_number = factory.Faker("random_int")
+    spire_run_number = factory.Faker("random_int")
+    mail = factory.SubFactory(MailFactory)
+
+    class Meta:
+        model = UsageData
