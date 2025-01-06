@@ -16,6 +16,8 @@ class Command(BaseCommand):
         self.stdout.write("Validating usage data parser…")
         self.stdout.write("Checking all previous data against new parser…")
 
+        count = UsageData.objects.count()
+        passed = 0
         for usage_data in UsageData.objects.all():
             edi_data = usage_data.mail.edi_data
             try:
@@ -53,6 +55,10 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"Original JSON does not equal transformed JSON for {usage_data}"))
                 continue
 
+            passed += 1
+
             self.stdout.write(self.style.SUCCESS(f"Everything was parsed fine for {usage_data}"))
 
         self.stdout.write(self.style.SUCCESS("Finished validating"))
+        self.stdout.write(self.style.SUCCESS(f"{passed} out of {count} passed"))
+        self.stdout.write(self.style.ERROR(f"{count - passed} out of {count} failed"))
