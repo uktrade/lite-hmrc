@@ -168,6 +168,11 @@ def get_message_iterator(server: MailServer) -> Iterator[Tuple[EmailMessageDto, 
             logger.debug(
                 "About to create or update mail_read_status for %s (%s)", message.message_id, message.message_number
             )
+
+            # The `mail_data` really shouldn't be changing here so the `update` part seems redundant.
+            # However, even if we read an email that we've read previously we get back some header information that
+            # does change on every read e.g. a request id and some timestamps.
+            # Given that the data is changing I chose to allow it to update each time to save the latest headers.
             read_status, created = mailbox_config.mail_read_statuses.update_or_create(
                 message_id=message.message_id,
                 message_num=message.message_number,
