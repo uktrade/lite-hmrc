@@ -42,11 +42,7 @@ class GetMessageHeaderTests(SimpleTestCase):
 
 
 class GetMessageIdTests(SimpleTestCase):
-    @override_settings(
-        SPIRE_FROM_ADDRESS="spire.from.address@example.com",  # /PS-IGNORE
-        HMRC_TO_DIT_REPLY_ADDRESS="hmrc.to.dit.reply.address@example.com",  # /PS-IGNORE
-    )
-    def test_get_message_id_not_from_valid_email(self):
+    def test_get_message_id(self):
         message = Message()
         message_id_header = Header("<123456@example.com>")  # /PS-IGNORE
         message["Message-ID"] = message_id_header

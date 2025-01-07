@@ -1,6 +1,7 @@
 import logging
 import poplib
 import smtplib
+from collections.abc import Iterator
 from contextlib import contextmanager
 
 from django.conf import settings
@@ -28,7 +29,7 @@ class MailServer:
         return self.hostname == other.hostname and self.auth == other.auth and self.pop3_port == other.pop3_port
 
     @contextmanager
-    def connect_to_pop3(self):
+    def connect_to_pop3(self) -> Iterator[poplib.POP3_SSL]:
         logger.info("Establishing a pop3 connection to %s:%s", self.hostname, self.pop3_port)
         pop3_connection = poplib.POP3_SSL(self.hostname, self.pop3_port, timeout=60)
         logger.info("Pop3 connection established")
