@@ -1,5 +1,4 @@
 import logging
-from collections.abc import Iterator
 from email.headerregistry import Address
 from email.message import Message
 from email.parser import BytesHeaderParser
