@@ -41,7 +41,7 @@ jobs:
       - setup
       - run:
           name: Run tests
-          command: pipenv run pytest --cov=. --cov-config=.coveragerc -k "not end_to_end"
+          command: pipenv run pytest --cov=. --cov-config=.coveragerc -k "not end_to_end and not integration"
       - run:
           name: Rename coverage file
           command: mkdir coverage-output && cp .coverage coverage-output/.coverage
@@ -66,7 +66,7 @@ jobs:
       - setup
       - run:
           name: Run tests on Postgres 13
-          command: pipenv run pytest -k "not end_to_end"
+          command: pipenv run pytest -k "not end_to_end and not integration"
 
   tests_e2e:
     machine:
@@ -88,7 +88,7 @@ jobs:
           name: Set Environment File
           command: cp docker.env .env
       - run:
-          name: Run tests
+          name: Run tests on Postgres 13
           command: docker compose run --build lite-hmrc-intg pipenv run pytest -k end_to_end
 
   tests_e2e_postgres13:
@@ -113,6 +113,52 @@ jobs:
       - run:
           name: Run tests
           command: docker compose -f docker-compose.yml -f docker-compose.postgres13.yml run --build lite-hmrc-intg pipenv run pytest -k end_to_end
+
+  tests_integration:
+    machine:
+      image: ubuntu-2204:current
+      docker_layer_caching: true
+    resource_class: small
+    environment:
+      PIPENV_YES: 1
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/repo/tmp
+      - run:
+          name: Git Submodule Checkout
+          command: |
+            git submodule sync
+            git submodule update --init
+      - run:
+          name: Set Environment File
+          command: cp docker.env .env
+      - run:
+          name: Run tests
+          command: docker compose run --build lite-hmrc-intg pipenv run pytest -k integration
+
+  tests_integration_postgres13:
+    machine:
+      image: ubuntu-2204:current
+      docker_layer_caching: true
+    resource_class: small
+    environment:
+      PIPENV_YES: 1
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/repo/tmp
+      - run:
+          name: Git Submodule Checkout
+          command: |
+            git submodule sync
+            git submodule update --init
+      - run:
+          name: Set Environment File
+          command: cp docker.env .env
+      - run:
+          name: Run tests
+          command: docker compose -f docker-compose.yml -f docker-compose.postgres13.yml run --build lite-hmrc-intg pipenv run pytest -k integration
 
   check_migrations:
     docker:
@@ -195,6 +241,8 @@ workflows:
       - tests_postgres13
       - tests_e2e
       - tests_e2e_postgres13
+      - tests_integration
+      - tests_integration_postgres13
       - check_migrations
       - linting
       - check_coverage:

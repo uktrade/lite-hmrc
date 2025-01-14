@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "mail",
+    "mailboxes",
     "health_check",
     "health_check.db",
     "health_check.cache",
@@ -91,11 +92,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "conf.wsgi.application"
 
-
-ENABLE_MOCK_HMRC_SERVICE = env.bool("ENABLE_MOCK_HMRC_SERVICE", default=False)
-if ENABLE_MOCK_HMRC_SERVICE:
-    INSTALLED_APPS += ["mock_hmrc.apps.MockHmrcConfig"]
-
 # Which system identifier to use in licence requests to HMRC's CHIEF system.
 # LITE (and SPIRE) uses "SPIRE". ICMS uses "ILBDOTI".
 CHIEF_SOURCE_SYSTEM = env("CHIEF_SOURCE_SYSTEM", default="SPIRE")
@@ -112,11 +108,6 @@ HMRC_TO_DIT_EMAIL_USER = env("HMRC_TO_DIT_EMAIL_USER", default="")
 HMRC_TO_DIT_EMAIL_POP3_PORT = env("HMRC_TO_DIT_EMAIL_POP3_PORT", default="")
 
 OUTGOING_EMAIL_USER = env("OUTGOING_EMAIL_USER")
-
-MOCK_HMRC_EMAIL_PASSWORD = env("MOCK_HMRC_EMAIL_PASSWORD", default="")
-MOCK_HMRC_EMAIL_HOSTNAME = env("MOCK_HMRC_EMAIL_HOSTNAME", default="")
-MOCK_HMRC_EMAIL_USER = env("MOCK_HMRC_EMAIL_USER", default="")
-MOCK_HMRC_EMAIL_POP3_PORT = env("MOCK_HMRC_EMAIL_POP3_PORT", default=None)
 
 SPIRE_STANDIN_EMAIL_PASSWORD = env("SPIRE_STANDIN_EMAIL_PASSWORD", default="")
 SPIRE_STANDIN_EMAIL_HOSTNAME = env("SPIRE_STANDIN_EMAIL_HOSTNAME", default="")
@@ -137,6 +128,35 @@ TEST_EMAIL_HOSTNAME = env("TEST_EMAIL_HOSTNAME", default="outbox-mailserver")
 
 SPIRE_ADDRESS = env("SPIRE_ADDRESS", default="test-spire-address@example.com")  # /PS-IGNORE
 HMRC_ADDRESS = env("HMRC_ADDRESS", default="test-hmrc-address@example.com")  # /PS-IGNORE
+
+AZURE_AUTH_CLIENT_ID = env.str("AZURE_AUTH_CLIENT_ID")
+AZURE_AUTH_CLIENT_SECRET = env.str("AZURE_AUTH_CLIENT_SECRET")
+AZURE_AUTH_TENANT_ID = env.str("AZURE_AUTH_TENANT_ID")
+
+MAIL_SERVERS = {
+    "spire_to_dit": {
+        "HOSTNAME": INCOMING_EMAIL_HOSTNAME,
+        "POP3_PORT": INCOMING_EMAIL_POP3_PORT,
+        "AUTHENTICATION_CLASS": "mail_servers.auth.ModernAuthentication",
+        "AUTHENTICATION_OPTIONS": {
+            "user": INCOMING_EMAIL_USER,
+            "client_id": AZURE_AUTH_CLIENT_ID,
+            "client_secret": AZURE_AUTH_CLIENT_SECRET,
+            "tenant_id": AZURE_AUTH_TENANT_ID,
+        },
+    },
+    "hmrc_to_dit": {
+        "HOSTNAME": HMRC_TO_DIT_EMAIL_HOSTNAME,
+        "POP3_PORT": HMRC_TO_DIT_EMAIL_POP3_PORT,
+        "AUTHENTICATION_CLASS": "mail_servers.auth.ModernAuthentication",
+        "AUTHENTICATION_OPTIONS": {
+            "user": HMRC_TO_DIT_EMAIL_USER,
+            "client_id": AZURE_AUTH_CLIENT_ID,
+            "client_secret": AZURE_AUTH_CLIENT_SECRET,
+            "tenant_id": AZURE_AUTH_TENANT_ID,
+        },
+    },
+}
 
 TIME_TESTS = env.bool("TIME_TESTS", default=False)
 
@@ -237,10 +257,6 @@ else:
 
 
 DEFAULT_ENCODING = "iso-8859-1"
-
-AZURE_AUTH_CLIENT_ID = env.str("AZURE_AUTH_CLIENT_ID")
-AZURE_AUTH_CLIENT_SECRET = env.str("AZURE_AUTH_CLIENT_SECRET")
-AZURE_AUTH_TENANT_ID = env.str("AZURE_AUTH_TENANT_ID")
 
 SEND_REJECTED_EMAIL = env.bool("SEND_REJECTED_EMAIL", default=True)
 

@@ -77,7 +77,9 @@ class ModernAuthentication:
         return result["access_token"]
 
     def _encode_access_string(self, username, access_token):
-        return base64.b64encode(f"user={username}\x01auth=Bearer {access_token}\x01\x01".encode()).decode()
+        return base64.b64encode(  # /PS-IGNORE
+            f"user={username}\x01auth=Bearer {access_token}\x01\x01".encode()  # /PS-IGNORE
+        ).decode()
 
     def authenticate(self, connection: poplib.POP3_SSL):
         logger.info("Authenticating using OAuth authentication: %s", self.user)

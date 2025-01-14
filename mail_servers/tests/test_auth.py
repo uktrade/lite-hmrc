@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, call, patch
 
 from django.test import SimpleTestCase
 
-from mail.auth import AuthenticationError, BasicAuthentication, ModernAuthentication
+from mail_servers.auth import AuthenticationError, BasicAuthentication, ModernAuthentication
 
 
 class BasicAuthenticationTests(SimpleTestCase):
@@ -31,8 +31,9 @@ class BasicAuthenticationTests(SimpleTestCase):
         self.assertNotEqual(auth, equal_auth)
 
 
+@patch("mail_servers.auth.msal")
 class ModernAuthenticationTests(SimpleTestCase):
-    def test_authenticates_connection_with_silent_acquisition(self):
+    def test_authenticates_connection_with_silent_acquisition(self, mock_msal):
         pop3conn = MagicMock(spec=POP3_SSL)
         mock_conn = pop3conn()
 
@@ -45,18 +46,17 @@ class ModernAuthenticationTests(SimpleTestCase):
             "access_token": "access_token",
         }
 
-        with patch("mail.auth.msal") as mock_msal:
-            mock_ConfidentialClientApplication = mock_msal.ConfidentialClientApplication()
-            mock_acquire_token_silent = mock_ConfidentialClientApplication.acquire_token_silent
-            mock_acquire_token_silent.return_value = mock_access_token
+        mock_ConfidentialClientApplication = mock_msal.ConfidentialClientApplication()
+        mock_acquire_token_silent = mock_ConfidentialClientApplication.acquire_token_silent
+        mock_acquire_token_silent.return_value = mock_access_token
 
-            auth = ModernAuthentication(
-                username,
-                client_id,
-                client_secret,
-                tenant_id,
-            )
-            auth.authenticate(mock_conn)
+        auth = ModernAuthentication(
+            username,
+            client_id,
+            client_secret,
+            tenant_id,
+        )
+        auth.authenticate(mock_conn)
 
         mock_msal.ConfidentialClientApplication.assert_called_with(
             client_id,
@@ -69,7 +69,9 @@ class ModernAuthenticationTests(SimpleTestCase):
             account=None,
         )
 
-        access_string = base64.b64encode("user=username\x01auth=Bearer access_token\x01\x01".encode()).decode()
+        access_string = base64.b64encode(  # /PS-IGNORE
+            "user=username\x01auth=Bearer access_token\x01\x01".encode()  # /PS-IGNORE
+        ).decode()
         mock_conn._shortcmd.assert_has_calls(
             [
                 call("AUTH XOAUTH2"),
@@ -77,7 +79,7 @@ class ModernAuthenticationTests(SimpleTestCase):
             ]
         )
 
-    def test_authenticates_connection_without_silent_acquisition(self):
+    def test_authenticates_connection_without_silent_acquisition(self, mock_msal):
         pop3conn = MagicMock(spec=POP3_SSL)
         mock_conn = pop3conn()
 
@@ -90,22 +92,21 @@ class ModernAuthenticationTests(SimpleTestCase):
             "access_token": "access_token",
         }
 
-        with patch("mail.auth.msal") as mock_msal:
-            mock_ConfidentialClientApplication = mock_msal.ConfidentialClientApplication()
+        mock_ConfidentialClientApplication = mock_msal.ConfidentialClientApplication()
 
-            mock_acquire_token_silent = mock_ConfidentialClientApplication.acquire_token_silent
-            mock_acquire_token_silent.return_value = None
+        mock_acquire_token_silent = mock_ConfidentialClientApplication.acquire_token_silent
+        mock_acquire_token_silent.return_value = None
 
-            mock_acquire_token_for_client = mock_ConfidentialClientApplication.acquire_token_for_client
-            mock_acquire_token_for_client.return_value = mock_access_token
+        mock_acquire_token_for_client = mock_ConfidentialClientApplication.acquire_token_for_client
+        mock_acquire_token_for_client.return_value = mock_access_token
 
-            auth = ModernAuthentication(
-                username,
-                client_id,
-                client_secret,
-                tenant_id,
-            )
-            auth.authenticate(mock_conn)
+        auth = ModernAuthentication(
+            username,
+            client_id,
+            client_secret,
+            tenant_id,
+        )
+        auth.authenticate(mock_conn)
 
         mock_msal.ConfidentialClientApplication.assert_called_with(
             client_id,
@@ -121,7 +122,9 @@ class ModernAuthenticationTests(SimpleTestCase):
             scopes=["https://outlook.office.com/.default"],
         )
 
-        access_string = base64.b64encode("user=username\x01auth=Bearer access_token\x01\x01".encode()).decode()
+        access_string = base64.b64encode(  # /PS-IGNORE
+            "user=username\x01auth=Bearer access_token\x01\x01".encode()  # /PS-IGNORE
+        ).decode()
         mock_conn._shortcmd.assert_has_calls(
             [
                 call("AUTH XOAUTH2"),
@@ -129,7 +132,7 @@ class ModernAuthenticationTests(SimpleTestCase):
             ]
         )
 
-    def test_error_acquiring_access_token(self):
+    def test_error_acquiring_access_token(self, mock_msal):
         pop3conn = MagicMock(spec=POP3_SSL)
         mock_conn = pop3conn()
 
@@ -148,60 +151,57 @@ class ModernAuthenticationTests(SimpleTestCase):
             "error_uri": "https://login.microsoftonline.com/error?code=1234567",
         }
 
-        with patch("mail.auth.msal") as mock_msal:
-            mock_ConfidentialClientApplication = mock_msal.ConfidentialClientApplication()
-            mock_acquire_token_silent = mock_ConfidentialClientApplication.acquire_token_silent
-            mock_acquire_token_silent.return_value = mock_failed_result
+        mock_ConfidentialClientApplication = mock_msal.ConfidentialClientApplication()
+        mock_acquire_token_silent = mock_ConfidentialClientApplication.acquire_token_silent
+        mock_acquire_token_silent.return_value = mock_failed_result
 
-            auth = ModernAuthentication(
-                username,
-                client_id,
-                client_secret,
-                tenant_id,
-            )
-            with self.assertRaises(AuthenticationError), self.assertLogs(logger="mail.auth", level="INFO") as cm:
-                auth.authenticate(mock_conn)
+        auth = ModernAuthentication(
+            username,
+            client_id,
+            client_secret,
+            tenant_id,
+        )
+        with self.assertRaises(AuthenticationError), self.assertLogs(logger="mail_servers.auth", level="INFO") as cm:
+            auth.authenticate(mock_conn)
 
-            self.assertIn(
-                f"INFO:mail.auth:{mock_failed_result}",
-                cm.output,
-            )
+        self.assertIn(
+            f"INFO:mail_servers.auth:{mock_failed_result}",
+            cm.output,
+        )
 
-    def test_equal(self):
+    def test_equal(self, mock_msal):
         username = "username"
         client_id = "client_id"
         client_secret = "client_secret"  # nosec
         tenant_id = "tenant_id"
 
-        with patch("mail.auth.msal"):
-            auth = ModernAuthentication(
-                username,
-                client_id,
-                client_secret,
-                tenant_id,
-            )
-            equal_auth = ModernAuthentication(
-                username,
-                client_id,
-                client_secret,
-                tenant_id,
-            )
+        auth = ModernAuthentication(
+            username,
+            client_id,
+            client_secret,
+            tenant_id,
+        )
+        equal_auth = ModernAuthentication(
+            username,
+            client_id,
+            client_secret,
+            tenant_id,
+        )
 
         self.assertEqual(auth, equal_auth)
 
-    def test_not_equal(self):
-        with patch("mail.auth.msal"):
-            auth = ModernAuthentication(
-                "username",
-                "client_id",
-                "client_secret",
-                "tenant_id",
-            )
-            equal_auth = ModernAuthentication(
-                "other_username",
-                "other_client_id",
-                "other_client_secret",
-                "other_tenant_id",
-            )
+    def test_not_equal(self, mock_msal):
+        auth = ModernAuthentication(
+            "username",
+            "client_id",
+            "client_secret",
+            "tenant_id",
+        )
+        equal_auth = ModernAuthentication(
+            "other_username",
+            "other_client_id",
+            "other_client_secret",
+            "other_tenant_id",
+        )
 
         self.assertNotEqual(auth, equal_auth)

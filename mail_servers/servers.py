@@ -1,24 +1,26 @@
 import logging
 import poplib
 import smtplib
+from collections.abc import Iterator
 from contextlib import contextmanager
 
 from django.conf import settings
 
-from mail.auth import Authenticator
+from mail_servers.auth import Authenticator
+
+logger = logging.getLogger(__name__)
 
 
-class MailServer(object):
+class MailServer:
     def __init__(
         self,
         auth: Authenticator,
-        hostname: str = settings.EMAIL_HOSTNAME,
-        pop3_port: int = settings.EMAIL_POP3_PORT,
+        hostname: str,
+        pop3_port: int,
     ):
         self.auth = auth
         self.pop3_port = pop3_port
         self.hostname = hostname
-        self.pop3_connection = None
 
     def __eq__(self, other):
         if not isinstance(other, MailServer):
@@ -26,15 +28,17 @@ class MailServer(object):
 
         return self.hostname == other.hostname and self.auth == other.auth and self.pop3_port == other.pop3_port
 
-    def connect_to_pop3(self) -> poplib.POP3_SSL:
-        logging.info("Establishing a pop3 connection to %s:%s", self.hostname, self.pop3_port)
-        self.pop3_connection = poplib.POP3_SSL(self.hostname, self.pop3_port, timeout=60)
-        self.auth.authenticate(self.pop3_connection)
-        logging.info("pop3 connection established")
-        return self.pop3_connection
-
-    def quit_pop3_connection(self):
-        self.pop3_connection.quit()
+    @contextmanager
+    def connect_to_pop3(self) -> Iterator[poplib.POP3_SSL]:
+        logger.info("Establishing a pop3 connection to %s:%s", self.hostname, self.pop3_port)
+        pop3_connection = poplib.POP3_SSL(self.hostname, self.pop3_port, timeout=60)
+        logger.info("Pop3 connection established")
+        try:
+            self.auth.authenticate(pop3_connection)
+            yield pop3_connection
+        finally:
+            logger.info("Disconnecting pop3 connection")
+            pop3_connection.quit()
 
     @property
     def user(self):

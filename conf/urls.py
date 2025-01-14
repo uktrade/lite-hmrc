@@ -14,7 +14,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
@@ -27,6 +26,3 @@ urlpatterns = [
     path("pingdom/ping.xml", HealthCheckPingdomView.as_view(), name="healthcheck-pingdom"),
     path("service-available-check/", ServiceAvailableHealthCheckView.as_view(), name="service-available-check"),
 ]
-
-if settings.ENABLE_MOCK_HMRC_SERVICE:  # pragma: no cover
-    urlpatterns += [path("mock-hmrc/", include("mock_hmrc.urls"))]
