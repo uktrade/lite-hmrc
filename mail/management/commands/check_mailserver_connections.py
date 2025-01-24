@@ -17,11 +17,8 @@ class Command(BaseCommand):
             self.stdout.write(f"Checking {mailserver_to_check_factory.__name__}")
             mailserver = mailserver_to_check_factory()
             try:
-                pop3_connection = mailserver.connect_to_pop3()
+                with mailserver.connect_to_pop3() as pop3_connection:
+                    self.stdout.write(pop3_connection.welcome.decode("ascii"))
             except poplib.error_proto as e:
                 response, *_ = e.args
                 self.stdout.write(self.style.ERROR(response))
-            else:
-                self.stdout.write(pop3_connection.welcome.decode("ascii"))
-            finally:
-                mailserver.quit_pop3_connection()

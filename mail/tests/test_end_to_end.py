@@ -10,12 +10,10 @@ from freezegun import freeze_time
 from pytest_django.asserts import assertQuerySetEqual
 from rest_framework import status
 
-from mail.auth import BasicAuthentication
 from mail.celery_tasks import manage_inbox, send_licence_details_to_hmrc
 from mail.enums import ExtractTypeEnum, ReceptionStatusEnum, SourceEnum
 from mail.libraries.helpers import read_file
 from mail.models import LicenceData, LicencePayload, Mail, UsageData
-from mail.servers import MailServer
 
 pytestmark = pytest.mark.django_db
 
@@ -41,6 +39,27 @@ def set_settings(settings, outgoing_email_user):
     settings.HMRC_ADDRESS = "hmrctodit@example.com"
 
     settings.LITE_API_URL = "https://lite.example.com"
+
+    settings.MAIL_SERVERS = {
+        "spire_to_dit": {
+            "HOSTNAME": "spire-to-dit-mailserver",
+            "POP3_PORT": 1110,
+            "AUTHENTICATION_CLASS": "mail_servers.auth.BasicAuthentication",
+            "AUTHENTICATION_OPTIONS": {
+                "user": "spire-to-dit-user",
+                "password": "password",
+            },
+        },
+        "hmrc_to_dit": {
+            "HOSTNAME": "hmrc-to-dit-mailserver",
+            "POP3_PORT": 1110,
+            "AUTHENTICATION_CLASS": "mail_servers.auth.BasicAuthentication",
+            "AUTHENTICATION_OPTIONS": {
+                "user": "hmrc-to-dit-user",
+                "password": "password",
+            },
+        },
+    }
 
 
 @pytest.fixture()
@@ -98,40 +117,6 @@ def usage_data_file_name():
 @pytest.fixture()
 def usage_data_file_body(usage_data_file_name):
     return read_file(f"mail/tests/files/end_to_end/{usage_data_file_name}", mode="rb")
-
-
-@pytest.fixture(autouse=True)
-def hmrc_to_dit_mailserver(mocker):
-    auth = BasicAuthentication(
-        user="hmrc-to-dit-user",
-        password="password",
-    )
-    hmrc_to_dit_mailserver = MailServer(
-        auth,
-        hostname="hmrc-to-dit-mailserver",
-        pop3_port=1110,
-    )
-    mocker.patch(
-        "mail.libraries.routing_controller.get_hmrc_to_dit_mailserver",
-        return_value=hmrc_to_dit_mailserver,
-    )
-
-
-@pytest.fixture(autouse=True)
-def spire_to_dit_mailserver(mocker):
-    auth = BasicAuthentication(
-        user="spire-to-dit-user",
-        password="password",
-    )
-    spire_to_dit_mailserver = MailServer(
-        auth,
-        hostname="spire-to-dit-mailserver",
-        pop3_port=1110,
-    )
-    mocker.patch(
-        "mail.libraries.routing_controller.get_spire_to_dit_mailserver",
-        return_value=spire_to_dit_mailserver,
-    )
 
 
 def normalise_line_endings(string):
