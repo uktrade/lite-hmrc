@@ -1,0 +1,95 @@
+{
+  "licence": {
+    "id": "09e21356-9e9d-418d-bd4d-9792333e8cc8",
+    "reference": "GBSIEL/2024/0001234/P",
+    "type": "siel",
+    "action": "insert",
+    "start_date": "2020-06-02",
+    "end_date": "2029-06-02",
+    "organisation": {
+      "name": "Organisation",
+      "id": "10a21d56-9e9d-333d-77c5-479bb3de7ac9",
+      "eori_number": "GB123456789000",
+      "address": {
+        "line_1": "might",
+        "line_2": "248 James Key Apt. 515",
+        "line_3": "Apt. 942",
+        "line_4": "West Ashleyton",
+        "line_5": "Farnborough",
+        "postcode": "GU40 2LX",
+        "country": {
+          "id": "GB",
+          "name": "United Kingdom"
+        }
+      }
+    },
+    "end_user": {
+      "name": "AgriTrade ",
+      "address": {
+        "line_1": "Lorem ipsum dolor sit amet, consectetur adipiscing elit° Aenean ac congue massa. Aliquam dolor sem, viverra nec porta nec, egestas at elit. Proin eget ante erat.",
+        "country": {
+          "id": "BR",
+          "name": "Brazil"
+        }
+      }
+    },
+    "goods": [
+      {
+        "id": "f95ded2a-354f-46f1-a572-c7f97d63bed1",
+        "name": "Sporting shotgun",
+        "description": "",
+        "unit": "NAR",
+        "quantity": 10
+      },
+      {
+        "id": "f95ded2a-354f-46f1-a572-c7f97d63bed2",
+        "name": "Stock",
+        "description": "",
+        "unit": "MGM",
+        "quantity": 11
+      },
+      {
+        "id": "f95ded2a-354f-46f1-a572-c7f97d63bed3",
+        "name": "Metal",
+        "description": "",
+        "unit": "TON",
+        "quantity": 1
+      },
+      {
+        "id": "f95ded2a-354f-46f1-a572-c7f97d63bed4",
+        "name": "Chemical",
+        "description": "",
+        "unit": "MCG",
+        "quantity": 20
+      },
+      {
+        "id": "f95ded2a-354f-46f1-a572-c7f97d63bed5",
+        "name": "Chemical",
+        "description": "",
+        "unit": "MCL",
+        "quantity": 20
+      },
+      {
+        "id": "f95ded2a-354f-46f1-a572-c7f97d63bed6",
+        "name": "Chemical",
+        "description": "",
+        "unit": "MLT",
+        "quantity": 20
+      },
+      {
+        "id": "f95ded2a-354f-46f1-a572-c7f97d63bed7",
+        "name": "Old Chemical",
+        "description": "",
+        "unit": "MIM",
+        "quantity": 20
+      },
+      {
+        "id": "b642b709-36c7-4010-8e43-e7b8813fbde9",
+        "name": "A bottle of water",
+        "description": "",
+        "unit": "LTR",
+        "quantity": 1
+      }
+    ]
+  }
+}

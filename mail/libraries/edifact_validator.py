@@ -180,6 +180,7 @@ def validate_foreign_trader(record):
         errors.append({record_type: f"Foreign trader name ({name}) cannot exceed {FOREIGN_TRADER_NAME_MAX_LEN} chars"})
 
     for index, line in enumerate(tokens[3:8], start=1):
+
         if len(line) > FOREIGN_TRADER_ADDR_LINE_MAX_LEN:
             errors.append(
                 {record_type: f"Address line_{index} ({line}) trader exceeds {FOREIGN_TRADER_ADDR_LINE_MAX_LEN} chars"}
