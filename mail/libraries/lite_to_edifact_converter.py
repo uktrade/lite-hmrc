@@ -5,6 +5,7 @@ import textwrap
 from typing import TYPE_CHECKING, Dict, Iterable, Optional
 
 from django.utils import timezone
+from unidecode import unidecode
 
 from mail.enums import (
     LITE_HMRC_LICENCE_TYPE_MAPPING,
@@ -247,7 +248,7 @@ def sanitize_foreign_trader_address(trader):
     addr_line = addr_line.replace("\n", " ").replace("\r", " ")
     # replace special characters
     addr_line = addr_line.replace("#", "")
-    addr_lines = textwrap.wrap(addr_line, width=FOREIGN_TRADER_ADDR_LINE_MAX_LEN, break_long_words=False)
+    addr_lines = textwrap.wrap(unidecode(addr_line), width=FOREIGN_TRADER_ADDR_LINE_MAX_LEN, break_long_words=False)
     if len(addr_lines) > FOREIGN_TRADER_NUM_ADDR_LINES:
         addr_lines = addr_lines[:FOREIGN_TRADER_NUM_ADDR_LINES]
 
@@ -270,7 +271,7 @@ def sanitize_trader_address(trader):
     addr_line = addr_line.replace("\n", " ").replace("\r", " ")
     # replace special characters
     addr_line = addr_line.replace("#", "")
-    addr_lines = textwrap.wrap(addr_line, width=FOREIGN_TRADER_ADDR_LINE_MAX_LEN, break_long_words=False)
+    addr_lines = textwrap.wrap(unidecode(addr_line), width=FOREIGN_TRADER_ADDR_LINE_MAX_LEN, break_long_words=False)
     if len(addr_lines) > FOREIGN_TRADER_NUM_ADDR_LINES:
         addr_lines = addr_lines[:FOREIGN_TRADER_NUM_ADDR_LINES]
         logging.info(

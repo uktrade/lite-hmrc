@@ -103,6 +103,10 @@ class LicenceToEdifactValidationTests(unittest.TestCase):
                 "5\\foreignTrader\\Advanced Firearms Limited\\50 Industrial Estate Very long\\address line_2 exceeding 35 chars\\Very long address line_3 exceeding\\35 chars Queensland NSW 42551\\\\123456789\\GBR",
                 2,
             ),
+            (
+                "5\\foreignTrader\\AgriTrade \\Lorem ipsum dolor sit amet,\\consectetur adipiscing elit° Aenean\\ac congue massa. Aliquam dolor sem,\\viverra nec porta nec, egestas at\\elit. Proin eget ante erat.\\\\BR",
+                0,
+            ),
         ]
     )
     def test_foreign_trader_validation(self, line, num_errors):
