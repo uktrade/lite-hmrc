@@ -87,20 +87,18 @@ class ManageInboxTests(LiteHMRCTestClient):
             manage_inbox()
         assert str(excinfo.value) == "Test Error"
 
-    @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
+    @mock.patch("mail.libraries.routing_controller.get_mail_server")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_sending_of_new_message_from_spire_success(
         self,
-        email_dtos,
+        mock_get_unread_email_message_dtos,
         mock_cache,
         mock_smtp_send,
-        mock_get_hmrc_to_dit_mailserver,
-        mock_get_spire_to_dit_mailserver,
+        mock_get_mail_server,
     ):
-        email_dtos.return_value = []
+        mock_get_unread_email_message_dtos.return_value = []
 
         # When a new message is processed from inbox it will be created with 'pending' status
         pending_mail = Mail.objects.create(
@@ -133,13 +131,13 @@ class ManageInboxTests(LiteHMRCTestClient):
                 True,
                 [
                     {
-                        "sender": "lite-hmrc@gov.uk",
-                        "recipients": "spire@example.com",
+                        "sender": "lite-hmrc@gov.uk",  # /PS-IGNORE
+                        "recipients": "spire@example.com",  # /PS-IGNORE
                         "subject": "ILBDOTI_live_CHIEF_licenceReply_78120_202403060300",
                     },
                     {
-                        "sender": "lite-hmrc@gov.uk",
-                        "recipients": "ecju@gov.uk",
+                        "sender": "lite-hmrc@gov.uk",  # /PS-IGNORE
+                        "recipients": "ecju@gov.uk",  # /PS-IGNORE
                         "subject": "Licence rejected by HMRC",
                     },
                 ],
@@ -148,8 +146,8 @@ class ManageInboxTests(LiteHMRCTestClient):
                 False,
                 [
                     {
-                        "sender": "lite-hmrc@gov.uk",
-                        "recipients": "spire@example.com",
+                        "sender": "lite-hmrc@gov.uk",  # /PS-IGNORE
+                        "recipients": "spire@example.com",  # /PS-IGNORE
                         "subject": "ILBDOTI_live_CHIEF_licenceReply_78120_202403060300",
                     }
                 ],
@@ -157,32 +155,28 @@ class ManageInboxTests(LiteHMRCTestClient):
         ]
     )
     @override_settings(
-        EMAIL_USER="lite-hmrc@gov.uk",
-        NOTIFY_USERS=["ecju@gov.uk"],
-        SPIRE_ADDRESS="spire@example.com",
+        EMAIL_USER="lite-hmrc@gov.uk",  # /PS-IGNORE
+        NOTIFY_USERS=["ecju@gov.uk"],  # /PS-IGNORE
+        SPIRE_ADDRESS="spire@example.com",  # /PS-IGNORE
     )
-    @mock.patch("mail.libraries.routing_controller.get_spire_to_dit_mailserver")
-    @mock.patch("mail.libraries.routing_controller.get_hmrc_to_dit_mailserver")
+    @mock.patch("mail.libraries.routing_controller.get_mail_server")
     @mock.patch("mail.celery_tasks.smtp_send")
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.libraries.routing_controller.get_email_message_dtos")
+    @mock.patch("mail.libraries.routing_controller.get_unread_email_message_dtos")
     def test_processing_of_licence_reply_with_rejected_licences(
         self,
         send_rejected_email_flag,
         emails_data,
-        email_dtos,
+        mock_get_unread_email_message_dtos,
         mock_cache,
         mock_smtp_send,
-        mock_get_hmrc_to_dit_mailserver,
-        mock_get_spire_to_dit_mailserver,
+        mock_get_mail_server,
     ):
         """
         Test processing of licence reply from HMRC with rejected licences.
         If SEND_REJECTED_EMAIL=True then we send email notifications to users if any licences are rejected.
         """
-        obj = MagicMock()
-        mock_get_hmrc_to_dit_mailserver.return_value = obj
-        mock_get_spire_to_dit_mailserver.return_value = obj
+        mock_get_mail_server.return_value = MagicMock()
 
         run_number = 78120
         mail = MailFactory(
@@ -206,15 +200,15 @@ class ManageInboxTests(LiteHMRCTestClient):
 
         email_message_dto = EmailMessageDto(
             run_number=f"{run_number}",
-            sender="test@example.com",
-            receiver="receiver@example.com",
+            sender="test@example.com",  # /PS-IGNORE
+            receiver="receiver@example.com",  # /PS-IGNORE
             date="Mon, 17 May 2021 14:20:18 +0100",
             body="licence rejected",
             subject=licence_reply_filename,
             attachment=[licence_reply_filename, file_lines.encode("utf-8")],
             raw_data="qwerty",
         )
-        email_dtos.return_value = [
+        mock_get_unread_email_message_dtos.return_value = [
             (email_message_dto, lambda x: x),
         ]
 
@@ -240,12 +234,12 @@ class SendEmailTestTests(TestCase):
         self.caplog = caplog
 
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.servers.get_smtp_connection")
+    @mock.patch("mail_servers.servers.get_smtp_connection")
     def test_sends_email(self, mock_get_smtp_connection, mock_cache):
         mock_conn = mock_get_smtp_connection().__enter__()
         message = {
-            "From": "from@example.com",
-            "To": "to@example.com",
+            "From": "from@example.com",  # /PS-IGNORE
+            "To": "to@example.com",  # /PS-IGNORE
         }
         send_email_task.apply(args=[message])
         mock_conn.send_message.assert_called_with(message)
@@ -258,12 +252,12 @@ class SendEmailTestTests(TestCase):
         ]
     )
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.servers.get_smtp_connection")
+    @mock.patch("mail_servers.servers.get_smtp_connection")
     def test_sends_email_failed_then_succeeds(self, exception_class, mock_get_smtp_connection, mock_cache):
         mock_conn = mock_get_smtp_connection().__enter__()
         message = {
-            "From": "from@example.com",
-            "To": "to@example.com",
+            "From": "from@example.com",  # /PS-IGNORE
+            "To": "to@example.com",  # /PS-IGNORE
         }
         mock_conn.send_message.side_effect = [exception_class(), None]
         send_email_task.apply(args=[message])
@@ -278,12 +272,12 @@ class SendEmailTestTests(TestCase):
         ]
     )
     @mock.patch("mail.celery_tasks.cache")
-    @mock.patch("mail.servers.get_smtp_connection")
+    @mock.patch("mail_servers.servers.get_smtp_connection")
     def test_sends_email_max_retry_failures(self, exception_class, mock_get_smtp_connection, mock_cache):
         mock_conn = mock_get_smtp_connection().__enter__()
         message = {
-            "From": "from@example.com",
-            "To": "to@example.com",
+            "From": "from@example.com",  # /PS-IGNORE
+            "To": "to@example.com",  # /PS-IGNORE
         }
         mock_conn.send_message.side_effect = exception_class()
         send_email_task.apply(args=[message])
@@ -294,7 +288,7 @@ class SendEmailTestTests(TestCase):
         )
         mock_cache.lock.assert_called_with("global_send_email_lock", timeout=600)
 
-    @mock.patch("mail.servers.get_smtp_connection")
+    @mock.patch("mail_servers.servers.get_smtp_connection")
     def test_locking(self, mock_get_smtp_connection):
         results = []
 
@@ -318,14 +312,14 @@ class SendEmailTestTests(TestCase):
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             message_1 = {
-                "From": "from1@example.com",
-                "To": "to1@example.com",
+                "From": "from1@example.com",  # /PS-IGNORE
+                "To": "to1@example.com",  # /PS-IGNORE
             }
             future_1 = executor.submit(send_email_task.apply, args=[message_1])
 
             message_2 = {
-                "From": "from2@example.com",
-                "To": "to2@example.com",
+                "From": "from2@example.com",  # /PS-IGNORE
+                "To": "to2@example.com",  # /PS-IGNORE
             }
             future_2 = executor.submit(send_email_task.apply, args=[message_2])
 

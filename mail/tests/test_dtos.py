@@ -6,9 +6,9 @@ from parameterized import parameterized
 
 from mail.libraries.email_message_dto import *
 from mail.libraries.helpers import read_file, sort_dtos_by_date, to_mail_message_dto
-from mail.libraries.routing_controller import get_email_message_dtos
-from mail.servers import MailServer
+from mail.libraries.routing_controller import get_unread_email_message_dtos
 from mail.tests.libraries.client import LiteHMRCTestClient
+from mail_servers.servers import MailServer
 
 
 class TestDtos(LiteHMRCTestClient):
@@ -87,18 +87,14 @@ class TestKnownMessageToDTO(SimpleTestCase):
 
 
 class TestGetEmailMessagesDTOs(SimpleTestCase):
-    @patch("mail.libraries.routing_controller.get_message_iterator")
-    def test_get_email_message_dtos(self, mock_get_message_iterator):
+    @patch("mail.libraries.routing_controller.get_unread_messages_iterator")
+    def test_get_unread_email_message_dtos(self, mock_get_unread_messages_iterator):
         mock_mail_server = Mock(spec=MailServer)
-        mock_emails = [Mock(), Mock()]
-        mock_get_message_iterator.return_value = mock_emails
 
-        emails = get_email_message_dtos(mock_mail_server)
+        mock_emails = [Mock(), Mock()]
+        mock_get_unread_messages_iterator.return_value = mock_emails
+
+        emails = get_unread_email_message_dtos(mock_mail_server)
 
         self.assertEqual(emails, mock_emails)
-        mock_mail_server.connect_to_pop3.assert_called_once_with()
-        mock_get_message_iterator.assert_called_once_with(
-            mock_mail_server.connect_to_pop3(),
-            mock_mail_server.user,
-        )
-        mock_mail_server.quit_pop3_connection.assert_called_once_with()
+        mock_get_unread_messages_iterator.assert_called_once_with(mock_mail_server)
