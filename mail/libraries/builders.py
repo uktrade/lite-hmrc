@@ -254,7 +254,6 @@ def build_email_message(email_message_dto: EmailMessageDto) -> MIMEMultipart:
             email_message_dto.attachment[1],
             file,
         )
-
     multipart_msg = MIMEMultipart()
     multipart_msg["From"] = settings.EMAIL_USER  # the SMTP server only allows sending as itself
     multipart_msg["To"] = email_message_dto.receiver

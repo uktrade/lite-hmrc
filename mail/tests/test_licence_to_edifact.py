@@ -235,6 +235,14 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
                 "MIDDLESEX",
                 "3\\trader\\\\GB123456789000\\20200602\\20220602\\Advanced Firearms Limited\\this is short address BIGMAM MANOR\\NEW TESCO LANE HARROW MIDDLESEX\\NEW TESCO LANE\\HARROW\\MIDDLESEX\\GU40 2LX",
             ),
+            (
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit° Aenean ac congue massa. Aliquam dolor sem, viverra nec porta nec, egestas at elit. Proin eget ante erat.",
+                "",
+                "",
+                "",
+                "",
+                "3\\trader\\\\GB123456789000\\20200602\\20220602\\Advanced Firearms Limited\\Lorem ipsum dolor sit amet,\\consectetur adipiscing elitdeg\\Aenean ac congue massa. Aliquam\\dolor sem, viverra nec porta nec,\\egestas at elit. Proin eget ante\\GU40 2LX",
+            ),
         ]
     )
     def test_trader_address_sanitize(

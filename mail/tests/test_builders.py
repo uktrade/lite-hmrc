@@ -1,13 +1,16 @@
 import datetime
+import json
 import uuid
 from pathlib import Path
 
 from django.conf import settings
 from django.test import override_settings, testcases
+from freezegun import freeze_time
 
-from mail.enums import ChiefSystemEnum, LicenceActionEnum, LicenceTypeEnum
+from mail.enums import ChiefSystemEnum, LicenceActionEnum, LicenceTypeEnum, SourceEnum
 from mail.libraries import builders
 from mail.libraries.email_message_dto import EmailMessageDto
+from mail.libraries.helpers import read_file
 from mail.models import LicencePayload
 
 
@@ -358,3 +361,62 @@ class TestBuildICMSLicenceDataSanction(testcases.TestCase):
         self.maxDiff = None
         expected_content = self.test_file.read_text()
         self.assertEqual(expected_content, file_content)
+
+
+class TestBuildUnidecodeMessage(testcases.TestCase):
+    maxDiff = None
+
+    def setUp(self) -> None:
+        licence_data = json.loads(
+            read_file("mail/tests/files/licence_payload_file_special_characters", encoding="utf-8")
+        )
+
+        self.single_siel_licence_payload = LicencePayload.objects.create(
+            lite_id=licence_data["licence"]["id"],
+            reference=licence_data["licence"]["reference"],
+            data=licence_data["licence"],
+            action=LicenceActionEnum.INSERT,
+        )
+
+    @freeze_time("2025-02-05 12:00:00")
+    def test_build_email_message(
+        self,
+    ):
+        licences = LicencePayload.objects.filter(reference="GBSIEL/2024/0001234/P")
+        mail = builders.build_licence_data_mail(licences, SourceEnum.LITE)
+        mail_dto = builders.build_request_mail_message_dto(mail)
+        mime_multipart = builders.build_email_message(mail_dto)
+        mime_multipart.set_boundary("===============8537751789001939036==")
+        self.assertEqual(
+            mime_multipart.as_string(),
+            'Content-Type: multipart/mixed; boundary="===============8537751789001939036=="\n'
+            + "MIME-Version: 1.0\n"
+            + f"From: {settings.EMAIL_USER}\n"
+            + f"To: {settings.OUTGOING_EMAIL_USER}\n"
+            + "Subject: CHIEF_LIVE_SPIRE_licenceData_1_202502051200\n"
+            + "name: CHIEF_LIVE_SPIRE_licenceData_1_202502051200\n\n"
+            + "--===============8537751789001939036==\n"
+            + 'Content-Type: text/plain; charset="iso-8859-1"\n'
+            + "MIME-Version: 1.0\n"
+            + "Content-Transfer-Encoding: quoted-printable\n\n\n\n\n"
+            + "--===============8537751789001939036==\n"
+            + "Content-Type: application/octet-stream\n"
+            + "MIME-Version: 1.0\n"
+            + "Content-Transfer-Encoding: 7bit\n"
+            + 'Content-Disposition: attachment; filename="CHIEF_LIVE_SPIRE_licenceData_1_202502051200"\n'
+            + "name: CHIEF_LIVE_SPIRE_licenceData_1_202502051200\n\n"
+            + "1\\fileHeader\\SPIRE\\CHIEF\\licenceData\\202502051200\\1\\N\n2\\licence\\20240001234P\\insert\\GBSIEL/2024/0001234/P\\SIE\\E\\20200602\\20290602\n"
+            + "3\\trader\\\\GB123456789000\\20200602\\20290602\\Organisation\\might 248 James Key Apt. 515 Apt.\\942 West Ashleyton Farnborough\\Apt. 942\\West Ashleyton\\Farnborough\\GU40 2LX\n4\\country\\BR\\\\D\n5\\foreignTrader\\AgriTrade \\Lorem ipsum dolor sit amet,\\consectetur adipiscing elitdeg\\Aenean ac congue massa. Aliquam\\dolor sem, viverra nec porta nec,\\egestas at elit. Proin eget ante\\\\BR\n"
+            + "6\\restrictions\\Provisos may apply please see licence\n"
+            + "7\\line\\1\\\\\\\\\\Sporting shotgun\\Q\\\\030\\\\10\\\\\\\\\\\\\n"
+            + "8\\line\\2\\\\\\\\\\Stock\\Q\\\\111\\\\11\\\\\\\\\\\\\n"
+            + "9\\line\\3\\\\\\\\\\Metal\\Q\\\\025\\\\1\\\\\\\\\\\\\n"
+            + "10\\line\\4\\\\\\\\\\Chemical\\Q\\\\116\\\\20\\\\\\\\\\\\\n"
+            + "11\\line\\5\\\\\\\\\\Chemical\\Q\\\\110\\\\20\\\\\\\\\\\\\n"
+            + "12\\line\\6\\\\\\\\\\Chemical\\Q\\\\074\\\\20\\\\\\\\\\\\\n"
+            + "13\\line\\7\\\\\\\\\\Old Chemical\\Q\\\\111\\\\20\\\\\\\\\\\\\n"
+            + "14\\line\\8\\\\\\\\\\A bottle of water\\Q\\\\076\\\\1\\\\\\\\\\\\\n"
+            + "15\\end\\licence\\14\n"
+            + "16\\fileTrailer\\1\n\n"
+            + "--===============8537751789001939036==--\n",
+        )
