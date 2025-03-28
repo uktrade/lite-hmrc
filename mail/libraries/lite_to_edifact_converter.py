@@ -35,6 +35,20 @@ class EdifactValidationError(Exception):
     pass
 
 
+class PreviousPayloadError(Exception):
+    pass
+
+
+def get_previous_licence_payload(old_reference):
+    previous_payloads = LicencePayload.objects.filter(reference=old_reference)
+
+    latest_payload = previous_payloads.latest("received_at")
+    if latest_payload.action != LicenceActionEnum.INSERT:
+        raise PreviousPayloadError(f"Invalid action found for {latest_payload}.")
+
+    return latest_payload.data
+
+
 def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._Record]:
     """Yield line tuples for a single licence, to use in a CHIEF message.
 
@@ -45,13 +59,13 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
     payload = licence.data
     licence_type = LITE_HMRC_LICENCE_TYPE_MAPPING.get(payload.get("type"))
 
-    logging.debug("Generating lines for %s with action %s", licence, licence.action)
+    logger.debug("Generating lines for %s with action %s", licence, licence.action)
 
     if licence.action == LicenceActionEnum.UPDATE:
         # An "update" is represented by a cancel for the old licence ref,
         # followed by an "insert" for the new ref.
         old_reference = licence.old_reference
-        old_payload = LicencePayload.objects.get(reference=old_reference).data
+        old_payload = get_previous_licence_payload(old_reference)
         yield chieftypes.Licence(
             transaction_ref=get_transaction_reference(old_reference),
             action="cancel",
