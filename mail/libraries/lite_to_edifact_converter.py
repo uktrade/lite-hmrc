@@ -28,6 +28,9 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet  # noqa
 
 
+logger = logging.getLogger(__name__)
+
+
 class EdifactValidationError(Exception):
     pass
 
@@ -131,10 +134,10 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
 
         yield chieftypes.Restrictions(text="Provisos may apply please see licence")
 
-        logging.debug("Payload type is %s with %s", payload.get("type"), payload.get("goods"))
+        logger.debug("Payload type is %s with %s", payload.get("type"), payload.get("goods"))
         if payload.get("goods") and payload.get("type") in LicenceTypeEnum.STANDARD_LICENCES:
             for g, commodity in enumerate(payload.get("goods"), start=1):
-                logging.debug(
+                logger.debug(
                     "Creating GoodIdMapping with lite_id=%s reference=%s line_number=%s",
                     commodity["id"],
                     licence.reference,
@@ -197,7 +200,7 @@ def licences_to_edifact(
     )
     lines.append(file_header)
 
-    logging.info("File header: %r", file_header)
+    logger.info("File header: %r", file_header)
 
     if source == ChiefSystemEnum.ICMS:
         get_licence_lines = generate_lines_for_icms_licence
@@ -216,10 +219,10 @@ def licences_to_edifact(
     # Convert line tuples to the final string with line numbers, etc.
     edifact_file = chiefprotocol.format_lines(lines)
 
-    logging.debug("Generated file content: %r", edifact_file)
+    logger.debug("Generated file content: %r", edifact_file)
     errors = validate_edifact_file(edifact_file)
     if errors:
-        logging.error("File content not as per specification, %r", errors)
+        logger.error("File content not as per specification, %r", errors)
         raise EdifactValidationError(repr(errors))
 
     return edifact_file
@@ -274,7 +277,7 @@ def sanitize_trader_address(trader):
     addr_lines = textwrap.wrap(unidecode(addr_line), width=FOREIGN_TRADER_ADDR_LINE_MAX_LEN, break_long_words=False)
     if len(addr_lines) > FOREIGN_TRADER_NUM_ADDR_LINES:
         addr_lines = addr_lines[:FOREIGN_TRADER_NUM_ADDR_LINES]
-        logging.info(
+        logger.info(
             "Truncating trader address as we exceeded %d, original_address: %s, truncated_address: %s",
             FOREIGN_TRADER_ADDR_LINE_MAX_LEN,
             addr_line,
