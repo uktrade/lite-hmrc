@@ -11,7 +11,7 @@ commands:
             git submodule update --init
       - run:
           name: Set Environment File
-          command: cp local.env .env
+          command: cp ci.env .env
       # Download and cache dependencies
       # ensure this step occurs *before* installing dependencies
       - restore_cache:

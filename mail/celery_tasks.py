@@ -204,14 +204,14 @@ def finalise_sending_lite_licence_details(mail_id, message_dto, licence_payload_
 
 class SendLicenceDetailsBaseTask(Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        message = """
-        Maximum attempts for send_licence_details_to_hmrc task exceeded - the task has failed and needs manual inspection.
-
-        Args: %s
-        """ % (
+        logger.error(
+            """Maximum attempts for send_licence_details_to_hmrc task exceeded - the task has failed and needs manual inspection.
+Args: %s
+Exception:
+%r""",
             args,
+            exc,
         )
-        logger.error(message)
 
 
 @shared_task(

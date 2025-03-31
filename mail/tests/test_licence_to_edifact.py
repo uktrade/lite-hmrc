@@ -8,6 +8,7 @@ from mail.enums import LicenceActionEnum
 from mail.libraries.chieftypes import Country
 from mail.libraries.lite_to_edifact_converter import (
     EdifactValidationError,
+    PreviousPayloadError,
     generate_lines_for_licence,
     get_transaction_reference,
     licences_to_edifact,
@@ -129,6 +130,92 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
         )
 
         self.assertEqual(result, expected)
+
+    def test_update_edifact_file_with_replaced_payload(self):
+        lp = LicencePayload.objects.get()
+        lp.is_processed = True
+        lp.action = LicenceActionEnum.REPLACE
+        lp.save()
+
+        LicencePayload.objects.create(
+            is_processed=True,
+            lite_id=lp.lite_id,
+            reference=lp.reference,
+            data=lp.data,
+            action=LicenceActionEnum.INSERT,
+        )
+
+        payload = self.licence_payload_json.copy()
+        payload["licence"]["goods"][0]["quantity"] = 15.0
+        payload["licence"]["end_date"] = "2022-07-03"
+        payload["licence"]["reference"] = "GBSIEL/2020/0000001/P/A"
+        LicencePayload.objects.create(
+            reference="GBSIEL/2020/0000001/P/A",
+            data=payload["licence"],
+            action=LicenceActionEnum.UPDATE,
+            lite_id="00000000-0000-0000-0000-9792333e8cc8",
+            old_lite_id=lp.lite_id,
+            old_reference=lp.reference,
+        )
+        licences = LicencePayload.objects.filter(is_processed=False)
+        result = licences_to_edifact(licences, 1234, "FOO")
+
+        trader = licences[0].data["organisation"]
+        now = timezone.now()
+        expected = (
+            "1\\fileHeader\\FOO\\CHIEF\\licenceData\\"
+            + "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
+            + "\\1234\\N"
+            + "\n2\\licence\\20200000001P\\cancel\\GBSIEL/2020/0000001/P\\SIE\\E\\20200602\\20220602"
+            + "\n3\\end\\licence\\2"
+            + "\n4\\licence\\20200000001PA\\insert\\GBSIEL/2020/0000001/P/A\\SIE\\E\\20200602\\20220703"
+            + f"\n5\\trader\\\\{trader['eori_number']}\\20200602\\20220703\\Organisation\\might 248 James Key Apt. 515 Apt.\\942 West Ashleyton Farnborough\\Apt. 942\\West Ashleyton\\Farnborough\\GU40 2LX"
+            + "\n6\\country\\GB\\\\D"
+            + "\n7\\foreignTrader\\End User\\42 Road, London, Buckinghamshire\\\\\\\\\\\\GB"
+            + "\n8\\restrictions\\Provisos may apply please see licence"
+            + "\n9\\line\\1\\\\\\\\\\Sporting shotgun\\Q\\\\030\\\\15\\\\\\\\\\\\"
+            + "\n10\\line\\2\\\\\\\\\\Stock\\Q\\\\111\\\\11.0\\\\\\\\\\\\"
+            + "\n11\\line\\3\\\\\\\\\\Metal\\Q\\\\025\\\\1.0\\\\\\\\\\\\"
+            + "\n12\\line\\4\\\\\\\\\\Chemical\\Q\\\\116\\\\20.0\\\\\\\\\\\\"
+            + "\n13\\line\\5\\\\\\\\\\Chemical\\Q\\\\110\\\\20.0\\\\\\\\\\\\"
+            + "\n14\\line\\6\\\\\\\\\\Chemical\\Q\\\\074\\\\20.0\\\\\\\\\\\\"
+            + "\n15\\line\\7\\\\\\\\\\Old Chemical\\Q\\\\111\\\\20.0\\\\\\\\\\\\"
+            + "\n16\\line\\8\\\\\\\\\\A bottle of water\\Q\\\\076\\\\1.0\\\\\\\\\\\\"
+            + "\n17\\end\\licence\\14"
+            + "\n18\\fileTrailer\\2\n"
+        )
+        self.assertEqual(result, expected)
+
+    def test_update_edifact_file_with_replaced_payload_last_action_should_be_insert(self):
+        lp = LicencePayload.objects.get()
+        lp.is_processed = True
+        lp.action = LicenceActionEnum.INSERT
+        lp.save()
+
+        LicencePayload.objects.create(
+            is_processed=True,
+            lite_id=lp.lite_id,
+            reference=lp.reference,
+            data=lp.data,
+            action=LicenceActionEnum.REPLACE,
+        )
+
+        payload = self.licence_payload_json.copy()
+        payload["licence"]["goods"][0]["quantity"] = 15.0
+        payload["licence"]["end_date"] = "2022-07-03"
+        payload["licence"]["reference"] = "GBSIEL/2020/0000001/P/A"
+        LicencePayload.objects.create(
+            reference="GBSIEL/2020/0000001/P/A",
+            data=payload["licence"],
+            action=LicenceActionEnum.UPDATE,
+            lite_id="00000000-0000-0000-0000-9792333e8cc8",
+            old_lite_id=lp.lite_id,
+            old_reference=lp.reference,
+        )
+        licences = LicencePayload.objects.filter(is_processed=False)
+
+        with self.assertRaises(PreviousPayloadError):
+            _ = licences_to_edifact(licences, 1234, "FOO")
 
     def test_cancel(self):
         self.single_siel_licence_payload.action = LicenceActionEnum.CANCEL
