@@ -208,12 +208,6 @@ class LiteLicenceDataSerializer(serializers.Serializer):
                 self.fields["countries"].required = True
                 self.fields["countries"].min_length = 1
 
-            if type_ in enums.LicenceTypeEnum.STANDARD_LICENCES:
-                self.fields["end_user"].required = True
-                self.fields["end_user"].allow_null = False
-                self.fields["goods"].required = True
-                self.fields["goods"].allow_null = False
-
         return super().is_valid(*args, **kwargs)
 
     def validate_old_id(self, value):
@@ -223,6 +217,11 @@ class LiteLicenceDataSerializer(serializers.Serializer):
         ):
             raise serializers.ValidationError("This licence does not exist in HMRC integration records")
         return value
+
+
+class LiteStandardLicenceDataSerializer(LiteLicenceDataSerializer):
+    end_user = ForeignTraderSerializer(required=True, allow_null=False)
+    goods = GoodSerializer(many=True, required=True, allow_null=False)
 
 
 class LicenceDataStatusSerializer(serializers.ModelSerializer):

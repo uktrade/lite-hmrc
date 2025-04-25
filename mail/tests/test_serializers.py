@@ -6,7 +6,7 @@ from rest_framework.exceptions import ErrorDetail
 
 from mail import icms_serializers
 from mail.enums import ChiefSystemEnum, LicenceTypeEnum, UnitMapping
-from mail.serializers import LiteLicenceDataSerializer
+from mail.serializers import LiteLicenceDataSerializer, LiteStandardLicenceDataSerializer
 
 
 class LiteLicenceDataSerializerTestCase(TestCase):
@@ -92,7 +92,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
                     "start_date": "1999-12-31",
                     "type": type_,
                 }
-                serializer = LiteLicenceDataSerializer(data=data)
+                serializer = LiteStandardLicenceDataSerializer(data=data)
 
                 self.assertFalse(serializer.is_valid())
 
@@ -498,7 +498,7 @@ def get_valid_fa_sil_payload():
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
-                "postcode": "S227ZZ",
+                "postcode": "S227ZZ",  # /PS-IGNORE
             },
         },
         "country_code": "US",
@@ -531,7 +531,7 @@ def get_valid_sanctions_payload():
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
-                "postcode": "S227ZZ",
+                "postcode": "S227ZZ",  # /PS-IGNORE
             },
         },
         "country_code": "RU",
