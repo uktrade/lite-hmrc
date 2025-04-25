@@ -1,15 +1,13 @@
 import logging
 from typing import TYPE_CHECKING, Type
 
-from django.conf import settings
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
 
 from conf.authentication import HawkOnlyAuthentication
-from mail import icms_serializers
 from mail.celery_tasks import send_licence_details_to_hmrc
-from mail.enums import ChiefSystemEnum, LicenceActionEnum, LicenceTypeEnum, ReceptionStatusEnum
+from mail.enums import LicenceActionEnum, ReceptionStatusEnum
 from mail.models import LicenceData, LicenceIdMapping, LicencePayload, Mail
 from mail.serializers import LiteLicenceDataSerializer, MailSerializer
 
@@ -76,16 +74,6 @@ class LicenceDataIngestView(APIView):
         )
 
     def get_serializer_cls(self, app_type: str) -> Type["Serializer"]:
-        if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.ICMS:
-            serializers = {
-                LicenceTypeEnum.IMPORT_OIL: icms_serializers.FirearmOilLicenceDataSerializer,
-                LicenceTypeEnum.IMPORT_DFL: icms_serializers.FirearmDflLicenceDataSerializer,
-                LicenceTypeEnum.IMPORT_SIL: icms_serializers.FirearmSilLicenceDataSerializer,
-                LicenceTypeEnum.IMPORT_SAN: icms_serializers.SanctionLicenceDataSerializer,
-            }
-
-            return serializers[app_type]
-
         return LiteLicenceDataSerializer
 
 
