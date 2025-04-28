@@ -199,7 +199,6 @@ class LiteGenericLicenceDataSerializer(serializers.Serializer):
             pass
         else:
             action = self.initial_data.get("action")
-            type_ = self.initial_data.get("type")
 
             if action == enums.LicenceActionEnum.UPDATE:
                 self.fields["old_id"].required = True
