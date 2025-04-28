@@ -184,7 +184,7 @@ class _LiteGenericLicenceDataSerializer(serializers.Serializer):
 
     old_id = serializers.CharField(required=False)
 
-    # These fields depend on the submitted licence `type`.
+    # These fields are required depending on the submitted licence `type`.
     countries = CountrySerializer(many=True, required=False)
     end_user = ForeignTraderSerializer(required=False, allow_null=True)
     goods = GoodSerializer(many=True, required=False, allow_null=True)
