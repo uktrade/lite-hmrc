@@ -5,7 +5,7 @@ from parameterized import parameterized
 from rest_framework.exceptions import ErrorDetail
 
 from mail import icms_serializers
-from mail.enums import ChiefSystemEnum, LicenceTypeEnum, UnitMapping
+from mail.enums import ChiefSystemEnum, UnitMapping
 from mail.serializers import (
     LiteOpenIndividualExportLicenceDataSerializer,
     LiteStandardIndividualExportLicenceDataSerializer,
@@ -169,28 +169,26 @@ class LiteStandardIndividualExportLicenceDataSerializerTestCase(TestCase):
 
 
 class LiteOpenIndividualExportLicenceDataSerializerTestCase(TestCase):
-    def test_required_fields_for_open_or_general_type(self):
-        for type_ in LicenceTypeEnum.OPEN_LICENCES + LicenceTypeEnum.OPEN_GENERAL_LICENCES:
-            with self.subTest(type_=type_):
-                data = {
-                    "action": "insert",
-                    "end_date": "1999-12-31",
-                    "id": "foo",
-                    "reference": "bar",
-                    "start_date": "1999-12-31",
-                    "type": type_,
-                }
-                serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
+    def test_required_fields_for_oiel_type(self):
+        data = {
+            "action": "insert",
+            "end_date": "1999-12-31",
+            "id": "foo",
+            "reference": "bar",
+            "start_date": "1999-12-31",
+            "type": "oiel",
+        }
+        serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
 
-                self.assertFalse(serializer.is_valid())
+        self.assertFalse(serializer.is_valid())
 
-                expected_errors = {
-                    "countries": ["This field is required."],
-                }
-                self.assertDictEqual(serializer.errors, expected_errors)
+        expected_errors = {
+            "countries": ["This field is required."],
+        }
+        self.assertDictEqual(serializer.errors, expected_errors)
 
-    def test_minimum_countries_for_open_type(self):
-        # For open licence types, the request data must include at least 1
+    def test_minimum_countries_for_oiel_type(self):
+        # For the oiel licence type, the request data must include at least 1
         # country item.
         data = {
             "action": "insert",
@@ -198,7 +196,7 @@ class LiteOpenIndividualExportLicenceDataSerializerTestCase(TestCase):
             "id": "foo",
             "reference": "bar",
             "start_date": "1999-12-31",
-            "type": LicenceTypeEnum.OPEN_LICENCES[0],
+            "type": "oiel",
             "countries": [],
         }
         serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
@@ -211,14 +209,14 @@ class LiteOpenIndividualExportLicenceDataSerializerTestCase(TestCase):
         }
         self.assertDictEqual(serializer.errors, expected_errors)
 
-    def test_valid_countries_for_open_type(self):
+    def test_valid_countries_for_oiel_type(self):
         data = {
             "action": "insert",
             "end_date": "1999-12-31",
             "id": "foo",
             "reference": "bar",
             "start_date": "1999-12-31",
-            "type": LicenceTypeEnum.OPEN_LICENCES[0],
+            "type": "oiel",
             "countries": [
                 {
                     "id": "GB",
