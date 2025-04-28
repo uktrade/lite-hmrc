@@ -6,12 +6,16 @@ from rest_framework.exceptions import ErrorDetail
 
 from mail import icms_serializers
 from mail.enums import ChiefSystemEnum, LicenceTypeEnum, UnitMapping
-from mail.serializers import LiteLicenceDataSerializer, LiteStandardLicenceDataSerializer
+from mail.serializers import (
+    LiteGenericLicenceDataSerializer,
+    LiteOpenIndividualExportLicenceDataSerializer,
+    LiteStandardIndividualExportLicenceDataSerializer,
+)
 
 
 class LiteLicenceDataSerializerTestCase(TestCase):
     def test_no_data(self):
-        serializer = LiteLicenceDataSerializer(data={})
+        serializer = LiteGenericLicenceDataSerializer(data={})
 
         self.assertFalse(serializer.is_valid())
         expected_errors = {
@@ -33,7 +37,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
             "start_date": "1999-12-31",
             "type": "baz",
         }
-        serializer = LiteLicenceDataSerializer(data=data)
+        serializer = LiteGenericLicenceDataSerializer(data=data)
 
         self.assertFalse(serializer.is_valid())
         expected_errors = {
@@ -53,7 +57,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
             "start_date": "1999-12-31",
             "type": "baz",
         }
-        serializer = LiteLicenceDataSerializer(data=data)
+        serializer = LiteGenericLicenceDataSerializer(data=data)
 
         self.assertFalse(serializer.is_valid())
         expected_errors = {
@@ -72,7 +76,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
                     "start_date": "1999-12-31",
                     "type": type_,
                 }
-                serializer = LiteLicenceDataSerializer(data=data)
+                serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
 
                 self.assertFalse(serializer.is_valid())
 
@@ -92,7 +96,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
                     "start_date": "1999-12-31",
                     "type": type_,
                 }
-                serializer = LiteStandardLicenceDataSerializer(data=data)
+                serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
 
                 self.assertFalse(serializer.is_valid())
 
@@ -114,7 +118,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
             "type": LicenceTypeEnum.OPEN_LICENCES[0],
             "countries": [],
         }
-        serializer = LiteLicenceDataSerializer(data=data)
+        serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
 
         self.assertFalse(serializer.is_valid())
         expected_errors = {
@@ -139,7 +143,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
                 }
             ],
         }
-        serializer = LiteLicenceDataSerializer(data=data)
+        serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
 
         self.assertTrue(serializer.is_valid())
 
@@ -168,7 +172,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
                 },
             ],
         }
-        serializer = LiteLicenceDataSerializer(data=data)
+        serializer = LiteGenericLicenceDataSerializer(data=data)
         serializer.is_valid()
 
         expected_errors = {
@@ -208,7 +212,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
             # `unit_label` is each of the strings, like "NAR", "ITG", etc.
             with self.subTest(unit=unit_label):
                 data["goods"][0]["unit"] = unit_label
-                serializer = LiteLicenceDataSerializer(data=data)
+                serializer = LiteGenericLicenceDataSerializer(data=data)
                 is_valid = serializer.is_valid()
 
                 self.assertDictEqual(serializer.errors, {})

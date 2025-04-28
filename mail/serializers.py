@@ -174,7 +174,7 @@ class ForeignTraderSerializer(serializers.Serializer):
     address = AddressSerializer()
 
 
-class LiteLicenceDataSerializer(serializers.Serializer):
+class LiteGenericLicenceDataSerializer(serializers.Serializer):
     id = serializers.CharField()
     reference = serializers.CharField(max_length=35)
     type = serializers.CharField()
@@ -204,10 +204,6 @@ class LiteLicenceDataSerializer(serializers.Serializer):
             if action == enums.LicenceActionEnum.UPDATE:
                 self.fields["old_id"].required = True
 
-            if type_ in enums.LicenceTypeEnum.OPEN_LICENCES + enums.LicenceTypeEnum.OPEN_GENERAL_LICENCES:
-                self.fields["countries"].required = True
-                self.fields["countries"].min_length = 1
-
         return super().is_valid(*args, **kwargs)
 
     def validate_old_id(self, value):
@@ -219,9 +215,15 @@ class LiteLicenceDataSerializer(serializers.Serializer):
         return value
 
 
-class LiteStandardLicenceDataSerializer(LiteLicenceDataSerializer):
+class LiteStandardIndividualExportLicenceDataSerializer(LiteGenericLicenceDataSerializer):
+    # LITE SIEL Licence Data Serializer
     end_user = ForeignTraderSerializer(required=True, allow_null=False)
     goods = GoodSerializer(many=True, required=True, allow_null=False)
+
+
+class LiteOpenIndividualExportLicenceDataSerializer(LiteGenericLicenceDataSerializer):
+    # LITE OIEL Licence Data Serializer
+    countries = CountrySerializer(many=True, required=True, min_length=1)
 
 
 class LicenceDataStatusSerializer(serializers.ModelSerializer):

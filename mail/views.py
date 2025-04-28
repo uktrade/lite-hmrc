@@ -9,7 +9,11 @@ from conf.authentication import HawkOnlyAuthentication
 from mail.celery_tasks import send_licence_details_to_hmrc
 from mail.enums import LicenceActionEnum, LicenceTypeEnum, ReceptionStatusEnum
 from mail.models import LicenceData, LicenceIdMapping, LicencePayload, Mail
-from mail.serializers import LiteLicenceDataSerializer, LiteStandardLicenceDataSerializer, MailSerializer
+from mail.serializers import (
+    LiteOpenIndividualExportLicenceDataSerializer,
+    LiteStandardIndividualExportLicenceDataSerializer,
+    MailSerializer,
+)
 
 if TYPE_CHECKING:
     from rest_framework.serializers import Serializer  # noqa
@@ -74,11 +78,13 @@ class LicenceDataIngestView(APIView):
         )
 
     def get_serializer_cls(self, app_type: str) -> Type["Serializer"]:
-        app_type_to_serializer = {str(LicenceTypeEnum.SIEL): LiteStandardLicenceDataSerializer}
+        app_type_to_serializer = {
+            str(LicenceTypeEnum.SIEL): LiteStandardIndividualExportLicenceDataSerializer,
+            str(LicenceTypeEnum.OIEL): LiteOpenIndividualExportLicenceDataSerializer,
+        }
         if app_type in app_type_to_serializer.keys():
             serializer = app_type_to_serializer[app_type]
             return serializer
-        return LiteLicenceDataSerializer
 
 
 class SendLicenceUpdatesToHmrc(APIView):
