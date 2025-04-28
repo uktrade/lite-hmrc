@@ -174,7 +174,7 @@ class ForeignTraderSerializer(serializers.Serializer):
     address = AddressSerializer()
 
 
-class LiteGenericLicenceDataSerializer(serializers.Serializer):
+class _LiteGenericLicenceDataSerializer(serializers.Serializer):
     id = serializers.CharField()
     reference = serializers.CharField(max_length=35)
     type = serializers.CharField()
@@ -214,13 +214,13 @@ class LiteGenericLicenceDataSerializer(serializers.Serializer):
         return value
 
 
-class LiteStandardIndividualExportLicenceDataSerializer(LiteGenericLicenceDataSerializer):
+class LiteStandardIndividualExportLicenceDataSerializer(_LiteGenericLicenceDataSerializer):
     # LITE SIEL Licence Data Serializer
     end_user = ForeignTraderSerializer(required=True, allow_null=False)
     goods = GoodSerializer(many=True, required=True, allow_null=False)
 
 
-class LiteOpenIndividualExportLicenceDataSerializer(LiteGenericLicenceDataSerializer):
+class LiteOpenIndividualExportLicenceDataSerializer(_LiteGenericLicenceDataSerializer):
     # LITE OIEL Licence Data Serializer
     countries = CountrySerializer(many=True, required=True, min_length=1)
 

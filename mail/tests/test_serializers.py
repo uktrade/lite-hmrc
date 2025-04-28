@@ -7,24 +7,25 @@ from rest_framework.exceptions import ErrorDetail
 from mail import icms_serializers
 from mail.enums import ChiefSystemEnum, LicenceTypeEnum, UnitMapping
 from mail.serializers import (
-    LiteGenericLicenceDataSerializer,
     LiteOpenIndividualExportLicenceDataSerializer,
     LiteStandardIndividualExportLicenceDataSerializer,
 )
 
 
-class LiteLicenceDataSerializerTestCase(TestCase):
+class LiteStandardIndividualExportLicenceDataSerializerTestCase(TestCase):
     def test_no_data(self):
-        serializer = LiteGenericLicenceDataSerializer(data={})
+        serializer = LiteStandardIndividualExportLicenceDataSerializer(data={})
 
         self.assertFalse(serializer.is_valid())
         expected_errors = {
-            "action": ["This field is required."],
-            "end_date": ["This field is required."],
-            "id": ["This field is required."],
-            "reference": ["This field is required."],
-            "start_date": ["This field is required."],
-            "type": ["This field is required."],
+            "action": [ErrorDetail(string="This field is required.", code="required")],
+            "end_date": [ErrorDetail(string="This field is required.", code="required")],
+            "id": [ErrorDetail(string="This field is required.", code="required")],
+            "reference": [ErrorDetail(string="This field is required.", code="required")],
+            "start_date": [ErrorDetail(string="This field is required.", code="required")],
+            "type": [ErrorDetail(string="This field is required.", code="required")],
+            "end_user": [ErrorDetail(string="This field is required.", code="required")],
+            "goods": [ErrorDetail(string="This field is required.", code="required")],
         }
         self.assertDictEqual(serializer.errors, expected_errors)
 
@@ -35,13 +36,28 @@ class LiteLicenceDataSerializerTestCase(TestCase):
             "id": "foo",
             "reference": "bar",
             "start_date": "1999-12-31",
-            "type": "baz",
+            "type": "siel",
+            "end_user": {
+                "name": "Foo",
+                "address": {
+                    "line_1": "Line1",
+                    "country": {"id": "GB", "name": "GB"},
+                },
+            },
+            "goods": [
+                {
+                    "description": "",
+                    "name": "Bar",
+                    "quantity": "1",
+                    "unit": "NAR",
+                },
+            ],
         }
-        serializer = LiteGenericLicenceDataSerializer(data=data)
+        serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
 
         self.assertFalse(serializer.is_valid())
         expected_errors = {
-            "old_id": ["This field is required."],
+            "old_id": [ErrorDetail(string="This field is required.", code="required")],
         }
         self.assertDictEqual(serializer.errors, expected_errors)
 
@@ -55,35 +71,30 @@ class LiteLicenceDataSerializerTestCase(TestCase):
             "old_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
             "reference": "bar",
             "start_date": "1999-12-31",
-            "type": "baz",
+            "type": "siel",
+            "end_user": {
+                "name": "Foo",
+                "address": {
+                    "line_1": "Line1",
+                    "country": {"id": "GB", "name": "GB"},
+                },
+            },
+            "goods": [
+                {
+                    "description": "",
+                    "name": "Bar",
+                    "quantity": "1",
+                    "unit": "NAR",
+                },
+            ],
         }
-        serializer = LiteGenericLicenceDataSerializer(data=data)
+        serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
 
         self.assertFalse(serializer.is_valid())
         expected_errors = {
-            "old_id": ["This licence does not exist in HMRC integration records"],
+            "old_id": [ErrorDetail(string="This licence does not exist in HMRC integration records", code="invalid")],
         }
         self.assertDictEqual(serializer.errors, expected_errors)
-
-    def test_required_fields_for_open_or_general_type(self):
-        for type_ in LicenceTypeEnum.OPEN_LICENCES + LicenceTypeEnum.OPEN_GENERAL_LICENCES:
-            with self.subTest(type_=type_):
-                data = {
-                    "action": "insert",
-                    "end_date": "1999-12-31",
-                    "id": "foo",
-                    "reference": "bar",
-                    "start_date": "1999-12-31",
-                    "type": type_,
-                }
-                serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
-
-                self.assertFalse(serializer.is_valid())
-
-                expected_errors = {
-                    "countries": ["This field is required."],
-                }
-                self.assertDictEqual(serializer.errors, expected_errors)
 
     def test_required_fields_for_standard_type(self):
         for type_ in LicenceTypeEnum.STANDARD_LICENCES:
@@ -103,6 +114,99 @@ class LiteLicenceDataSerializerTestCase(TestCase):
                 expected_errors = {
                     "end_user": ["This field is required."],
                     "goods": ["This field is required."],
+                }
+                self.assertDictEqual(serializer.errors, expected_errors)
+
+    def test_goods_invalid_choice_for_unit(self):
+        data = {
+            "action": "insert",
+            "end_date": "1999-12-31",
+            "id": "foo",
+            "reference": "bar",
+            "start_date": "1999-12-31",
+            "type": "siel",  # Standard type, which requires "goods".
+            "end_user": {
+                "name": "Foo",
+                "address": {
+                    "line_1": "Line1",
+                    "country": {"id": "GB", "name": "GB"},
+                },
+            },
+            # This "goods" nested object is what we are testing.
+            "goods": [
+                {
+                    "description": "",
+                    "name": "Bar",
+                    "quantity": "1",
+                    "unit": "XyzUnit",
+                },
+            ],
+        }
+        serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
+        serializer.is_valid()
+
+        expected_errors = {
+            "goods": [
+                {"unit": ['"XyzUnit" is not a valid choice.']},
+            ],
+        }
+        self.assertDictEqual(serializer.errors, expected_errors)
+
+    def test_goods_valid_choice_for_unit(self):
+        data = {
+            "action": "insert",
+            "end_date": "1999-12-31",
+            "id": "foo",
+            "reference": "bar",
+            "start_date": "1999-12-31",
+            "type": "siel",  # Standard type, which requires "goods".
+            "end_user": {
+                "name": "Foo",
+                "address": {
+                    "line_1": "Line1",
+                    "country": {"id": "GB", "name": "GB"},
+                },
+            },
+            # This "goods" nested object is what we are testing.
+            "goods": [
+                {
+                    "description": "",
+                    "name": "Bar",
+                    "quantity": "1",
+                    "unit": "XyzUnit",
+                },
+            ],
+        }
+
+        for unit_label in UnitMapping.__members__:
+            # `unit_label` is each of the strings, like "NAR", "ITG", etc.
+            with self.subTest(unit=unit_label):
+                data["goods"][0]["unit"] = unit_label
+                serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
+                is_valid = serializer.is_valid()
+
+                self.assertDictEqual(serializer.errors, {})
+                self.assertTrue(is_valid)
+
+
+class LiteOpenIndividualExportLicenceDataSerializerTestCase(TestCase):
+    def test_required_fields_for_open_or_general_type(self):
+        for type_ in LicenceTypeEnum.OPEN_LICENCES + LicenceTypeEnum.OPEN_GENERAL_LICENCES:
+            with self.subTest(type_=type_):
+                data = {
+                    "action": "insert",
+                    "end_date": "1999-12-31",
+                    "id": "foo",
+                    "reference": "bar",
+                    "start_date": "1999-12-31",
+                    "type": type_,
+                }
+                serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
+
+                self.assertFalse(serializer.is_valid())
+
+                expected_errors = {
+                    "countries": ["This field is required."],
                 }
                 self.assertDictEqual(serializer.errors, expected_errors)
 
@@ -146,77 +250,6 @@ class LiteLicenceDataSerializerTestCase(TestCase):
         serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
 
         self.assertTrue(serializer.is_valid())
-
-    def test_goods_invalid_choice_for_unit(self):
-        data = {
-            "action": "insert",
-            "end_date": "1999-12-31",
-            "id": "foo",
-            "reference": "bar",
-            "start_date": "1999-12-31",
-            "type": "siel",  # Standard type, which requires "goods".
-            "end_user": {
-                "name": "Foo",
-                "address": {
-                    "line_1": "Line1",
-                    "country": {"id": "GB", "name": "GB"},
-                },
-            },
-            # This "goods" nested object is what we are testing.
-            "goods": [
-                {
-                    "description": "",
-                    "name": "Bar",
-                    "quantity": "1",
-                    "unit": "XyzUnit",
-                },
-            ],
-        }
-        serializer = LiteGenericLicenceDataSerializer(data=data)
-        serializer.is_valid()
-
-        expected_errors = {
-            "goods": [
-                {"unit": ['"XyzUnit" is not a valid choice.']},
-            ],
-        }
-        self.assertDictEqual(serializer.errors, expected_errors)
-
-    def test_goods_valid_choice_for_unit(self):
-        data = {
-            "action": "insert",
-            "end_date": "1999-12-31",
-            "id": "foo",
-            "reference": "bar",
-            "start_date": "1999-12-31",
-            "type": "siel",  # Standard type, which requires "goods".
-            "end_user": {
-                "name": "Foo",
-                "address": {
-                    "line_1": "Line1",
-                    "country": {"id": "GB", "name": "GB"},
-                },
-            },
-            # This "goods" nested object is what we are testing.
-            "goods": [
-                {
-                    "description": "",
-                    "name": "Bar",
-                    "quantity": "1",
-                    "unit": "XyzUnit",
-                },
-            ],
-        }
-
-        for unit_label in UnitMapping.__members__:
-            # `unit_label` is each of the strings, like "NAR", "ITG", etc.
-            with self.subTest(unit=unit_label):
-                data["goods"][0]["unit"] = unit_label
-                serializer = LiteGenericLicenceDataSerializer(data=data)
-                is_valid = serializer.is_valid()
-
-                self.assertDictEqual(serializer.errors, {})
-                self.assertTrue(is_valid)
 
 
 @override_settings(CHIEF_SOURCE_SYSTEM=ChiefSystemEnum.ICMS)
