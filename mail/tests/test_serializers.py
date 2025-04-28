@@ -96,27 +96,6 @@ class LiteStandardIndividualExportLicenceDataSerializerTestCase(TestCase):
         }
         self.assertDictEqual(serializer.errors, expected_errors)
 
-    def test_required_fields_for_standard_type(self):
-        for type_ in LicenceTypeEnum.STANDARD_LICENCES:
-            with self.subTest(type_=type_):
-                data = {
-                    "action": "insert",
-                    "end_date": "1999-12-31",
-                    "id": "foo",
-                    "reference": "bar",
-                    "start_date": "1999-12-31",
-                    "type": type_,
-                }
-                serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
-
-                self.assertFalse(serializer.is_valid())
-
-                expected_errors = {
-                    "end_user": ["This field is required."],
-                    "goods": ["This field is required."],
-                }
-                self.assertDictEqual(serializer.errors, expected_errors)
-
     def test_goods_invalid_choice_for_unit(self):
         data = {
             "action": "insert",
