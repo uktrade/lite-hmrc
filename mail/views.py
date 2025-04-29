@@ -85,6 +85,7 @@ class LicenceDataIngestView(APIView):
         if app_type in app_type_to_serializer.keys():
             serializer = app_type_to_serializer[app_type]
             return serializer
+        raise NotImplementedError(f"Application type {app_type} not supported.")
 
 
 class SendLicenceUpdatesToHmrc(APIView):
