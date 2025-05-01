@@ -32,10 +32,10 @@ class LiteStandardIndividualExportLicenceDataSerializerTestCase(TestCase):
     def test_old_id_required_when_action_is_update(self):
         data = {
             "action": "update",
-            "end_date": "1999-12-31",
+            "end_date": "2027-01-01",
             "id": "foo",
             "reference": "bar",
-            "start_date": "1999-12-31",
+            "start_date": "2025-01-01",
             "type": "siel",
             "end_user": {
                 "name": "Foo",
@@ -64,13 +64,13 @@ class LiteStandardIndividualExportLicenceDataSerializerTestCase(TestCase):
     def test_invalid_old_id_when_action_is_update(self):
         data = {
             "action": "update",
-            "end_date": "1999-12-31",
+            "end_date": "2027-01-01",
             "id": "foo",
             # This is a valid UUID-format key, but there is no matching
             # record in the database.
             "old_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
             "reference": "bar",
-            "start_date": "1999-12-31",
+            "start_date": "2025-01-01",
             "type": "siel",
             "end_user": {
                 "name": "Foo",
@@ -99,10 +99,10 @@ class LiteStandardIndividualExportLicenceDataSerializerTestCase(TestCase):
     def test_goods_invalid_choice_for_unit(self):
         data = {
             "action": "insert",
-            "end_date": "1999-12-31",
+            "end_date": "2027-01-01",
             "id": "foo",
             "reference": "bar",
-            "start_date": "1999-12-31",
+            "start_date": "2025-01-01",
             "type": "siel",  # Standard type, which requires "goods".
             "end_user": {
                 "name": "Foo",
@@ -134,10 +134,10 @@ class LiteStandardIndividualExportLicenceDataSerializerTestCase(TestCase):
     def test_goods_valid_choice_for_unit(self):
         data = {
             "action": "insert",
-            "end_date": "1999-12-31",
+            "end_date": "2027-01-01",
             "id": "foo",
             "reference": "bar",
-            "start_date": "1999-12-31",
+            "start_date": "2025-01-01",
             "type": "siel",  # Standard type, which requires "goods".
             "end_user": {
                 "name": "Foo",
@@ -172,10 +172,10 @@ class LiteOpenIndividualExportLicenceDataSerializerTestCase(TestCase):
     def test_required_fields_for_oiel_type(self):
         data = {
             "action": "insert",
-            "end_date": "1999-12-31",
+            "end_date": "2030-01-01",
             "id": "foo",
             "reference": "bar",
-            "start_date": "1999-12-31",
+            "start_date": "2025-01-01",
             "type": "oiel",
         }
         serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
@@ -192,10 +192,10 @@ class LiteOpenIndividualExportLicenceDataSerializerTestCase(TestCase):
         # country item.
         data = {
             "action": "insert",
-            "end_date": "1999-12-31",
+            "end_date": "2030-01-01",
             "id": "foo",
             "reference": "bar",
-            "start_date": "1999-12-31",
+            "start_date": "2025-01-01",
             "type": "oiel",
             "countries": [],
         }
@@ -212,10 +212,10 @@ class LiteOpenIndividualExportLicenceDataSerializerTestCase(TestCase):
     def test_valid_countries_for_oiel_type(self):
         data = {
             "action": "insert",
-            "end_date": "1999-12-31",
+            "end_date": "2030-01-01",
             "id": "foo",
             "reference": "bar",
-            "start_date": "1999-12-31",
+            "start_date": "2025-01-01",
             "type": "oiel",
             "countries": [
                 {
