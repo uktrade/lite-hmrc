@@ -95,3 +95,9 @@ class UpdateLicenceEndpointTests(LiteHMRCTestClient):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(LicencePayload.objects.count(), initial_licence_count)
         self.assertEqual(LicenceIdMapping.objects.count(), initial_licence_id_mapping_count)
+
+    def test_post_data_failure_app_type_not_supported(self):
+        data = self.licence_payload_json
+        data["licence"]["type"] = "notavalidtype"
+        with self.assertRaises(NotImplementedError):
+            self.client.post(self.url, data=data, content_type="application/json")

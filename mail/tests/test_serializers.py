@@ -5,151 +5,104 @@ from parameterized import parameterized
 from rest_framework.exceptions import ErrorDetail
 
 from mail import icms_serializers
-from mail.enums import ChiefSystemEnum, LicenceTypeEnum, UnitMapping
-from mail.serializers import LiteLicenceDataSerializer
+from mail.enums import ChiefSystemEnum, UnitMapping
+from mail.serializers import (
+    LiteOpenIndividualExportLicenceDataSerializer,
+    LiteStandardIndividualExportLicenceDataSerializer,
+)
 
 
-class LiteLicenceDataSerializerTestCase(TestCase):
+class LiteStandardIndividualExportLicenceDataSerializerTestCase(TestCase):
     def test_no_data(self):
-        serializer = LiteLicenceDataSerializer(data={})
+        serializer = LiteStandardIndividualExportLicenceDataSerializer(data={})
 
         self.assertFalse(serializer.is_valid())
         expected_errors = {
-            "action": ["This field is required."],
-            "end_date": ["This field is required."],
-            "id": ["This field is required."],
-            "reference": ["This field is required."],
-            "start_date": ["This field is required."],
-            "type": ["This field is required."],
+            "action": [ErrorDetail(string="This field is required.", code="required")],
+            "end_date": [ErrorDetail(string="This field is required.", code="required")],
+            "id": [ErrorDetail(string="This field is required.", code="required")],
+            "reference": [ErrorDetail(string="This field is required.", code="required")],
+            "start_date": [ErrorDetail(string="This field is required.", code="required")],
+            "type": [ErrorDetail(string="This field is required.", code="required")],
+            "end_user": [ErrorDetail(string="This field is required.", code="required")],
+            "goods": [ErrorDetail(string="This field is required.", code="required")],
         }
         self.assertDictEqual(serializer.errors, expected_errors)
 
     def test_old_id_required_when_action_is_update(self):
         data = {
             "action": "update",
-            "end_date": "1999-12-31",
+            "end_date": "2027-01-01",
             "id": "foo",
             "reference": "bar",
-            "start_date": "1999-12-31",
-            "type": "baz",
+            "start_date": "2025-01-01",
+            "type": "siel",
+            "end_user": {
+                "name": "Foo",
+                "address": {
+                    "line_1": "Line1",
+                    "country": {"id": "GB", "name": "GB"},
+                },
+            },
+            "goods": [
+                {
+                    "description": "",
+                    "name": "Bar",
+                    "quantity": "1",
+                    "unit": "NAR",
+                },
+            ],
         }
-        serializer = LiteLicenceDataSerializer(data=data)
+        serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
 
         self.assertFalse(serializer.is_valid())
         expected_errors = {
-            "old_id": ["This field is required."],
+            "old_id": [ErrorDetail(string="This field is required.", code="required")],
         }
         self.assertDictEqual(serializer.errors, expected_errors)
 
     def test_invalid_old_id_when_action_is_update(self):
         data = {
             "action": "update",
-            "end_date": "1999-12-31",
+            "end_date": "2027-01-01",
             "id": "foo",
             # This is a valid UUID-format key, but there is no matching
             # record in the database.
             "old_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
             "reference": "bar",
-            "start_date": "1999-12-31",
-            "type": "baz",
-        }
-        serializer = LiteLicenceDataSerializer(data=data)
-
-        self.assertFalse(serializer.is_valid())
-        expected_errors = {
-            "old_id": ["This licence does not exist in HMRC integration records"],
-        }
-        self.assertDictEqual(serializer.errors, expected_errors)
-
-    def test_required_fields_for_open_or_general_type(self):
-        for type_ in LicenceTypeEnum.OPEN_LICENCES + LicenceTypeEnum.OPEN_GENERAL_LICENCES:
-            with self.subTest(type_=type_):
-                data = {
-                    "action": "insert",
-                    "end_date": "1999-12-31",
-                    "id": "foo",
-                    "reference": "bar",
-                    "start_date": "1999-12-31",
-                    "type": type_,
-                }
-                serializer = LiteLicenceDataSerializer(data=data)
-
-                self.assertFalse(serializer.is_valid())
-
-                expected_errors = {
-                    "countries": ["This field is required."],
-                }
-                self.assertDictEqual(serializer.errors, expected_errors)
-
-    def test_required_fields_for_standard_type(self):
-        for type_ in LicenceTypeEnum.STANDARD_LICENCES:
-            with self.subTest(type_=type_):
-                data = {
-                    "action": "insert",
-                    "end_date": "1999-12-31",
-                    "id": "foo",
-                    "reference": "bar",
-                    "start_date": "1999-12-31",
-                    "type": type_,
-                }
-                serializer = LiteLicenceDataSerializer(data=data)
-
-                self.assertFalse(serializer.is_valid())
-
-                expected_errors = {
-                    "end_user": ["This field is required."],
-                    "goods": ["This field is required."],
-                }
-                self.assertDictEqual(serializer.errors, expected_errors)
-
-    def test_minimum_countries_for_open_type(self):
-        # For open licence types, the request data must include at least 1
-        # country item.
-        data = {
-            "action": "insert",
-            "end_date": "1999-12-31",
-            "id": "foo",
-            "reference": "bar",
-            "start_date": "1999-12-31",
-            "type": LicenceTypeEnum.OPEN_LICENCES[0],
-            "countries": [],
-        }
-        serializer = LiteLicenceDataSerializer(data=data)
-
-        self.assertFalse(serializer.is_valid())
-        expected_errors = {
-            "countries": {
-                "non_field_errors": ["Ensure this field has at least 1 elements."],
+            "start_date": "2025-01-01",
+            "type": "siel",
+            "end_user": {
+                "name": "Foo",
+                "address": {
+                    "line_1": "Line1",
+                    "country": {"id": "GB", "name": "GB"},
+                },
             },
-        }
-        self.assertDictEqual(serializer.errors, expected_errors)
-
-    def test_valid_countries_for_open_type(self):
-        data = {
-            "action": "insert",
-            "end_date": "1999-12-31",
-            "id": "foo",
-            "reference": "bar",
-            "start_date": "1999-12-31",
-            "type": LicenceTypeEnum.OPEN_LICENCES[0],
-            "countries": [
+            "goods": [
                 {
-                    "id": "GB",
-                    "name": "United Kingdom",
-                }
+                    "description": "",
+                    "name": "Bar",
+                    "quantity": "1",
+                    "unit": "NAR",
+                },
             ],
         }
-        serializer = LiteLicenceDataSerializer(data=data)
+        serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
 
-        self.assertTrue(serializer.is_valid())
+        self.assertFalse(serializer.is_valid())
+        expected_errors = {
+            "old_id": [ErrorDetail(string="This licence does not exist in HMRC integration records", code="invalid")],
+        }
+        self.assertDictEqual(serializer.errors, expected_errors)
 
     def test_goods_invalid_choice_for_unit(self):
         data = {
             "action": "insert",
-            "end_date": "1999-12-31",
+            "end_date": "2027-01-01",
             "id": "foo",
             "reference": "bar",
-            "start_date": "1999-12-31",
+            "start_date": "2025-01-01",
             "type": "siel",  # Standard type, which requires "goods".
             "end_user": {
                 "name": "Foo",
@@ -168,7 +121,7 @@ class LiteLicenceDataSerializerTestCase(TestCase):
                 },
             ],
         }
-        serializer = LiteLicenceDataSerializer(data=data)
+        serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
         serializer.is_valid()
 
         expected_errors = {
@@ -181,10 +134,10 @@ class LiteLicenceDataSerializerTestCase(TestCase):
     def test_goods_valid_choice_for_unit(self):
         data = {
             "action": "insert",
-            "end_date": "1999-12-31",
+            "end_date": "2027-01-01",
             "id": "foo",
             "reference": "bar",
-            "start_date": "1999-12-31",
+            "start_date": "2025-01-01",
             "type": "siel",  # Standard type, which requires "goods".
             "end_user": {
                 "name": "Foo",
@@ -208,11 +161,72 @@ class LiteLicenceDataSerializerTestCase(TestCase):
             # `unit_label` is each of the strings, like "NAR", "ITG", etc.
             with self.subTest(unit=unit_label):
                 data["goods"][0]["unit"] = unit_label
-                serializer = LiteLicenceDataSerializer(data=data)
+                serializer = LiteStandardIndividualExportLicenceDataSerializer(data=data)
                 is_valid = serializer.is_valid()
 
                 self.assertDictEqual(serializer.errors, {})
                 self.assertTrue(is_valid)
+
+
+class LiteOpenIndividualExportLicenceDataSerializerTestCase(TestCase):
+    def test_required_fields_for_oiel_type(self):
+        data = {
+            "action": "insert",
+            "end_date": "2030-01-01",
+            "id": "foo",
+            "reference": "bar",
+            "start_date": "2025-01-01",
+            "type": "oiel",
+        }
+        serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+
+        expected_errors = {
+            "countries": ["This field is required."],
+        }
+        self.assertDictEqual(serializer.errors, expected_errors)
+
+    def test_minimum_countries_for_oiel_type(self):
+        # For the oiel licence type, the request data must include at least 1
+        # country item.
+        data = {
+            "action": "insert",
+            "end_date": "2030-01-01",
+            "id": "foo",
+            "reference": "bar",
+            "start_date": "2025-01-01",
+            "type": "oiel",
+            "countries": [],
+        }
+        serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
+
+        self.assertFalse(serializer.is_valid())
+        expected_errors = {
+            "countries": {
+                "non_field_errors": ["Ensure this field has at least 1 elements."],
+            },
+        }
+        self.assertDictEqual(serializer.errors, expected_errors)
+
+    def test_valid_countries_for_oiel_type(self):
+        data = {
+            "action": "insert",
+            "end_date": "2030-01-01",
+            "id": "foo",
+            "reference": "bar",
+            "start_date": "2025-01-01",
+            "type": "oiel",
+            "countries": [
+                {
+                    "id": "GB",
+                    "name": "United Kingdom",
+                }
+            ],
+        }
+        serializer = LiteOpenIndividualExportLicenceDataSerializer(data=data)
+
+        self.assertTrue(serializer.is_valid())
 
 
 @override_settings(CHIEF_SOURCE_SYSTEM=ChiefSystemEnum.ICMS)
@@ -498,7 +512,7 @@ def get_valid_fa_sil_payload():
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
-                "postcode": "S227ZZ",
+                "postcode": "S227ZZ",  # /PS-IGNORE
             },
         },
         "country_code": "US",
@@ -531,7 +545,7 @@ def get_valid_sanctions_payload():
                 "line_3": "line_3",
                 "line_4": "",
                 "line_5": "",
-                "postcode": "S227ZZ",
+                "postcode": "S227ZZ",  # /PS-IGNORE
             },
         },
         "country_code": "RU",

@@ -1,17 +1,19 @@
 import logging
 from typing import TYPE_CHECKING, Type
 
-from django.conf import settings
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
 
 from conf.authentication import HawkOnlyAuthentication
-from mail import icms_serializers
 from mail.celery_tasks import send_licence_details_to_hmrc
-from mail.enums import ChiefSystemEnum, LicenceActionEnum, LicenceTypeEnum, ReceptionStatusEnum
+from mail.enums import LicenceActionEnum, LicenceTypeEnum, ReceptionStatusEnum
 from mail.models import LicenceData, LicenceIdMapping, LicencePayload, Mail
-from mail.serializers import LiteLicenceDataSerializer, MailSerializer
+from mail.serializers import (
+    LiteOpenIndividualExportLicenceDataSerializer,
+    LiteStandardIndividualExportLicenceDataSerializer,
+    MailSerializer,
+)
 
 if TYPE_CHECKING:
     from rest_framework.serializers import Serializer  # noqa
@@ -76,17 +78,14 @@ class LicenceDataIngestView(APIView):
         )
 
     def get_serializer_cls(self, app_type: str) -> Type["Serializer"]:
-        if settings.CHIEF_SOURCE_SYSTEM == ChiefSystemEnum.ICMS:
-            serializers = {
-                LicenceTypeEnum.IMPORT_OIL: icms_serializers.FirearmOilLicenceDataSerializer,
-                LicenceTypeEnum.IMPORT_DFL: icms_serializers.FirearmDflLicenceDataSerializer,
-                LicenceTypeEnum.IMPORT_SIL: icms_serializers.FirearmSilLicenceDataSerializer,
-                LicenceTypeEnum.IMPORT_SAN: icms_serializers.SanctionLicenceDataSerializer,
-            }
-
-            return serializers[app_type]
-
-        return LiteLicenceDataSerializer
+        app_type_to_serializer = {
+            str(LicenceTypeEnum.SIEL): LiteStandardIndividualExportLicenceDataSerializer,
+            str(LicenceTypeEnum.OIEL): LiteOpenIndividualExportLicenceDataSerializer,
+        }
+        if app_type in app_type_to_serializer.keys():
+            serializer = app_type_to_serializer[app_type]
+            return serializer
+        raise NotImplementedError(f"Application type {app_type} not supported.")
 
 
 class SendLicenceUpdatesToHmrc(APIView):

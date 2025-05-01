@@ -174,7 +174,7 @@ class ForeignTraderSerializer(serializers.Serializer):
     address = AddressSerializer()
 
 
-class LiteLicenceDataSerializer(serializers.Serializer):
+class _LiteGenericLicenceDataSerializer(serializers.Serializer):
     id = serializers.CharField()
     reference = serializers.CharField(max_length=35)
     type = serializers.CharField()
@@ -184,7 +184,7 @@ class LiteLicenceDataSerializer(serializers.Serializer):
 
     old_id = serializers.CharField(required=False)
 
-    # These fields depend on the submitted licence `type`.
+    # These fields are required depending on the submitted licence `type`.
     countries = CountrySerializer(many=True, required=False)
     end_user = ForeignTraderSerializer(required=False, allow_null=True)
     goods = GoodSerializer(many=True, required=False, allow_null=True)
@@ -199,20 +199,9 @@ class LiteLicenceDataSerializer(serializers.Serializer):
             pass
         else:
             action = self.initial_data.get("action")
-            type_ = self.initial_data.get("type")
 
             if action == enums.LicenceActionEnum.UPDATE:
                 self.fields["old_id"].required = True
-
-            if type_ in enums.LicenceTypeEnum.OPEN_LICENCES + enums.LicenceTypeEnum.OPEN_GENERAL_LICENCES:
-                self.fields["countries"].required = True
-                self.fields["countries"].min_length = 1
-
-            if type_ in enums.LicenceTypeEnum.STANDARD_LICENCES:
-                self.fields["end_user"].required = True
-                self.fields["end_user"].allow_null = False
-                self.fields["goods"].required = True
-                self.fields["goods"].allow_null = False
 
         return super().is_valid(*args, **kwargs)
 
@@ -223,6 +212,17 @@ class LiteLicenceDataSerializer(serializers.Serializer):
         ):
             raise serializers.ValidationError("This licence does not exist in HMRC integration records")
         return value
+
+
+class LiteStandardIndividualExportLicenceDataSerializer(_LiteGenericLicenceDataSerializer):
+    # LITE SIEL Licence Data Serializer
+    end_user = ForeignTraderSerializer(required=True, allow_null=False)
+    goods = GoodSerializer(many=True, required=True, allow_null=False)
+
+
+class LiteOpenIndividualExportLicenceDataSerializer(_LiteGenericLicenceDataSerializer):
+    # LITE OIEL Licence Data Serializer
+    countries = CountrySerializer(many=True, required=True, min_length=1)
 
 
 class LicenceDataStatusSerializer(serializers.ModelSerializer):
