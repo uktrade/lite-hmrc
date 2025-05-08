@@ -17,7 +17,7 @@ from mail.models import GoodIdMapping, LicencePayload, Mail
 from mail.tests.libraries.client import LiteHMRCTestClient
 
 
-class LicenceToEdifactTests(LiteHMRCTestClient):
+class StandardLicenceToEdifactTests(LiteHMRCTestClient):
     def test_mappings(self):
         licence = LicencePayload.objects.get()
         licence.data["type"] = "siel"
@@ -357,7 +357,7 @@ class LicenceToEdifactTests(LiteHMRCTestClient):
         self.assertEqual(trader_line, expected_trader_line)
 
 
-class GenerateLinesForLicenceTest(LiteHMRCTestClient):
+class GenerateLinesForOpenLicenceTest(LiteHMRCTestClient):
     def test_open_licence_with_country_group(self):
         data = {
             "start_date": "1",
@@ -369,7 +369,7 @@ class GenerateLinesForLicenceTest(LiteHMRCTestClient):
             "type": "oiel",  # One of the OPEN_LICENCES.
             "country_group": "G012",  # This example is from an ICMS message.
         }
-        licence = LicencePayload(reference="GBSIEL/123", data=data)
+        licence = LicencePayload(reference="GBOIEL/123", data=data)
         lines = list(generate_lines_for_licence(licence))
 
         expected_types = ["licence", "trader", "country", "restrictions", "line", "end"]
@@ -388,7 +388,7 @@ class GenerateLinesForLicenceTest(LiteHMRCTestClient):
             "type": "oiel",  # One of the OPEN_LICENCES.
             "countries": [{"id": "GB"}, {"id": "NI"}],
         }
-        licence = LicencePayload(reference="GBSIEL/123", data=data)
+        licence = LicencePayload(reference="GBOIEL/123", data=data)
         lines = list(generate_lines_for_licence(licence))
 
         # Note there are 2 country lines.
