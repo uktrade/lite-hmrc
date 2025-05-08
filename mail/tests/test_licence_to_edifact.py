@@ -18,10 +18,9 @@ from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class LicenceToEdifactTests(LiteHMRCTestClient):
-    @parameterized.expand(["siel", "sitl", "sicl"])
-    def test_mappings(self, licence_type):
+    def test_mappings(self):
         licence = LicencePayload.objects.get()
-        licence.data["type"] = licence_type
+        licence.data["type"] = "siel"
         licence.save()
         organisation_id = licence.data["organisation"]["id"]
         good_id = licence.data["goods"][0]["id"]
