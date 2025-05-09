@@ -24,6 +24,15 @@ Copy the template local_settings.sample if required: `cp local_settings.sample l
 
 if using local_settings.py remember to add this to your .env `DJANGO_SETTINGS_MODULE=local_settings`
 
+### Installing Submodule
+
+HMRC Repo uses submodules, these must be installed now.
+
+from the HMRC root directory perform
+
+`git submodule init`
+
+`git submodule update`
 
 ### Running in Docker
 To run in docker do the following
