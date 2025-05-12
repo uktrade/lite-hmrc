@@ -7,6 +7,15 @@ from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class UpdateLicenceEndpointTests(LiteHMRCTestClient):
+    def setUp(self):
+        super().setUp()
+        self.single_siel_licence_payload = LicencePayload.objects.create(
+            lite_id=self.licence_payload_json["licence"]["id"],
+            reference=self.licence_payload_json["licence"]["reference"],
+            data=self.licence_payload_json["licence"],
+            action=LicenceActionEnum.INSERT,
+        )
+
     url = reverse("mail:update_licence")
 
     def test_post_data_failure_no_data(self):

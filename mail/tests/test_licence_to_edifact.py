@@ -18,6 +18,15 @@ from mail.tests.libraries.client import LiteHMRCTestClient
 
 
 class StandardLicenceToEdifactTests(LiteHMRCTestClient):
+    def setUp(self):
+        super().setUp()
+        self.single_siel_licence_payload = LicencePayload.objects.create(
+            lite_id=self.licence_payload_json["licence"]["id"],
+            reference=self.licence_payload_json["licence"]["reference"],
+            data=self.licence_payload_json["licence"],
+            action=LicenceActionEnum.INSERT,
+        )
+
     def test_mappings(self):
         licence = LicencePayload.objects.get()
         licence.data["type"] = "siel"
@@ -355,6 +364,17 @@ class StandardLicenceToEdifactTests(LiteHMRCTestClient):
         edifact_file = licences_to_edifact(licences, 1234, "FOO")
         trader_line = edifact_file.split("\n")[2]
         self.assertEqual(trader_line, expected_trader_line)
+
+
+class OpenLicenceToEdifactTests(LiteHMRCTestClient):
+    def setUp(self):
+        super().setUp()
+        self.single_oiel_licence_payload = LicencePayload.objects.create(
+            lite_id=self.open_licence_payload_json["licence"]["id"],
+            reference=self.open_licence_payload_json["licence"]["reference"],
+            data=self.open_licence_payload_json["licence"],
+            action=LicenceActionEnum.INSERT,
+        )
 
 
 class GenerateLinesForOpenLicenceTest(LiteHMRCTestClient):
