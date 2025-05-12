@@ -376,6 +376,28 @@ class OpenLicenceToEdifactTests(LiteHMRCTestClient):
             action=LicenceActionEnum.INSERT,
         )
 
+    def test_single_oiel(self):
+        licences = LicencePayload.objects.filter(is_processed=False)
+
+        result = licences_to_edifact(licences, 1234, "FOO")
+        trader = licences[0].data["organisation"]
+        now = timezone.now()
+        expected = (
+            "1\\fileHeader\\FOO\\CHIEF\\licenceData\\"
+            + "{:04d}{:02d}{:02d}{:02d}{:02d}".format(now.year, now.month, now.day, now.hour, now.minute)
+            + "\\1234\\N"
+            + "\n2\\licence\\20260000001P\\insert\\GBOIEL/2026/0000001/P\\OIE\\E\\20260602\\20310602"
+            + f"\n3\\trader\\\\{trader['eori_number']}\\20260602\\20310602\\Organisation\\might 248 James Key Apt. 515 Apt.\\942 West Ashleyton Farnborough\\Apt. 942\\West Ashleyton\\Farnborough\\GU40 2LX"
+            + "\n4\\country\\CA\\\\D"
+            + "\n5\\country\\US\\\\D"
+            + "\n6\\restrictions\\Provisos may apply please see licence"
+            + "\n7\\line\\1\\\\\\\\\\Open Licence goods - see actual licence for information\\\\\\\\\\\\\\\\\\\\\\"
+            + "\n8\\end\\licence\\7"
+            + "\n9\\fileTrailer\\1\n"
+        )
+
+        self.assertEqual(result, expected)
+
 
 class GenerateLinesForOpenLicenceTest(LiteHMRCTestClient):
     def test_open_licence_with_country_group(self):
