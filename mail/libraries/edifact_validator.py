@@ -231,7 +231,7 @@ def validate_licence_product_line(record):
     # Use chief type rather than indexing into tokens
     ld = chieftypes.LicenceDataLine(*tokens)
 
-    if ld.goods_description == "Open Licence goods - see actual licence for information":
+    if ld.controlled_by == "O":
         # open licence goods, skip further checks
         return errors
 
