@@ -391,7 +391,7 @@ class OpenLicenceToEdifactTests(LiteHMRCTestClient):
             + "\n4\\country\\CA\\\\D"
             + "\n5\\country\\US\\\\D"
             + "\n6\\restrictions\\Provisos may apply please see licence"
-            + "\n7\\line\\1\\\\\\\\\\Open Licence goods - see actual licence for information\\\\\\\\\\\\\\\\\\\\\\"
+            + "\n7\\line\\1\\\\\\\\\\Open Licence goods - see actual licence for information\\O\\\\\\\\\\\\\\\\\\\\"
             + "\n8\\end\\licence\\7"
             + "\n9\\fileTrailer\\1\n"
         )
