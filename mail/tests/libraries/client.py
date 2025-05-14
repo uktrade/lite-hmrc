@@ -1,13 +1,10 @@
 import json
-import logging
 
 from django.test import testcases
 from django.utils import timezone
 
 from conf import settings
-from mail.enums import LicenceActionEnum
 from mail.libraries.helpers import read_file
-from mail.models import LicencePayload
 from mail.tests.libraries import colours
 
 
@@ -37,11 +34,8 @@ class LiteHMRCTestClient(testcases.TestCase):
 
         self.licence_payload_json = json.loads(read_file("mail/tests/files/licence_payload_file", encoding="utf-8"))
 
-        self.single_siel_licence_payload = LicencePayload.objects.create(
-            lite_id=self.licence_payload_json["licence"]["id"],
-            reference=self.licence_payload_json["licence"]["reference"],
-            data=self.licence_payload_json["licence"],
-            action=LicenceActionEnum.INSERT,
+        self.open_licence_payload_json = json.loads(
+            read_file("mail/tests/files/open_licence_payload_file", encoding="utf-8")
         )
 
     def tearDown(self):

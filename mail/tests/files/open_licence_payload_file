@@ -1,0 +1,37 @@
+{
+  "licence": {
+    "id": "3de27a3e-defa-4d59-8223-947d2dc4bb00",
+    "reference": "GBOIEL/2026/0000001/P",
+    "type": "oiel",
+    "action": "insert",
+    "start_date": "2026-06-02",
+    "end_date": "2031-06-02",
+    "organisation": {
+      "name": "Organisation",
+      "id": "10a21d56-9e9d-333d-77c5-479bb3de7ac9",
+      "eori_number": "GB123456789000",
+      "address": {
+        "line_1": "might",
+        "line_2": "248 James Key Apt. 515",
+        "line_3": "Apt. 942",
+        "line_4": "West Ashleyton",
+        "line_5": "Farnborough",
+        "postcode": "GU40 2LX",
+        "country": {
+          "id": "GB",
+          "name": "United Kingdom"
+        }
+      }
+    },
+    "countries": [
+      {
+        "id": "CA",
+        "name": "Canada"
+      },
+      {
+        "id": "US",
+        "name": "United States"
+      }
+    ]
+  }
+}

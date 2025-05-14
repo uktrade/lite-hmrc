@@ -231,6 +231,10 @@ def validate_licence_product_line(record):
     # Use chief type rather than indexing into tokens
     ld = chieftypes.LicenceDataLine(*tokens)
 
+    if ld.controlled_by == "O":
+        # open licence goods, skip further checks
+        return errors
+
     if settings.CHIEF_SOURCE_SYSTEM == "SPIRE":
         if not ld.goods_description:
             errors.append({record_type: "Product description cannot be empty"})

@@ -1,6 +1,6 @@
 import uuid
 
-from mail.enums import SourceEnum
+from mail.enums import LicenceActionEnum, SourceEnum
 from mail.libraries.helpers import get_good_id, read_file
 from mail.libraries.usage_data_decomposition import (
     build_edifact_file_from_data_blocks,
@@ -15,6 +15,12 @@ from mail.tests.libraries.client import LiteHMRCTestClient
 class FileDeconstruction(LiteHMRCTestClient):
     def setUp(self):
         super().setUp()
+        self.single_siel_licence_payload = LicencePayload.objects.create(
+            lite_id=self.licence_payload_json["licence"]["id"],
+            reference=self.licence_payload_json["licence"]["reference"],
+            data=self.licence_payload_json["licence"],
+            action=LicenceActionEnum.INSERT,
+        )
 
         self.spire_data_expected = [
             ["fileHeader\\CHIEF\\SPIRE\\usageData\\201901130300\\49543\\"],

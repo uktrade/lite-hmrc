@@ -3,7 +3,7 @@ from unittest import mock
 from parameterized import parameterized
 
 from mail.celery_tasks import send_licence_details_to_hmrc
-from mail.enums import ReceptionStatusEnum
+from mail.enums import LicenceActionEnum, ReceptionStatusEnum
 from mail.libraries.lite_to_edifact_converter import EdifactValidationError
 from mail.models import LicencePayload, Mail
 from mail.tests.libraries.client import LiteHMRCTestClient
@@ -12,6 +12,12 @@ from mail.tests.libraries.client import LiteHMRCTestClient
 class SendLiteLicenceDetailsTaskTests(LiteHMRCTestClient):
     def setUp(self):
         super().setUp()
+        self.single_siel_licence_payload = LicencePayload.objects.create(
+            lite_id=self.licence_payload_json["licence"]["id"],
+            reference=self.licence_payload_json["licence"]["reference"],
+            data=self.licence_payload_json["licence"],
+            action=LicenceActionEnum.INSERT,
+        )
         self.mail = Mail.objects.create(edi_filename="filename", edi_data="1\\fileHeader\\CHIEF\\SPIRE\\")
 
     @mock.patch("mail.celery_tasks.cache")
