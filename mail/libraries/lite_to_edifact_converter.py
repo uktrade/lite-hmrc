@@ -182,7 +182,7 @@ def generate_lines_for_licence(licence: LicencePayload) -> Iterable[chieftypes._
             yield chieftypes.LicenceDataLine(
                 line_num=1,
                 goods_description="Open Licence goods - see actual licence for information",
-                controlled_by="O",
+                controlled_by=controlled_by,
             )
 
     yield chieftypes.End(start_record_type=chieftypes.Licence.type_)
